@@ -1,2 +1,3 @@
-# gin-auth
-G-Node Infrastructure Authentication Provider
+# GIN-Auth
+
+**G**-Node **In**frastructure Authentication Provider
