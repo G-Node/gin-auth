@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/pborman/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Account data as stored in the database
@@ -24,7 +25,7 @@ type Account struct {
 	FirstName      string
 	MiddleName     sql.NullString
 	LastName       string
-	Password       string
+	PWHash         string
 	ActivationCode sql.NullString
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
@@ -57,18 +58,46 @@ func GetAccount(uuid string) (*Account, error) {
 	return account, err
 }
 
-func (account *Account) Create() error {
-	const q = `INSERT INTO Accounts (uuid, login, email, title, firstName, middleName, lastName, password,
+// SetPassword hashes the plain text password in
+func (acc *Account) SetPassword(plain string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.DefaultCost)
+	if err == nil {
+		acc.PWHash = string(hash)
+	}
+	return err
+}
+
+func (acc *Account) VerifyPassword(plain string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(acc.PWHash), []byte(plain))
+	return err == nil
+}
+
+func (acc *Account) Create() error {
+	const q = `INSERT INTO Accounts (uuid, login, email, title, firstName, middleName, lastName, pwHash,
 	                                 activationCode, createdAt, updatedAt)
 	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now())
 	           RETURNING *`
 
-	if account.UUID == "" {
-		account.UUID = uuid.NewRandom().String()
+	if acc.UUID == "" {
+		acc.UUID = uuid.NewRandom().String()
 	}
 
-	err := database.Get(account, q, account.UUID, account.Login, account.Email, account.Title, account.FirstName,
-		account.MiddleName, account.LastName, account.Password, account.ActivationCode)
+	err := database.Get(acc, q, acc.UUID, acc.Login, acc.Email, acc.Title, acc.FirstName, acc.MiddleName, acc.LastName,
+		acc.PWHash, acc.ActivationCode)
+
+	// TODO There is a lot of room for improvement here concerning errors about constraints for certain fields
+	return err
+}
+
+func (acc *Account) Update() error {
+	const q = `UPDATE Accounts
+	           SET (email, title, firstName, middleName, lastName, pwHash, activationCode, updatedAt) =
+	               ($1, $2, $3, $4, $5, $6, $7, now())
+	           WHERE uuid=$8
+	           RETURNING *`
+
+	err := database.Get(acc, q, acc.Email, acc.Title, acc.FirstName, acc.MiddleName, acc.LastName, acc.PWHash,
+		acc.ActivationCode, acc.UUID)
 
 	// TODO There is a lot of room for improvement here concerning errors about constraints for certain fields
 	return err
