@@ -7,7 +7,7 @@ services:
   - postgresql
 
 install:
- - go get github.com/golang/lint
+ - go get github.com/golang/lint/golint
  - go get github.com/GeertJohan/fgt
  - go get github.com/jmoiron/sqlx
  - go get github.com/lib/pq
