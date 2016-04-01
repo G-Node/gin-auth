@@ -11,6 +11,8 @@ package data
 import (
 	"database/sql"
 	"time"
+
+	"github.com/pborman/uuid"
 )
 
 // Account data as stored in the database
@@ -53,4 +55,21 @@ func GetAccount(uuid string) (*Account, error) {
 	}
 
 	return account, err
+}
+
+func (account *Account) Create() error {
+	const q = `INSERT INTO Accounts (uuid, login, email, title, firstName, middleName, lastName, password,
+	                                 activationCode, createdAt, updatedAt)
+	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now())
+	           RETURNING *`
+
+	if account.UUID == "" {
+		account.UUID = uuid.NewRandom().String()
+	}
+
+	err := database.Get(account, q, account.UUID, account.Login, account.Email, account.Title, account.FirstName,
+		account.MiddleName, account.LastName, account.Password, account.ActivationCode)
+
+	// TODO There is a lot of room for improvement here concerning errors about constraints for certain fields
+	return err
 }

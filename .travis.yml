@@ -12,6 +12,7 @@ install:
  - go get github.com/jmoiron/sqlx
  - go get github.com/lib/pq
  - go get gopkg.in/yaml.v2
+ - go get github.com/pborman/uuid
  - go get -tags "nomymysql nomysql nosqlite3" github.com/CloudCom/goose/cmd/goose
 
 before_script:
