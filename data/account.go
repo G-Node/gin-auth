@@ -67,11 +67,14 @@ func (acc *Account) SetPassword(plain string) error {
 	return err
 }
 
+// VerifyPassword checks whether the stored hash matches the plain text password
 func (acc *Account) VerifyPassword(plain string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(acc.PWHash), []byte(plain))
 	return err == nil
 }
 
+// Create stores the account as new Account in the database.
+// If the UUID string is empty a new UUID will be generated.
 func (acc *Account) Create() error {
 	const q = `INSERT INTO Accounts (uuid, login, email, title, firstName, middleName, lastName, pwHash,
 	                                 activationCode, createdAt, updatedAt)
@@ -89,6 +92,9 @@ func (acc *Account) Create() error {
 	return err
 }
 
+// Update stores the new values of an Account in the database.
+// New values for Login and CreatedAt are ignored. UpdatedAt will be set
+// automatically to the current date and time.
 func (acc *Account) Update() error {
 	const q = `UPDATE Accounts
 	           SET (email, title, firstName, middleName, lastName, pwHash, activationCode, updatedAt) =
