@@ -4,16 +4,19 @@ go:
  - 1.6
 
 services:
-  - postgresql
+ - postgresql
 
 install:
+ # tools
+ - go get -tags "nomymysql nomysql nosqlite3" github.com/CloudCom/goose/cmd/goose
  - go get github.com/golang/lint/golint
  - go get github.com/GeertJohan/fgt
+ # dependencies
  - go get github.com/jmoiron/sqlx
  - go get github.com/lib/pq
  - go get gopkg.in/yaml.v2
  - go get github.com/pborman/uuid
- - go get -tags "nomymysql nomysql nosqlite3" github.com/CloudCom/goose/cmd/goose
+ - go get golang.org/x/crypto/bcrypt
 
 before_script:
  - psql -c "CREATE ROLE test WITH LOGIN PASSWORD 'test';" -U postgres
