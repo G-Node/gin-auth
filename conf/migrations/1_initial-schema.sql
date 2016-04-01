@@ -14,7 +14,7 @@ CREATE TABLE Accounts (
   uuid              VARCHAR(36) PRIMARY KEY ,
   login             VARCHAR(512) NOT NULL UNIQUE ,
   email             VARCHAR(512) NOT NULL UNIQUE ,
-  password          VARCHAR(512) NOT NULL ,
+  pwHash            VARCHAR(512) NOT NULL ,
   title             VARCHAR(512),
   firstName         VARCHAR(512) NOT NULL,
   middleName        VARCHAR(512),
