@@ -1,0 +1,8 @@
+- UUID: 8b14d6bb-cae7-4163-bbd1-f3be46e43e31
+  Name: gin
+  Secret: secret
+  ScopeProvided:
+  - repo-read
+  - repo-write
+  RedirectURIs:
+  - https://localhost:8081/login

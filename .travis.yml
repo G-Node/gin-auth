@@ -1,0 +1,28 @@
+language: go
+
+go:
+ - 1.6
+
+services:
+ - postgresql
+
+install:
+ # tools
+ - go get -tags "nomymysql nomysql nosqlite3" github.com/CloudCom/goose/cmd/goose
+ - go get github.com/golang/lint/golint
+ - go get github.com/GeertJohan/fgt
+ # dependencies
+ - go get github.com/jmoiron/sqlx
+ - go get github.com/lib/pq
+ - go get gopkg.in/yaml.v2
+ - go get github.com/pborman/uuid
+ - go get golang.org/x/crypto/bcrypt
+
+before_script:
+ - psql -c "CREATE ROLE test WITH LOGIN PASSWORD 'test';" -U postgres
+ - psql -c "CREATE DATABASE gin_auth OWNER test;" -U postgres
+ - goose -path conf up
+
+script:
+ - fgt golint -min_confidence 0.9 ./...
+ - go test -v ./...
