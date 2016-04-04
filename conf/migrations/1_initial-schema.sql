@@ -27,6 +27,7 @@ CREATE TABLE Accounts (
 CREATE TABLE SSHKeys (
   fingerprint       VARCHAR(128) PRIMARY KEY ,
   key               VARCHAR(1024) NOT NULL UNIQUE ,
+  description       VARCHAR(1024) NOT NULL ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
