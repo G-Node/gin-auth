@@ -58,6 +58,20 @@ func GetAccount(uuid string) (*Account, error) {
 	return account, err
 }
 
+// GetAccountByLogin returns an account with matching login.
+// Returns an error if no account with such login exists.
+func GetAccountByLogin(login string) (*Account, error) {
+	const q = `SELECT * FROM Accounts a WHERE a.login=$1`
+
+	account := &Account{}
+	err := database.Get(account, q, login)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+
+	return account, err
+}
+
 // SetPassword hashes the plain text password in
 func (acc *Account) SetPassword(plain string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.DefaultCost)

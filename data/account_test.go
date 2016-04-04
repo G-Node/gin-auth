@@ -59,6 +59,33 @@ func TestGetAccount(t *testing.T) {
 	}
 }
 
+func TestGetAccountByLogin(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Error(r)
+		}
+	}()
+
+	initTestDb(t)
+
+	acc, err := GetAccountByLogin("alice")
+	if err != nil {
+		t.Error(err)
+	}
+	if acc.UUID != uuidAlice {
+		t.Error("UUID was expected to be '%s'", uuidAlice)
+	}
+
+	_, err = GetAccount("doesNotExist")
+	if err != nil {
+		if err != sql.ErrNoRows {
+			t.Error("Error must be sql.ErrNoRows")
+		}
+	} else {
+		t.Error("Error expected")
+	}
+}
+
 func TestAccountPassword(t *testing.T) {
 	acc := &Account{}
 	acc.SetPassword("foobar")
