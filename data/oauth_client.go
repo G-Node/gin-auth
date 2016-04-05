@@ -10,6 +10,7 @@ package data
 
 import (
 	"database/sql"
+	"github.com/pborman/uuid"
 	"time"
 )
 
@@ -40,7 +41,7 @@ func ListOAuthClients() []OAuthClient {
 // GetOAuthClient returns an OAuth client with a given uuid.
 // Returns an error if no client with a matching uuid can be found.
 func GetOAuthClient(uuid string) (*OAuthClient, error) {
-	const q = `SELECT * FROM OAuthClient c WHERE c.uuid=$1`
+	const q = `SELECT * FROM OAuthClients c WHERE c.uuid=$1`
 
 	client := &OAuthClient{}
 	err := database.Get(client, q, uuid)
@@ -54,7 +55,7 @@ func GetOAuthClient(uuid string) (*OAuthClient, error) {
 // GetOAuthClientByName returns an OAuth client with a given client name.
 // Returns an error if no client with a matching name can be found.
 func GetOAuthClientByName(name string) (*OAuthClient, error) {
-	const q = `SELECT * FROM OAuthClient c WHERE c.name=$1`
+	const q = `SELECT * FROM OAuthClients c WHERE c.name=$1`
 
 	client := &OAuthClient{}
 	err := database.Get(client, q, name)
@@ -70,6 +71,10 @@ func (client *OAuthClient) Create() error {
 	const q = `INSERT INTO OAuthClients (uuid, name, secret, scopeProvided, redirectURIs, createdAt, updatedAt)
 	           VALUES ($1, $2, $3, $4, $5, now(), now())
 	           RETURNING *`
+
+	if client.UUID == "" {
+		client.UUID = uuid.NewRandom().String()
+	}
 
 	return database.Get(client, q, client.UUID, client.Name, client.Secret, client.ScopeProvided, client.RedirectURIs)
 }
