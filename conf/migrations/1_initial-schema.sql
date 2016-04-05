@@ -52,14 +52,18 @@ CREATE TABLE ClientApprovals (
   updatedAt         TIMESTAMP NOT NULL
 );
 
-CREATE TABLE TokenRequests (
+CREATE TABLE GrantRequests (
   token             VARCHAR(512) PRIMARY KEY ,       -- the grant request id
   grantType         VARCHAR(10) NOT NULL CHECK (grantType = 'code' OR grantType = 'token'),
   state             VARCHAR(512) ,
   code              VARCHAR(512) ,
   scopeRequested    VARCHAR[] NOT NULL ,
   scopeApproved     VARCHAR[] NOT NULL ,
-  redirectURI       VARCHAR(512)
+  redirectURI       VARCHAR(512) ,
+  oAuthClientUUID   VARCHAR(36) NOT NULL REFERENCES OAuthClients(uuid) ON DELETE CASCADE ,
+  accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
+  createdAt         TIMESTAMP NOT NULL ,
+  updatedAt         TIMESTAMP NOT NULL
 );
 
 CREATE TABLE RefreshTokens (
@@ -96,7 +100,7 @@ DROP TABLE IF EXISTS Sessions CASCADE;
 DROP TABLE IF EXISTS AccessTokens CASCADE;
 DROP TABLE IF EXISTS RefreshTokens CASCADE;
 DROP TABLE IF EXISTS ClientApprovals CASCADE;
-DROP TABLE IF EXISTS TokenRequests CASCADE;
+DROP TABLE IF EXISTS GrantRequests CASCADE;
 DROP TABLE IF EXISTS OAuthClients CASCADE;
 DROP TABLE IF EXISTS SSHKeys CASCADE;
 DROP TABLE IF EXISTS Accounts CASCADE;
