@@ -50,17 +50,21 @@ func GetGrantRequest(token string) (*GrantRequest, bool) {
 
 // ClearOldGrantRequests removes requests older than 15 minutes
 // and returns the number of removed requests.
-func ClearOldGrantRequests() (int64, error) {
+func ClearOldGrantRequests() int64 {
 	const q = `DELETE FROM GrantRequests WHERE createdAt < $1`
 
 	minutesAgo15 := time.Now().Add(-time.Minute * 15)
 
 	res, err := database.Exec(q, minutesAgo15)
 	if err != nil {
-		return 0, err
+		panic(err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		panic(err)
 	}
 
-	return res.RowsAffected()
+	return rows
 }
 
 // Create stores a new grant request.
