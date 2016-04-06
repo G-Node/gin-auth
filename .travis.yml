@@ -28,6 +28,7 @@ before_script:
 
 script:
  - fgt golint -min_confidence 0.9 ./...
+ - go vet ./...
  - go test -v -covermode=count -coverprofile=profile-data.cov.part ./data
  - go test -v -covermode=count -coverprofile=profile-util.cov.part ./util
 
