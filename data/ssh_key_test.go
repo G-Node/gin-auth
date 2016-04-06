@@ -64,7 +64,7 @@ func TestCreateSSHKey(t *testing.T) {
 		t.Error("SSH key does not exist")
 	}
 	if check.AccountUUID != uuidAlice {
-		t.Errorf("Login was expected to be $s", uuidAlice)
+		t.Errorf("Login was expected to be '%s'", uuidAlice)
 	}
 }
 

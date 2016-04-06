@@ -54,7 +54,7 @@ func TestGetAccountByLogin(t *testing.T) {
 		t.Error("Account does not exist")
 	}
 	if acc.UUID != uuidAlice {
-		t.Error("UUID was expected to be '%s'", uuidAlice)
+		t.Errorf("UUID was expected to be '%s'", uuidAlice)
 	}
 
 	_, ok = GetAccount("doesNotExist")
