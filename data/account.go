@@ -45,8 +45,8 @@ func ListAccounts() []Account {
 }
 
 // GetAccount returns an account with matching UUID
-// Returns an error if no account with such UUID exists
-func GetAccount(uuid string) (*Account, error) {
+// Returns false if no account with such UUID exists
+func GetAccount(uuid string) (*Account, bool) {
 	const q = `SELECT * FROM Accounts a WHERE a.uuid=$1`
 
 	account := &Account{}
@@ -55,12 +55,12 @@ func GetAccount(uuid string) (*Account, error) {
 		panic(err)
 	}
 
-	return account, err
+	return account, err == nil
 }
 
 // GetAccountByLogin returns an account with matching login.
-// Returns an error if no account with such login exists.
-func GetAccountByLogin(login string) (*Account, error) {
+// Returns false if no account with such login exists.
+func GetAccountByLogin(login string) (*Account, bool) {
 	const q = `SELECT * FROM Accounts a WHERE a.login=$1`
 
 	account := &Account{}
@@ -69,7 +69,7 @@ func GetAccountByLogin(login string) (*Account, error) {
 		panic(err)
 	}
 
-	return account, err
+	return account, err == nil
 }
 
 // SetPassword hashes the plain text password and

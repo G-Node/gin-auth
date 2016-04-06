@@ -1,7 +1,6 @@
 package data
 
 import (
-	"database/sql"
 	"github.com/pborman/uuid"
 	"testing"
 )
@@ -24,21 +23,17 @@ func TestGetOAuthClient(t *testing.T) {
 	defer failOnPanic(t)
 	initTestDb(t)
 
-	client, err := GetOAuthClient(uuidClientGin)
-	if err != nil {
-		t.Error(err)
+	client, ok := GetOAuthClient(uuidClientGin)
+	if !ok {
+		t.Error("Client does not exist")
 	}
 	if client.Name != "gin" {
 		t.Error("Client name was expected to be 'gin'")
 	}
 
-	_, err = GetOAuthClient("doesNotExist")
-	if err != nil {
-		if err != sql.ErrNoRows {
-			t.Error("Error must be sql.ErrNoRows")
-		}
-	} else {
-		t.Error("Error expected")
+	_, ok = GetOAuthClient("doesNotExist")
+	if ok {
+		t.Error("Client should not exist")
 	}
 }
 
@@ -46,21 +41,17 @@ func TestGetOAuthClientByName(t *testing.T) {
 	defer failOnPanic(t)
 	initTestDb(t)
 
-	client, err := GetOAuthClientByName("gin")
-	if err != nil {
-		t.Error(err)
+	client, ok := GetOAuthClientByName("gin")
+	if !ok {
+		t.Error("Client does not exist")
 	}
 	if client.UUID != uuidClientGin {
 		t.Errorf("Client UUID was expected to be '%s'", uuidClientGin)
 	}
 
-	_, err = GetOAuthClientByName("doesNotExist")
-	if err != nil {
-		if err != sql.ErrNoRows {
-			t.Error("Error must be sql.ErrNoRows")
-		}
-	} else {
-		t.Error("Error expected")
+	_, ok = GetOAuthClientByName("doesNotExist")
+	if ok {
+		t.Error("Client should not exist")
 	}
 }
 
@@ -80,9 +71,9 @@ func TestCreateOAuthClient(t *testing.T) {
 		t.Error(err)
 	}
 
-	check, err := GetOAuthClient(id)
-	if err != nil {
-		t.Error(err)
+	check, ok := GetOAuthClient(id)
+	if !ok {
+		t.Error("Client does not exist")
 	}
 	if check.Name != "gin-foo" {
 		t.Error("Name was expected to bo 'gin-foo'")
@@ -101,22 +92,18 @@ func TestCreateOAuthClient(t *testing.T) {
 func TestDeleteOAuthClient(t *testing.T) {
 	initTestDb(t)
 
-	client, err := GetOAuthClient(uuidClientGin)
+	client, ok := GetOAuthClient(uuidClientGin)
+	if !ok {
+		t.Error("Client does not exist")
+	}
+
+	err := client.Delete()
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = client.Delete()
-	if err != nil {
-		t.Error(err)
-	}
-
-	_, err = GetOAuthClient(uuidClientGin)
-	if err != nil {
-		if err != sql.ErrNoRows {
-			t.Error("Error must be sql.ErrNoRows")
-		}
-	} else {
-		t.Error("Error expected")
+	_, ok = GetOAuthClient(uuidClientGin)
+	if ok {
+		t.Error("Client should not exist")
 	}
 }

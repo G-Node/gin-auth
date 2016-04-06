@@ -1,7 +1,6 @@
 package data
 
 import (
-	"database/sql"
 	"github.com/G-Node/gin-auth/util"
 	"testing"
 )
@@ -24,21 +23,17 @@ func TestGetGrantRequest(t *testing.T) {
 	defer failOnPanic(t)
 	initTestDb(t)
 
-	req, err := GetGrantRequest(grantReqTokenAlice)
-	if err != nil {
-		t.Error(err)
+	req, ok := GetGrantRequest(grantReqTokenAlice)
+	if !ok {
+		t.Error("Grant request does not exist")
 	}
 	if req.ScopeRequested[0] != "repo-read" {
 		t.Errorf("First requested scope was expected to be 'repo-read'")
 	}
 
-	_, err = GetGrantRequest("doesNotExist")
-	if err != nil {
-		if err != sql.ErrNoRows {
-			t.Error("Error must be sql.ErrNoRows")
-		}
-	} else {
-		t.Error("Error expected")
+	_, ok = GetGrantRequest("doesNotExist")
+	if ok {
+		t.Error("Grant request should not exist")
 	}
 }
 
@@ -63,9 +58,9 @@ func TestCreateGrantRequest(t *testing.T) {
 		t.Error(err)
 	}
 
-	check, err := GetGrantRequest(token)
-	if err != nil {
-		t.Error(err)
+	check, ok := GetGrantRequest(token)
+	if !ok {
+		t.Error("Grant request does not exist")
 	}
 	if check.State != state {
 		t.Error("State does not match")
@@ -87,22 +82,22 @@ func TestUpdateGrantRequest(t *testing.T) {
 	newCode := util.RandomToken()
 	newState := util.RandomToken()
 
-	req, err := GetGrantRequest(grantReqTokenAlice)
-	if err != nil {
-		t.Error(err)
+	req, ok := GetGrantRequest(grantReqTokenAlice)
+	if !ok {
+		t.Error("Grant request does not exist")
 	}
 
 	req.Code = newCode
 	req.State = newState
 
-	err = req.Update()
+	err := req.Update()
 	if err != nil {
 		t.Error(err)
 	}
 
-	check, err := GetGrantRequest(grantReqTokenAlice)
-	if err != nil {
-		t.Error(err)
+	check, ok := GetGrantRequest(grantReqTokenAlice)
+	if !ok {
+		t.Error("Grant request does not exist")
 	}
 	if check.Code != newCode {
 		t.Error("Code does not match")
@@ -115,22 +110,18 @@ func TestUpdateGrantRequest(t *testing.T) {
 func TestDeleteGrantRequest(t *testing.T) {
 	initTestDb(t)
 
-	req, err := GetGrantRequest(grantReqTokenAlice)
+	req, ok := GetGrantRequest(grantReqTokenAlice)
+	if !ok {
+		t.Error("Grant request does not exist")
+	}
+
+	err := req.Delete()
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = req.Delete()
-	if err != nil {
-		t.Error(err)
-	}
-
-	_, err = GetGrantRequest(uuidClientGin)
-	if err != nil {
-		if err != sql.ErrNoRows {
-			t.Error("Error must be sql.ErrNoRows")
-		}
-	} else {
-		t.Error("Error expected")
+	_, ok = GetGrantRequest(uuidClientGin)
+	if ok {
+		t.Error("Grant request shoul not exist")
 	}
 }

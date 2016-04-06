@@ -39,8 +39,8 @@ func ListOAuthClients() []OAuthClient {
 }
 
 // GetOAuthClient returns an OAuth client with a given uuid.
-// Returns an error if no client with a matching uuid can be found.
-func GetOAuthClient(uuid string) (*OAuthClient, error) {
+// Returns false if no client with a matching uuid can be found.
+func GetOAuthClient(uuid string) (*OAuthClient, bool) {
 	const q = `SELECT * FROM OAuthClients c WHERE c.uuid=$1`
 
 	client := &OAuthClient{}
@@ -49,12 +49,12 @@ func GetOAuthClient(uuid string) (*OAuthClient, error) {
 		panic(err)
 	}
 
-	return client, err
+	return client, err == nil
 }
 
 // GetOAuthClientByName returns an OAuth client with a given client name.
-// Returns an error if no client with a matching name can be found.
-func GetOAuthClientByName(name string) (*OAuthClient, error) {
+// Returns false if no client with a matching name can be found.
+func GetOAuthClientByName(name string) (*OAuthClient, bool) {
 	const q = `SELECT * FROM OAuthClients c WHERE c.name=$1`
 
 	client := &OAuthClient{}
@@ -63,7 +63,7 @@ func GetOAuthClientByName(name string) (*OAuthClient, error) {
 		panic(err)
 	}
 
-	return client, err
+	return client, err == nil
 }
 
 // Create stores a new client in the database.

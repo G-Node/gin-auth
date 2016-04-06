@@ -35,8 +35,8 @@ func ListGrantRequests() []GrantRequest {
 }
 
 // GetGrantRequest returns a grant request with a given token.
-// Returns an error if no request with a matching token exists.
-func GetGrantRequest(token string) (*GrantRequest, error) {
+// Returns false if no request with a matching token exists.
+func GetGrantRequest(token string) (*GrantRequest, bool) {
 	const q = `SELECT * FROM GrantRequests WHERE token=$1`
 
 	grantRequest := &GrantRequest{}
@@ -45,7 +45,7 @@ func GetGrantRequest(token string) (*GrantRequest, error) {
 		panic(err)
 	}
 
-	return grantRequest, err
+	return grantRequest, err == nil
 }
 
 // ClearOldGrantRequests removes requests older than 15 minutes

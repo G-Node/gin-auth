@@ -9,7 +9,6 @@
 package data
 
 import (
-	"database/sql"
 	"testing"
 )
 
@@ -31,21 +30,17 @@ func TestGetSSHKey(t *testing.T) {
 	defer failOnPanic(t)
 	initTestDb(t)
 
-	key, err := GetSSHKey(keyPrintAlice)
-	if err != nil {
-		t.Error(err)
+	key, ok := GetSSHKey(keyPrintAlice)
+	if !ok {
+		t.Error("SSH key does not exist")
 	}
 	if key.AccountUUID != uuidAlice {
 		t.Errorf("AccountUUID was expected to be '%s'", uuidAlice)
 	}
 
-	_, err = GetSSHKey("doesNotExist")
-	if err != nil {
-		if err != sql.ErrNoRows {
-			t.Error("Error must be sql.ErrNoRows")
-		}
-	} else {
-		t.Error("Error expected")
+	_, ok = GetSSHKey("doesNotExist")
+	if ok {
+		t.Error("SSH key should not exist")
 	}
 }
 
@@ -64,9 +59,9 @@ func TestCreateSSHKey(t *testing.T) {
 		t.Error(err)
 	}
 
-	check, err := GetSSHKey(fingerprint)
-	if err != nil {
-		t.Error(err)
+	check, ok := GetSSHKey(fingerprint)
+	if !ok {
+		t.Error("SSH key does not exist")
 	}
 	if check.AccountUUID != uuidAlice {
 		t.Errorf("Login was expected to be $s", uuidAlice)
@@ -76,22 +71,18 @@ func TestCreateSSHKey(t *testing.T) {
 func TestDeleteSSHKey(t *testing.T) {
 	initTestDb(t)
 
-	key, err := GetSSHKey(keyPrintAlice)
+	key, ok := GetSSHKey(keyPrintAlice)
+	if !ok {
+		t.Error("SSH key does not exist")
+	}
+
+	err := key.Delete()
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = key.Delete()
-	if err != nil {
-		t.Error(err)
-	}
-
-	_, err = GetSSHKey(keyPrintAlice)
-	if err != nil {
-		if err != sql.ErrNoRows {
-			t.Error("Error must be sql.ErrNoRows")
-		}
-	} else {
-		t.Error("Error expected")
+	_, ok = GetSSHKey(keyPrintAlice)
+	if ok {
+		t.Error("SSH key should not exist")
 	}
 }

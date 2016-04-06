@@ -37,8 +37,8 @@ func ListSSHKeys() []SSHKey {
 }
 
 // GetSSHKey returns an SSH key for a given fingerprint.
-// Returns an error if no key with the fingerprint can be found.
-func GetSSHKey(fingerprint string) (*SSHKey, error) {
+// Returns false if no key with the fingerprint can be found.
+func GetSSHKey(fingerprint string) (*SSHKey, bool) {
 	const q = `SELECT * FROM SSHKeys k WHERE k.fingerprint=$1`
 
 	key := &SSHKey{}
@@ -47,7 +47,7 @@ func GetSSHKey(fingerprint string) (*SSHKey, error) {
 		panic(err)
 	}
 
-	return key, err
+	return key, err == nil
 }
 
 // Create stores a new SSH key in the database.
