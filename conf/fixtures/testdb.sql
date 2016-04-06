@@ -19,3 +19,8 @@ DELETE FROM GrantRequests;
 INSERT INTO GrantRequests (token, grantType, state, code, scopeRequested, scopeApproved, redirectUri, oAuthClientUUID, accountUUID, createdAt, updatedAt) VALUES
   ('U7JIKKYI', 'code', 'OCQYDRYW', 'HGZQP6WE','{"repo-read","repo-write"}', '{"repo-read"}', 'https://localhost:8081/login', '8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'bf431618-f696-4dca-a95d-882618ce4ef9', now(), now()),
   ('B4LIMIMB', 'code', '6Y4UTL24', 'C52KLSIZ','{"repo-read","repo-write"}', '{"repo-read"}', 'https://localhost:8081/login', '8b14d6bb-cae7-4163-bbd1-f3be46e43e31', '51f5ac36-d332-4889-8023-6e033fcd8e17', now(), now());
+
+DELETE FROM Sessions;
+INSERT INTO Sessions (token, expires, accountuuid, createdat, updatedat) VALUES
+  ('DNM5RS3C', 'tomorrow', 'bf431618-f696-4dca-a95d-882618ce4ef9', now(), now()),
+  ('2MFZZUKI', 'yesterday', '51f5ac36-d332-4889-8023-6e033fcd8e17', 'yesterday', 'yesterday');
