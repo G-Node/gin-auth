@@ -35,7 +35,7 @@ func ListGrantRequests() []GrantRequest {
 }
 
 // GetGrantRequest returns a grant request with a given token.
-// Returns and error if no request with a matching token exists.
+// Returns an error if no request with a matching token exists.
 func GetGrantRequest(token string) (*GrantRequest, error) {
 	const q = `SELECT * FROM GrantRequests WHERE token=$1`
 

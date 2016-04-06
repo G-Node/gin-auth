@@ -72,7 +72,8 @@ func GetAccountByLogin(login string) (*Account, error) {
 	return account, err
 }
 
-// SetPassword hashes the plain text password in
+// SetPassword hashes the plain text password and
+// sets PWHash to the new value.
 func (acc *Account) SetPassword(plain string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.DefaultCost)
 	if err == nil {
