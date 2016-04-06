@@ -11,12 +11,7 @@ const (
 )
 
 func TestListGrantRequests(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-
+	defer failOnPanic(t)
 	initTestDb(t)
 
 	requests := ListGrantRequests()
@@ -26,12 +21,7 @@ func TestListGrantRequests(t *testing.T) {
 }
 
 func TestGetGrantRequest(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-
+	defer failOnPanic(t)
 	initTestDb(t)
 
 	req, err := GetGrantRequest(grantReqTokenAlice)

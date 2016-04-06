@@ -13,20 +13,26 @@ import (
 	"testing"
 )
 
+func failOnPanic(t *testing.T) {
+	if r := recover(); r != nil {
+		t.Fatal(r)
+	}
+}
+
 func initTestDb(t *testing.T) {
 	conf, err := LoadDbConf("../conf/dbconf.yml")
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	err = InitDb(conf)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	fixtures, err := ioutil.ReadFile("../conf/fixtures/testdb.sql")
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	database.MustExec(string(fixtures))

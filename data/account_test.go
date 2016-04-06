@@ -18,12 +18,7 @@ const (
 )
 
 func TestListAccounts(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-
+	defer failOnPanic(t)
 	initTestDb(t)
 
 	accounts := ListAccounts()
@@ -33,12 +28,7 @@ func TestListAccounts(t *testing.T) {
 }
 
 func TestGetAccount(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-
+	defer failOnPanic(t)
 	initTestDb(t)
 
 	acc, err := GetAccount(uuidAlice)
@@ -60,12 +50,7 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestGetAccountByLogin(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-
+	defer failOnPanic(t)
 	initTestDb(t)
 
 	acc, err := GetAccountByLogin("alice")

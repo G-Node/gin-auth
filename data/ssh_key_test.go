@@ -18,12 +18,7 @@ const (
 )
 
 func TestListSSHKeys(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-
+	defer failOnPanic(t)
 	initTestDb(t)
 
 	keys := ListSSHKeys()
@@ -33,12 +28,7 @@ func TestListSSHKeys(t *testing.T) {
 }
 
 func TestGetSSHKey(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-
+	defer failOnPanic(t)
 	initTestDb(t)
 
 	key, err := GetSSHKey(keyPrintAlice)

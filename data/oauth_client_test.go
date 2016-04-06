@@ -11,12 +11,7 @@ const (
 )
 
 func TestListOAuthClients(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-
+	defer failOnPanic(t)
 	initTestDb(t)
 
 	clients := ListOAuthClients()
@@ -26,12 +21,7 @@ func TestListOAuthClients(t *testing.T) {
 }
 
 func TestGetOAuthClient(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-
+	defer failOnPanic(t)
 	initTestDb(t)
 
 	client, err := GetOAuthClient(uuidClientGin)
@@ -53,12 +43,7 @@ func TestGetOAuthClient(t *testing.T) {
 }
 
 func TestGetOAuthClientByName(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-
+	defer failOnPanic(t)
 	initTestDb(t)
 
 	client, err := GetOAuthClientByName("gin")
