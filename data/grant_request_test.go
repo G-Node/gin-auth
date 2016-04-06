@@ -122,6 +122,6 @@ func TestDeleteGrantRequest(t *testing.T) {
 
 	_, ok = GetGrantRequest(uuidClientGin)
 	if ok {
-		t.Error("Grant request shoul not exist")
+		t.Error("Grant request should not exist")
 	}
 }
