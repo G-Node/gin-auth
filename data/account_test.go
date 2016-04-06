@@ -18,12 +18,7 @@ const (
 )
 
 func TestListAccounts(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-
+	defer failOnPanic(t)
 	initTestDb(t)
 
 	accounts := ListAccounts()
@@ -33,29 +28,38 @@ func TestListAccounts(t *testing.T) {
 }
 
 func TestGetAccount(t *testing.T) {
-	defer func() {
-		if r := recover(); r != nil {
-			t.Error(r)
-		}
-	}()
-
+	defer failOnPanic(t)
 	initTestDb(t)
 
-	acc, err := GetAccount(uuidAlice)
-	if err != nil {
-		t.Error(err)
+	acc, ok := GetAccount(uuidAlice)
+	if !ok {
+		t.Error("Account does not exist")
 	}
 	if acc.Login != "alice" {
 		t.Error("Login was expected to be 'alice'")
 	}
 
-	_, err = GetAccount("doesNotExist")
-	if err != nil {
-		if err != sql.ErrNoRows {
-			t.Error("Error must be sql.ErrNoRows")
-		}
-	} else {
-		t.Error("Error expected")
+	_, ok = GetAccount("doesNotExist")
+	if ok {
+		t.Error("Account should not exist")
+	}
+}
+
+func TestGetAccountByLogin(t *testing.T) {
+	defer failOnPanic(t)
+	initTestDb(t)
+
+	acc, ok := GetAccountByLogin("alice")
+	if !ok {
+		t.Error("Account does not exist")
+	}
+	if acc.UUID != uuidAlice {
+		t.Error("UUID was expected to be '%s'", uuidAlice)
+	}
+
+	_, ok = GetAccount("doesNotExist")
+	if ok {
+		t.Error("Account should not exist")
 	}
 }
 
@@ -83,9 +87,9 @@ func TestCreateAccount(t *testing.T) {
 		t.Error(err)
 	}
 
-	check, err := GetAccount(new.UUID)
-	if err != nil {
-		t.Error(err)
+	check, ok := GetAccount(new.UUID)
+	if !ok {
+		t.Error("Account does not exist")
 	}
 	if check.Login != "theo" {
 		t.Error("Login was expected to be 'theo'")
@@ -104,9 +108,9 @@ func TestUpdateAccount(t *testing.T) {
 	newLastName := "Badchild"
 	newActivationCode := "1234567890"
 
-	acc, err := GetAccount(uuidAlice)
-	if err != nil {
-		t.Error(err)
+	acc, ok := GetAccount(uuidAlice)
+	if !ok {
+		t.Error("Account does not exist")
 	}
 
 	acc.SetPassword(newPw)
@@ -118,14 +122,14 @@ func TestUpdateAccount(t *testing.T) {
 	acc.LastName = newLastName
 	acc.ActivationCode = sql.NullString{String: newActivationCode, Valid: true}
 
-	err = acc.Update()
+	err := acc.Update()
 	if err != nil {
 		t.Error(err)
 	}
 
-	acc, err = GetAccount(uuidAlice)
-	if err != nil {
-		t.Error(err)
+	acc, ok = GetAccount(uuidAlice)
+	if !ok {
+		t.Error("Account does not exist")
 	}
 
 	if !acc.VerifyPassword(newPw) {

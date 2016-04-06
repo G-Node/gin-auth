@@ -11,6 +11,9 @@ install:
  - go get -tags "nomymysql nomysql nosqlite3" github.com/CloudCom/goose/cmd/goose
  - go get github.com/golang/lint/golint
  - go get github.com/GeertJohan/fgt
+ # coveralls
+ - go get github.com/mattn/goveralls
+ - go get golang.org/x/tools/cmd/cover
  # dependencies
  - go get github.com/jmoiron/sqlx
  - go get github.com/lib/pq
@@ -25,4 +28,12 @@ before_script:
 
 script:
  - fgt golint -min_confidence 0.9 ./...
- - go test -v ./...
+ - go test -v -covermode=count -coverprofile=profile-data.cov.part ./data
+ - go test -v -covermode=count -coverprofile=profile-util.cov.part ./util
+
+after_success:
+ # collect all coverage profiles
+ - "echo \"mode: count\" > profile.cov"
+ - "grep -h -v \"mode: count\" *.cov.part >> profile.cov"
+ # upload coverage profile
+ - goveralls -coverprofile=profile.cov -service=travis-ci

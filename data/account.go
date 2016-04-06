@@ -45,8 +45,8 @@ func ListAccounts() []Account {
 }
 
 // GetAccount returns an account with matching UUID
-// Returns an error if no account with such UUID exists
-func GetAccount(uuid string) (*Account, error) {
+// Returns false if no account with such UUID exists
+func GetAccount(uuid string) (*Account, bool) {
 	const q = `SELECT * FROM Accounts a WHERE a.uuid=$1`
 
 	account := &Account{}
@@ -55,10 +55,25 @@ func GetAccount(uuid string) (*Account, error) {
 		panic(err)
 	}
 
-	return account, err
+	return account, err == nil
 }
 
-// SetPassword hashes the plain text password in
+// GetAccountByLogin returns an account with matching login.
+// Returns false if no account with such login exists.
+func GetAccountByLogin(login string) (*Account, bool) {
+	const q = `SELECT * FROM Accounts a WHERE a.login=$1`
+
+	account := &Account{}
+	err := database.Get(account, q, login)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+
+	return account, err == nil
+}
+
+// SetPassword hashes the plain text password and
+// sets PWHash to the new value.
 func (acc *Account) SetPassword(plain string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.DefaultCost)
 	if err == nil {
