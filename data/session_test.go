@@ -85,12 +85,12 @@ func TestSessionUpdateExpirationTime(t *testing.T) {
 		t.Error("Session does not exist")
 	}
 	if time.Since(sess.Expires) < 0 {
-		t.Error("Sesssion should be expired")
+		t.Error("Session should be expired")
 	}
 
 	sess.UpdateExpirationTime()
 	if time.Since(sess.Expires) > 0 {
-		t.Error("Sesssion should not be expired")
+		t.Error("Session should not be expired")
 	}
 
 	check, ok := GetSession(sessionTokenBob)
@@ -98,7 +98,7 @@ func TestSessionUpdateExpirationTime(t *testing.T) {
 		t.Error("Session does not exist")
 	}
 	if time.Since(check.Expires) > 0 {
-		t.Error("Sesssion should not be expired")
+		t.Error("Session should not be expired")
 	}
 }
 

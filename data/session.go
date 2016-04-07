@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	defaultLifeTime = time.Hour * 48
+	defaultSessionLifeTime = time.Hour * 48
 )
 
 // Session contains data about session tokens used to identify
@@ -85,7 +85,7 @@ func (sess *Session) UpdateExpirationTime() error {
 	           WHERE token=$2
 	           RETURNING *`
 
-	return database.Get(sess, q, time.Now().Add(defaultLifeTime), sess.Token)
+	return database.Get(sess, q, time.Now().Add(defaultSessionLifeTime), sess.Token)
 }
 
 // Delete removes a session from the database.
