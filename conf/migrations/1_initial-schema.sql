@@ -78,6 +78,7 @@ CREATE TABLE RefreshTokens (
 CREATE TABLE AccessTokens (
   token             VARCHAR(512) PRIMARY KEY ,
   scope             VARCHAR[] NOT NULL ,
+  expires           TIMESTAMP NOT NULL ,
   oAuthClientUUID   VARCHAR(36) NOT NULL REFERENCES OAuthClients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
   createdAt         TIMESTAMP NOT NULL ,
