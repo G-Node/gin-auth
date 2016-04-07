@@ -8,6 +8,8 @@
 
 package data
 
+// TODO rename to client!!!
+
 import (
 	"database/sql"
 	"github.com/pborman/uuid"
