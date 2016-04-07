@@ -10,8 +10,9 @@ const (
 	defaultTokenLifeTime = time.Hour * 24
 )
 
+// AccessToken represents an OAuth access token
 type AccessToken struct {
-	Token           string
+	Token           string // This is just a random string not the JWT token
 	Scope           SqlStringSlice
 	Expires         time.Time
 	OAuthClientUUID string

@@ -112,7 +112,7 @@ func TestAccessTokenDelete(t *testing.T) {
 
 	tok, ok := GetAccessToken(accessTokenAlice)
 	if !ok {
-		t.Error("AccessToken does not exist")
+		t.Error("Access token does not exist")
 	}
 
 	err := tok.Delete()
