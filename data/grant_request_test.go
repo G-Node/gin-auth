@@ -44,14 +44,14 @@ func TestCreateGrantRequest(t *testing.T) {
 	state := util.RandomToken()
 	code := util.RandomToken()
 	new := GrantRequest{
-		Token:           token,
-		GrantType:       "code",
-		State:           state,
-		Code:            code,
-		ScopeRequested:  SqlStringSlice{"foo-read", "foo-write", "foo-admin"},
-		ScopeApproved:   SqlStringSlice{"foo-read"},
-		OAuthClientUUID: uuidClientGin,
-		AccountUUID:     uuidAlice}
+		Token:          token,
+		GrantType:      "code",
+		State:          state,
+		Code:           code,
+		ScopeRequested: SqlStringSlice{"foo-read", "foo-write", "foo-admin"},
+		ScopeApproved:  SqlStringSlice{"foo-read"},
+		ClientUUID:     uuidClientGin,
+		AccountUUID:    uuidAlice}
 
 	err := new.Create()
 	if err != nil {

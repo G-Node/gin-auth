@@ -50,10 +50,10 @@ func TestCreateRefreshToken(t *testing.T) {
 
 	token := util.RandomToken()
 	new := RefreshToken{
-		Token:           token,
-		Scope:           SqlStringSlice{"foo-read", "foo-write"},
-		OAuthClientUUID: uuidClientGin,
-		AccountUUID:     uuidAlice}
+		Token:       token,
+		Scope:       SqlStringSlice{"foo-read", "foo-write"},
+		ClientUUID:  uuidClientGin,
+		AccountUUID: uuidAlice}
 
 	err := new.Create()
 	if err != nil {

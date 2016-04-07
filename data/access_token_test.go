@@ -59,11 +59,11 @@ func TestCreateAccessToken(t *testing.T) {
 
 	token := util.RandomToken()
 	new := AccessToken{
-		Token:           token,
-		Scope:           SqlStringSlice{"foo-read", "foo-write"},
-		Expires:         time.Now().Add(time.Hour * 12),
-		OAuthClientUUID: uuidClientGin,
-		AccountUUID:     uuidAlice}
+		Token:       token,
+		Scope:       SqlStringSlice{"foo-read", "foo-write"},
+		Expires:     time.Now().Add(time.Hour * 12),
+		ClientUUID:  uuidClientGin,
+		AccountUUID: uuidAlice}
 
 	err := new.Create()
 	if err != nil {

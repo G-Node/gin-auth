@@ -10,12 +10,12 @@ import (
 // approved for a certain client. This is needed to implement Trust On
 // First Use (TOFU).
 type ClientApproval struct {
-	UUID            string
-	Scope           SqlStringSlice
-	OAuthClientUUID string
-	AccountUUID     string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	UUID        string
+	Scope       SqlStringSlice
+	ClientUUID  string
+	AccountUUID string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 // ListClientApprovals returns all client approvals stored in the database
@@ -49,7 +49,7 @@ func GetClientApproval(uuid string) (*ClientApproval, bool) {
 // Create stores a new approval in the database.
 // If the UUID is empty a new random UUID will be created.
 func (app *ClientApproval) Create() error {
-	const q = `INSERT INTO ClientApprovals (uuid, scope, oAuthClientUUID, accountUUID, createdAt, updatedAt)
+	const q = `INSERT INTO ClientApprovals (uuid, scope, clientUUID, accountUUID, createdAt, updatedAt)
 	           VALUES ($1, $2, $3, $4, now(), now())
 	           RETURNING *`
 
@@ -57,18 +57,18 @@ func (app *ClientApproval) Create() error {
 		app.UUID = uuid.NewRandom().String()
 	}
 
-	return database.Get(app, q, app.UUID, app.Scope, app.OAuthClientUUID, app.AccountUUID)
+	return database.Get(app, q, app.UUID, app.Scope, app.ClientUUID, app.AccountUUID)
 }
 
 // Update stores the new values of the approval in the database.
 // New values for CreatedAt will be ignored. UpdatedAt will be set
 // automatically to the current time.
 func (app *ClientApproval) Update() error {
-	const q = `UPDATE ClientApprovals SET (scope, oAuthClientUUID, accountUUID, updatedAt) = ($1, $2, $3, now())
+	const q = `UPDATE ClientApprovals SET (scope, clientUUID, accountUUID, updatedAt) = ($1, $2, $3, now())
 	           WHERE uuid=$4
 	           RETURNING *`
 
-	return database.Get(app, q, app.Scope, app.OAuthClientUUID, app.AccountUUID, app.UUID)
+	return database.Get(app, q, app.Scope, app.ClientUUID, app.AccountUUID, app.UUID)
 }
 
 // Delete removes an approval from the database.

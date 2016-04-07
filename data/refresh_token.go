@@ -9,12 +9,12 @@ import (
 // RefreshToken represents an OAuth refresh token issued
 // in a `code` grant request.
 type RefreshToken struct {
-	Token           string
-	Scope           SqlStringSlice
-	OAuthClientUUID string
-	AccountUUID     string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	Token       string
+	Scope       SqlStringSlice
+	ClientUUID  string
+	AccountUUID string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 // ListRefreshTokens returns all refresh tokens sorted by creation time.
@@ -47,7 +47,7 @@ func GetRefreshToken(token string) (*RefreshToken, bool) {
 // Create stores a new refresh token in the database.
 // If the token is empty a random token will be generated.
 func (tok *RefreshToken) Create() error {
-	const q = `INSERT INTO RefreshTokens (token, scope, oAuthClientUUID, accountUUID, createdAt, updatedAt)
+	const q = `INSERT INTO RefreshTokens (token, scope, clientUUID, accountUUID, createdAt, updatedAt)
 	           VALUES ($1, $2, $3, $4, now(), now())
 	           RETURNING *`
 
@@ -55,7 +55,7 @@ func (tok *RefreshToken) Create() error {
 		tok.Token = util.RandomToken()
 	}
 
-	return database.Get(tok, q, tok.Token, tok.Scope, tok.OAuthClientUUID, tok.AccountUUID)
+	return database.Get(tok, q, tok.Token, tok.Scope, tok.ClientUUID, tok.AccountUUID)
 }
 
 // Delete removes an refresh token from the database.

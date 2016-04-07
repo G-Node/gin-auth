@@ -8,17 +8,17 @@ import (
 
 // GrantRequest contains data about an ongoing authorization grant request.
 type GrantRequest struct {
-	Token           string
-	GrantType       string
-	State           string
-	Code            string
-	ScopeRequested  SqlStringSlice
-	ScopeApproved   SqlStringSlice
-	RedirectURI     string
-	OAuthClientUUID string
-	AccountUUID     string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	Token          string
+	GrantType      string
+	State          string
+	Code           string
+	ScopeRequested SqlStringSlice
+	ScopeApproved  SqlStringSlice
+	RedirectURI    string
+	ClientUUID     string
+	AccountUUID    string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 // ListGrantRequests returns all current grant requests ordered by creation time.
@@ -70,7 +70,7 @@ func ClearOldGrantRequests() int64 {
 // Create stores a new grant request.
 func (req *GrantRequest) Create() error {
 	const q = `INSERT INTO GrantRequests (token, grantType, state, code, scopeRequested, scopeApproved, redirectUri,
-	                                      oAuthClientUUID, accountUUID, createdAt, updatedAt)
+	                                      clientUUID, accountUUID, createdAt, updatedAt)
 	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now())
 	           RETURNING *`
 
@@ -79,19 +79,19 @@ func (req *GrantRequest) Create() error {
 	}
 
 	return database.Get(req, q, req.Token, req.GrantType, req.State, req.Code, req.ScopeRequested, req.ScopeApproved,
-		req.RedirectURI, req.OAuthClientUUID, req.AccountUUID)
+		req.RedirectURI, req.ClientUUID, req.AccountUUID)
 }
 
 // Update an existing grant request.
 func (req *GrantRequest) Update() error {
 	const q = `UPDATE GrantRequests gr
-	           SET (grantType, state, code, scopeRequested, scopeApproved, redirectUri, oAuthClientUUID, accountUUID, updatedAt) =
+	           SET (grantType, state, code, scopeRequested, scopeApproved, redirectUri, clientUUID, accountUUID, updatedAt) =
 	               ($1, $2, $3, $4, $5, $6, $7, $8, now())
 	           WHERE token=$9
 	           RETURNING *`
 
 	return database.Get(req, q, req.GrantType, req.State, req.Code, req.ScopeRequested, req.ScopeApproved, req.RedirectURI,
-		req.OAuthClientUUID, req.AccountUUID, req.Token)
+		req.ClientUUID, req.AccountUUID, req.Token)
 }
 
 // Delete removes an existing request from the database.

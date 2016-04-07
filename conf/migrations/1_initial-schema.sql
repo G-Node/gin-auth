@@ -33,7 +33,7 @@ CREATE TABLE SSHKeys (
   updatedAt         TIMESTAMP NOT NULL
 );
 
-CREATE TABLE OAuthClients (
+CREATE TABLE Clients (
   uuid              VARCHAR(36) PRIMARY KEY ,
   name              VARCHAR(512) NOT NULL UNIQUE ,      -- in oauth lingo this is the client_id
   secret            VARCHAR(512) ,
@@ -46,7 +46,7 @@ CREATE TABLE OAuthClients (
 CREATE TABLE ClientApprovals (
   uuid              VARCHAR(36) PRIMARY KEY ,
   scope             VARCHAR[] NOT NULL ,
-  oAuthClientUUID   VARCHAR(36) NOT NULL REFERENCES OAuthClients(uuid) ON DELETE CASCADE ,
+  clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
@@ -60,7 +60,7 @@ CREATE TABLE GrantRequests (
   scopeRequested    VARCHAR[] NOT NULL ,
   scopeApproved     VARCHAR[] NOT NULL ,
   redirectURI       VARCHAR(512) ,
-  oAuthClientUUID   VARCHAR(36) NOT NULL REFERENCES OAuthClients(uuid) ON DELETE CASCADE ,
+  clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
@@ -69,7 +69,7 @@ CREATE TABLE GrantRequests (
 CREATE TABLE RefreshTokens (
   token             VARCHAR(512) PRIMARY KEY ,
   scope             VARCHAR[] NOT NULL ,
-  oAuthClientUUID   VARCHAR(36) NOT NULL REFERENCES OAuthClients(uuid) ON DELETE CASCADE ,
+  clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
@@ -79,7 +79,7 @@ CREATE TABLE AccessTokens (
   token             VARCHAR(512) PRIMARY KEY ,
   scope             VARCHAR[] NOT NULL ,
   expires           TIMESTAMP NOT NULL ,
-  oAuthClientUUID   VARCHAR(36) NOT NULL REFERENCES OAuthClients(uuid) ON DELETE CASCADE ,
+  clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
@@ -102,6 +102,6 @@ DROP TABLE IF EXISTS AccessTokens CASCADE;
 DROP TABLE IF EXISTS RefreshTokens CASCADE;
 DROP TABLE IF EXISTS ClientApprovals CASCADE;
 DROP TABLE IF EXISTS GrantRequests CASCADE;
-DROP TABLE IF EXISTS OAuthClients CASCADE;
+DROP TABLE IF EXISTS Clients CASCADE;
 DROP TABLE IF EXISTS SSHKeys CASCADE;
 DROP TABLE IF EXISTS Accounts CASCADE;

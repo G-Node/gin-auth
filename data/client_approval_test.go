@@ -42,10 +42,10 @@ func TestClientApprovalCreate(t *testing.T) {
 
 	uuid := uuid.NewRandom().String()
 	new := ClientApproval{
-		UUID:            uuid,
-		Scope:           SqlStringSlice{"foo-read", "foo-write"},
-		OAuthClientUUID: uuidClientGin,
-		AccountUUID:     uuidBob}
+		UUID:        uuid,
+		Scope:       SqlStringSlice{"foo-read", "foo-write"},
+		ClientUUID:  uuidClientGin,
+		AccountUUID: uuidBob}
 
 	err := new.Create()
 	if err != nil {

@@ -9,21 +9,21 @@ const (
 	uuidClientGin = "8b14d6bb-cae7-4163-bbd1-f3be46e43e31"
 )
 
-func TestListOAuthClients(t *testing.T) {
+func TestListClients(t *testing.T) {
 	defer failOnPanic(t)
 	initTestDb(t)
 
-	clients := ListOAuthClients()
+	clients := ListClients()
 	if len(clients) != 1 {
 		t.Error("Exactly one client expected in list")
 	}
 }
 
-func TestGetOAuthClient(t *testing.T) {
+func TestGetClient(t *testing.T) {
 	defer failOnPanic(t)
 	initTestDb(t)
 
-	client, ok := GetOAuthClient(uuidClientGin)
+	client, ok := GetClient(uuidClientGin)
 	if !ok {
 		t.Error("Client does not exist")
 	}
@@ -31,17 +31,17 @@ func TestGetOAuthClient(t *testing.T) {
 		t.Error("Client name was expected to be 'gin'")
 	}
 
-	_, ok = GetOAuthClient("doesNotExist")
+	_, ok = GetClient("doesNotExist")
 	if ok {
 		t.Error("Client should not exist")
 	}
 }
 
-func TestGetOAuthClientByName(t *testing.T) {
+func TestGetClientByName(t *testing.T) {
 	defer failOnPanic(t)
 	initTestDb(t)
 
-	client, ok := GetOAuthClientByName("gin")
+	client, ok := GetClientByName("gin")
 	if !ok {
 		t.Error("Client does not exist")
 	}
@@ -49,17 +49,17 @@ func TestGetOAuthClientByName(t *testing.T) {
 		t.Errorf("Client UUID was expected to be '%s'", uuidClientGin)
 	}
 
-	_, ok = GetOAuthClientByName("doesNotExist")
+	_, ok = GetClientByName("doesNotExist")
 	if ok {
 		t.Error("Client should not exist")
 	}
 }
 
-func TestCreateOAuthClient(t *testing.T) {
+func TestCreateClient(t *testing.T) {
 	initTestDb(t)
 
 	id := uuid.NewRandom().String()
-	new := OAuthClient{
+	new := Client{
 		UUID:          id,
 		Name:          "gin-foo",
 		Secret:        "secret",
@@ -71,7 +71,7 @@ func TestCreateOAuthClient(t *testing.T) {
 		t.Error(err)
 	}
 
-	check, ok := GetOAuthClient(id)
+	check, ok := GetClient(id)
 	if !ok {
 		t.Error("Client does not exist")
 	}
@@ -89,10 +89,10 @@ func TestCreateOAuthClient(t *testing.T) {
 	}
 }
 
-func TestDeleteOAuthClient(t *testing.T) {
+func TestDeleteClient(t *testing.T) {
 	initTestDb(t)
 
-	client, ok := GetOAuthClient(uuidClientGin)
+	client, ok := GetClient(uuidClientGin)
 	if !ok {
 		t.Error("Client does not exist")
 	}
@@ -102,7 +102,7 @@ func TestDeleteOAuthClient(t *testing.T) {
 		t.Error(err)
 	}
 
-	_, ok = GetOAuthClient(uuidClientGin)
+	_, ok = GetClient(uuidClientGin)
 	if ok {
 		t.Error("Client should not exist")
 	}

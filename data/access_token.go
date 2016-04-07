@@ -12,13 +12,13 @@ const (
 
 // AccessToken represents an OAuth access token
 type AccessToken struct {
-	Token           string // This is just a random string not the JWT token
-	Scope           SqlStringSlice
-	Expires         time.Time
-	OAuthClientUUID string
-	AccountUUID     string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	Token       string // This is just a random string not the JWT token
+	Scope       SqlStringSlice
+	Expires     time.Time
+	ClientUUID  string
+	AccountUUID string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 // ListAccessTokens returns all access tokens sorted by creation time.
@@ -68,7 +68,7 @@ func ClearOldAccessTokens() int64 {
 // Create stores a new access token in the database.
 // If the token is empty a random token will be generated.
 func (tok *AccessToken) Create() error {
-	const q = `INSERT INTO AccessTokens (token, scope, expires, oAuthClientUUID, accountUUID, createdAt, updatedAt)
+	const q = `INSERT INTO AccessTokens (token, scope, expires, clientUUID, accountUUID, createdAt, updatedAt)
 	           VALUES ($1, $2, $3, $4, $5, now(), now())
 	           RETURNING *`
 
@@ -76,7 +76,7 @@ func (tok *AccessToken) Create() error {
 		tok.Token = util.RandomToken()
 	}
 
-	return database.Get(tok, q, tok.Token, tok.Scope, tok.Expires, tok.OAuthClientUUID, tok.AccountUUID)
+	return database.Get(tok, q, tok.Token, tok.Scope, tok.Expires, tok.ClientUUID, tok.AccountUUID)
 }
 
 // UpdateExpirationTime updates the expiration time and stores
