@@ -1,0 +1,12 @@
+package web
+
+import "github.com/gorilla/mux"
+
+// RegisterRoutes add all registered routes for this app to the
+// main router. This should make it easier to get a quick overview
+// over all routes.
+func RegisterRoutes(r *mux.Router) {
+	// all for /oauth
+	oauth := r.PathPrefix("/oauth").Subrouter()
+	oauth.HandleFunc("/authorize", Authorize).Methods("GET")
+}
