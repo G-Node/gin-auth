@@ -48,13 +48,13 @@ func TestCreateSSHKey(t *testing.T) {
 	initTestDb(t)
 
 	fingerprint := "SHA256:A3tkBXFQWkjU6rzhkofY55G7tPR/Lmna4B+WEGVFXOQ"
-	new := &SSHKey{
+	fresh := &SSHKey{
 		Fingerprint: fingerprint,
 		Key:         "fake key",
 		Description: "Alice 2nd key",
 		AccountUUID: uuidAlice}
 
-	err := new.Create()
+	err := fresh.Create()
 	if err != nil {
 		t.Error(err)
 	}

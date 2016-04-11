@@ -51,7 +51,7 @@ func TestCreateGrantRequest(t *testing.T) {
 	token := util.RandomToken()
 	state := util.RandomToken()
 	code := util.RandomToken()
-	new := GrantRequest{
+	fresh := GrantRequest{
 		Token:          token,
 		GrantType:      "code",
 		State:          state,
@@ -61,7 +61,7 @@ func TestCreateGrantRequest(t *testing.T) {
 		ClientUUID:     uuidClientGin,
 		AccountUUID:    uuidAlice}
 
-	err := new.Create()
+	err := fresh.Create()
 	if err != nil {
 		t.Error(err)
 	}

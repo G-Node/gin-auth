@@ -81,14 +81,14 @@ func TestAccountPassword(t *testing.T) {
 func TestCreateAccount(t *testing.T) {
 	initTestDb(t)
 
-	new := &Account{Login: "theo", Email: "theo@foo.com", FirstName: "Theo", LastName: "Test"}
-	new.SetPassword("testtest")
-	err := new.Create()
+	fresh := &Account{Login: "theo", Email: "theo@foo.com", FirstName: "Theo", LastName: "Test"}
+	fresh.SetPassword("testtest")
+	err := fresh.Create()
 	if err != nil {
 		t.Error(err)
 	}
 
-	check, ok := GetAccount(new.UUID)
+	check, ok := GetAccount(fresh.UUID)
 	if !ok {
 		t.Error("Account does not exist")
 	}

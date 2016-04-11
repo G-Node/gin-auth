@@ -66,12 +66,12 @@ func TestCreateSession(t *testing.T) {
 	initTestDb(t)
 
 	token := util.RandomToken()
-	new := Session{
+	fresh := Session{
 		Token:       token,
 		Expires:     time.Now().Add(time.Hour * 12),
 		AccountUUID: uuidAlice}
 
-	err := new.Create()
+	err := fresh.Create()
 	if err != nil {
 		t.Error(err)
 	}

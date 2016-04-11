@@ -67,14 +67,14 @@ func TestCreateClient(t *testing.T) {
 	initTestDb(t)
 
 	id := uuid.NewRandom().String()
-	new := Client{
+	fresh := Client{
 		UUID:          id,
 		Name:          "gin-foo",
 		Secret:        "secret",
 		ScopeProvided: SqlStringSlice{"foo-read", "foo-write"},
 		RedirectURIs:  SqlStringSlice{"https://foo.com/redirect"}}
 
-	err := new.Create()
+	err := fresh.Create()
 	if err != nil {
 		t.Error(err)
 	}

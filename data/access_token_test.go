@@ -66,14 +66,14 @@ func TestCreateAccessToken(t *testing.T) {
 	initTestDb(t)
 
 	token := util.RandomToken()
-	new := AccessToken{
+	fresh := AccessToken{
 		Token:       token,
 		Scope:       SqlStringSlice{"foo-read", "foo-write"},
 		Expires:     time.Now().Add(time.Hour * 12),
 		ClientUUID:  uuidClientGin,
 		AccountUUID: uuidAlice}
 
-	err := new.Create()
+	err := fresh.Create()
 	if err != nil {
 		t.Error(err)
 	}

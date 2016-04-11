@@ -49,13 +49,13 @@ func TestClientApprovalCreate(t *testing.T) {
 	initTestDb(t)
 
 	uuid := uuid.NewRandom().String()
-	new := ClientApproval{
+	fresh := ClientApproval{
 		UUID:        uuid,
 		Scope:       SqlStringSlice{"foo-read", "foo-write"},
 		ClientUUID:  uuidClientGin,
 		AccountUUID: uuidBob}
 
-	err := new.Create()
+	err := fresh.Create()
 	if err != nil {
 		t.Error(err)
 	}
