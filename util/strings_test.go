@@ -25,3 +25,14 @@ func TestToSnakeCase(t *testing.T) {
 		t.Error("String expected to be 'i_hate_camels'")
 	}
 }
+
+func TestStringInSlice(t *testing.T) {
+	slice := []string{"foo", "bar", "bla"}
+
+	if !(StringInSlice(slice, "foo") && StringInSlice(slice, "bar") && StringInSlice(slice, "bla")) {
+		t.Error("String not found")
+	}
+	if StringInSlice(slice, "nothing") {
+		t.Error("String was not expected to be found")
+	}
+}
