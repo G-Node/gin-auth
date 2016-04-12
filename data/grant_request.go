@@ -1,3 +1,11 @@
+// Copyright (c) 2016, German Neuroinformatics Node (G-Node),
+//                     Adrian Stoewer <adrian.stoewer@rz.ifi.lmu.de>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted under the terms of the BSD License. See
+// LICENSE file in the root of the Project.
+
 package data
 
 import (
@@ -8,17 +16,17 @@ import (
 
 // GrantRequest contains data about an ongoing authorization grant request.
 type GrantRequest struct {
-	Token           string
-	GrantType       string
-	State           string
-	Code            string
-	ScopeRequested  SqlStringSlice
-	ScopeApproved   SqlStringSlice
-	RedirectURI     string
-	OAuthClientUUID string
-	AccountUUID     string
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	Token          string
+	GrantType      string
+	State          string
+	Code           string
+	ScopeRequested SqlStringSlice
+	ScopeApproved  SqlStringSlice
+	RedirectURI    string
+	ClientUUID     string
+	AccountUUID    string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 // ListGrantRequests returns all current grant requests ordered by creation time.
@@ -50,23 +58,27 @@ func GetGrantRequest(token string) (*GrantRequest, bool) {
 
 // ClearOldGrantRequests removes requests older than 15 minutes
 // and returns the number of removed requests.
-func ClearOldGrantRequests() (int64, error) {
+func ClearOldGrantRequests() int64 {
 	const q = `DELETE FROM GrantRequests WHERE createdAt < $1`
 
 	minutesAgo15 := time.Now().Add(-time.Minute * 15)
 
 	res, err := database.Exec(q, minutesAgo15)
 	if err != nil {
-		return 0, err
+		panic(err)
+	}
+	rows, err := res.RowsAffected()
+	if err != nil {
+		panic(err)
 	}
 
-	return res.RowsAffected()
+	return rows
 }
 
 // Create stores a new grant request.
 func (req *GrantRequest) Create() error {
 	const q = `INSERT INTO GrantRequests (token, grantType, state, code, scopeRequested, scopeApproved, redirectUri,
-	                                      oAuthClientUUID, accountUUID, createdAt, updatedAt)
+	                                      clientUUID, accountUUID, createdAt, updatedAt)
 	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now())
 	           RETURNING *`
 
@@ -75,19 +87,19 @@ func (req *GrantRequest) Create() error {
 	}
 
 	return database.Get(req, q, req.Token, req.GrantType, req.State, req.Code, req.ScopeRequested, req.ScopeApproved,
-		req.RedirectURI, req.OAuthClientUUID, req.AccountUUID)
+		req.RedirectURI, req.ClientUUID, req.AccountUUID)
 }
 
 // Update an existing grant request.
 func (req *GrantRequest) Update() error {
 	const q = `UPDATE GrantRequests gr
-	           SET (grantType, state, code, scopeRequested, scopeApproved, redirectUri, oAuthClientUUID, accountUUID, updatedAt) =
+	           SET (grantType, state, code, scopeRequested, scopeApproved, redirectUri, clientUUID, accountUUID, updatedAt) =
 	               ($1, $2, $3, $4, $5, $6, $7, $8, now())
 	           WHERE token=$9
 	           RETURNING *`
 
 	return database.Get(req, q, req.GrantType, req.State, req.Code, req.ScopeRequested, req.ScopeApproved, req.RedirectURI,
-		req.OAuthClientUUID, req.AccountUUID, req.Token)
+		req.ClientUUID, req.AccountUUID, req.Token)
 }
 
 // Delete removes an existing request from the database.

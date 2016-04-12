@@ -15,6 +15,7 @@ import (
 
 const (
 	uuidAlice = "bf431618-f696-4dca-a95d-882618ce4ef9"
+	uuidBob   = "51f5ac36-d332-4889-8023-6e033fcd8e17"
 )
 
 func TestListAccounts(t *testing.T) {
@@ -49,12 +50,12 @@ func TestGetAccountByLogin(t *testing.T) {
 	defer failOnPanic(t)
 	initTestDb(t)
 
-	acc, ok := GetAccountByLogin("alice")
+	acc, ok := GetAccountByLogin("bob")
 	if !ok {
 		t.Error("Account does not exist")
 	}
-	if acc.UUID != uuidAlice {
-		t.Error("UUID was expected to be '%s'", uuidAlice)
+	if acc.UUID != uuidBob {
+		t.Errorf("UUID was expected to be '%s'", uuidBob)
 	}
 
 	_, ok = GetAccount("doesNotExist")
@@ -80,14 +81,14 @@ func TestAccountPassword(t *testing.T) {
 func TestCreateAccount(t *testing.T) {
 	initTestDb(t)
 
-	new := &Account{Login: "theo", Email: "theo@foo.com", FirstName: "Theo", LastName: "Test"}
-	new.SetPassword("testtest")
-	err := new.Create()
+	fresh := &Account{Login: "theo", Email: "theo@foo.com", FirstName: "Theo", LastName: "Test"}
+	fresh.SetPassword("testtest")
+	err := fresh.Create()
 	if err != nil {
 		t.Error(err)
 	}
 
-	check, ok := GetAccount(new.UUID)
+	check, ok := GetAccount(fresh.UUID)
 	if !ok {
 		t.Error("Account does not exist")
 	}

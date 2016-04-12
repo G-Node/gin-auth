@@ -1,3 +1,11 @@
+// Copyright (c) 2016, German Neuroinformatics Node (G-Node),
+//                     Adrian Stoewer <adrian.stoewer@rz.ifi.lmu.de>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted under the terms of the BSD License. See
+// LICENSE file in the root of the Project.
+
 package data
 
 import (
@@ -43,17 +51,17 @@ func TestCreateGrantRequest(t *testing.T) {
 	token := util.RandomToken()
 	state := util.RandomToken()
 	code := util.RandomToken()
-	new := GrantRequest{
-		Token:           token,
-		GrantType:       "code",
-		State:           state,
-		Code:            code,
-		ScopeRequested:  SqlStringSlice{"foo-read", "foo-write", "foo-admin"},
-		ScopeApproved:   SqlStringSlice{"foo-read"},
-		OAuthClientUUID: uuidClientGin,
-		AccountUUID:     uuidAlice}
+	fresh := GrantRequest{
+		Token:          token,
+		GrantType:      "code",
+		State:          state,
+		Code:           code,
+		ScopeRequested: SqlStringSlice{"foo-read", "foo-write", "foo-admin"},
+		ScopeApproved:  SqlStringSlice{"foo-read"},
+		ClientUUID:     uuidClientGin,
+		AccountUUID:    uuidAlice}
 
-	err := new.Create()
+	err := fresh.Create()
 	if err != nil {
 		t.Error(err)
 	}
@@ -122,6 +130,6 @@ func TestDeleteGrantRequest(t *testing.T) {
 
 	_, ok = GetGrantRequest(uuidClientGin)
 	if ok {
-		t.Error("Grant request shoul not exist")
+		t.Error("Grant request should not exist")
 	}
 }

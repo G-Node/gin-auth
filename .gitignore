@@ -27,5 +27,8 @@ _testmain.go
 *.iml
 .idea
 
+# My playground
+playground.go
+
 # Temp
 *~

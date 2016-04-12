@@ -8,14 +8,16 @@
 
 package data
 
+// TODO rename to client!!!
+
 import (
 	"database/sql"
 	"github.com/pborman/uuid"
 	"time"
 )
 
-// OAuthClient object stored in the database
-type OAuthClient struct {
+// Client object stored in the database
+type Client struct {
 	UUID          string
 	Name          string
 	Secret        string
@@ -25,11 +27,11 @@ type OAuthClient struct {
 	UpdatedAt     time.Time
 }
 
-// ListOAuthClients returns all registered OAuth clients ordered by name
-func ListOAuthClients() []OAuthClient {
-	const q = `SELECT * FROM OAuthClients ORDER BY name`
+// ListClients returns all registered OAuth clients ordered by name
+func ListClients() []Client {
+	const q = `SELECT * FROM Clients ORDER BY name`
 
-	clients := make([]OAuthClient, 0)
+	clients := make([]Client, 0)
 	err := database.Select(&clients, q)
 	if err != nil {
 		panic(err)
@@ -38,12 +40,12 @@ func ListOAuthClients() []OAuthClient {
 	return clients
 }
 
-// GetOAuthClient returns an OAuth client with a given uuid.
+// GetClient returns an OAuth client with a given uuid.
 // Returns false if no client with a matching uuid can be found.
-func GetOAuthClient(uuid string) (*OAuthClient, bool) {
-	const q = `SELECT * FROM OAuthClients c WHERE c.uuid=$1`
+func GetClient(uuid string) (*Client, bool) {
+	const q = `SELECT * FROM Clients c WHERE c.uuid=$1`
 
-	client := &OAuthClient{}
+	client := &Client{}
 	err := database.Get(client, q, uuid)
 	if err != nil && err != sql.ErrNoRows {
 		panic(err)
@@ -52,12 +54,12 @@ func GetOAuthClient(uuid string) (*OAuthClient, bool) {
 	return client, err == nil
 }
 
-// GetOAuthClientByName returns an OAuth client with a given client name.
+// GetClientByName returns an OAuth client with a given client name.
 // Returns false if no client with a matching name can be found.
-func GetOAuthClientByName(name string) (*OAuthClient, bool) {
-	const q = `SELECT * FROM OAuthClients c WHERE c.name=$1`
+func GetClientByName(name string) (*Client, bool) {
+	const q = `SELECT * FROM Clients c WHERE c.name=$1`
 
-	client := &OAuthClient{}
+	client := &Client{}
 	err := database.Get(client, q, name)
 	if err != nil && err != sql.ErrNoRows {
 		panic(err)
@@ -67,8 +69,8 @@ func GetOAuthClientByName(name string) (*OAuthClient, bool) {
 }
 
 // Create stores a new client in the database.
-func (client *OAuthClient) Create() error {
-	const q = `INSERT INTO OAuthClients (uuid, name, secret, scopeProvided, redirectURIs, createdAt, updatedAt)
+func (client *Client) Create() error {
+	const q = `INSERT INTO Clients (uuid, name, secret, scopeProvided, redirectURIs, createdAt, updatedAt)
 	           VALUES ($1, $2, $3, $4, $5, now(), now())
 	           RETURNING *`
 
@@ -80,8 +82,8 @@ func (client *OAuthClient) Create() error {
 }
 
 // Delete removes an existing client from the database
-func (client *OAuthClient) Delete() error {
-	const q = `DELETE FROM OAuthClients c WHERE c.uuid=$1`
+func (client *Client) Delete() error {
+	const q = `DELETE FROM Clients c WHERE c.uuid=$1`
 
 	_, err := database.Exec(q, client.UUID)
 	return err
