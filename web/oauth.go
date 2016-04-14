@@ -53,5 +53,5 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 		panic("Unable to save grant request")
 	}
 
-	http.Redirect(w, r, "/oauth/login?request_id="+grantRequest.Token, 302)
+	http.Redirect(w, r, "/oauth/login?request_id="+grantRequest.Token, http.StatusFound)
 }

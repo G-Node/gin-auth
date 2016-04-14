@@ -33,5 +33,8 @@ func main() {
 		Addr:    ":8080",
 		Handler: handler,
 	}
-	server.ListenAndServe()
+	err = server.ListenAndServe()
+	if err != nil {
+		panic(err)
+	}
 }
