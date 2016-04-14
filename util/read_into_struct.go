@@ -25,9 +25,22 @@ func (err *ValidationError) Error() string {
 func ReadQueryIntoStruct(request *http.Request, dest interface{}, ignoreMissing bool) error {
 	query := request.URL.Query()
 	if query == nil {
-		return errors.New("Request has now query parameters")
+		return errors.New("Request has no query parameters")
 	}
 	return ReadMapIntoStruct(query, dest, ignoreMissing)
+}
+
+// ReadFormIntoStruct call ParseForm on the request and reads all form data into a struct with
+// matching fields.
+//
+// See ReadMapIntoStruct for more information.
+func ReadFormIntoStruct(request *http.Request, dest interface{}, ignoreMissing bool) error {
+	request.ParseForm()
+	form := request.PostForm
+	if form == nil {
+		return errors.New("Request has no form data")
+	}
+	return ReadMapIntoStruct(form, dest, ignoreMissing)
 }
 
 // ReadMapIntoStruct reads values from a map of string slices into a struct with matching fields
