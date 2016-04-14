@@ -9,4 +9,6 @@ func RegisterRoutes(r *mux.Router) {
 	// all for /oauth
 	oauth := r.PathPrefix("/oauth").Subrouter()
 	oauth.HandleFunc("/authorize", Authorize).Methods("GET")
+	oauth.HandleFunc("/login_page", LoginPage).Methods("GET")
+	oauth.HandleFunc("/login", Login).Methods("POST")
 }
