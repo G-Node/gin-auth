@@ -109,3 +109,17 @@ func (req *GrantRequest) Delete() error {
 	_, err := database.Exec(q, req.Token)
 	return err
 }
+
+func (req *GrantRequest) GetClientApproval() (*ClientApproval, bool) {
+	const q = `SELECT * FROM ClientApprovals
+	           WHERE clientUUID=$1 AND accountUUID=$2`
+
+	approval := &ClientApproval{}
+	err := database.Get(approval, q, req.ClientUUID, req.AccountUUID)
+
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+
+	return approval, err == nil
+}

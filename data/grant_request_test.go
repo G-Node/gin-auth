@@ -16,6 +16,7 @@ import (
 
 const (
 	grantReqTokenAlice = "U7JIKKYI"
+	grantReqTokenBob   = "B4LIMIMB"
 )
 
 func TestListGrantRequests(t *testing.T) {
@@ -132,5 +133,33 @@ func TestDeleteGrantRequest(t *testing.T) {
 	_, ok = GetGrantRequest(uuidClientGin)
 	if ok {
 		t.Error("Grant request should not exist")
+	}
+}
+
+func TestGrantRequestGetApproval(t *testing.T) {
+	initTestDb(t)
+
+	req, ok := GetGrantRequest(grantReqTokenAlice)
+	if !ok {
+		t.Error("Grant request does not exist")
+	}
+	cli, ok := req.GetClientApproval()
+	if !ok {
+		t.Error("Approval does not exist")
+	}
+	if cli.ClientUUID != req.ClientUUID {
+		t.Errorf("Client UUID should be '%s' but was '%s'", req.ClientUUID, cli.ClientUUID)
+	}
+	if cli.AccountUUID != uuidAlice {
+		t.Errorf("Account UUID should be '%s' but was '%s'", uuidAlice, cli.AccountUUID)
+	}
+
+	req, ok = GetGrantRequest(grantReqTokenBob)
+	if !ok {
+		t.Error("Grant request does not exist")
+	}
+	cli, ok = req.GetClientApproval()
+	if ok {
+		t.Error("Approval should not exist")
 	}
 }
