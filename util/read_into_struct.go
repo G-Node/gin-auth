@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 // ValidationError provides information about each field of a struct that failed.
@@ -20,12 +21,18 @@ func (err *ValidationError) Error() string {
 }
 
 // ReadQueryIntoStruct reads request query parameters into a struct with matching fields.
+// Single query values are interpreted as coma separated list of values.
 //
 // See ReadMapIntoStruct for more information.
 func ReadQueryIntoStruct(request *http.Request, dest interface{}, ignoreMissing bool) error {
 	query := request.URL.Query()
 	if query == nil {
 		return errors.New("Request has no query parameters")
+	}
+	for k, v := range query {
+		if len(v) == 1 {
+			query[k] = strings.Split(v[0], ",")
+		}
 	}
 	return ReadMapIntoStruct(query, dest, ignoreMissing)
 }
