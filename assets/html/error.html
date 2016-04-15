@@ -1,0 +1,10 @@
+{{ define "content" }}
+    <h1>{{ .HeadLine }} <small>({{ .Code }})</small></h1>
+    <hr /><br>
+    <p>{{ .Message }}</p>
+    <ul>
+        {{ range .Reasons }}
+        <li>{{ . }}</li>
+        {{ end }}
+    </ul>
+{{ end }}
