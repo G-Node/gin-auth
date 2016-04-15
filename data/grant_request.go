@@ -110,6 +110,7 @@ func (req *GrantRequest) Delete() error {
 	return err
 }
 
+// GetClientApproval gets a matching client approval from the database
 func (req *GrantRequest) GetClientApproval() (*ClientApproval, bool) {
 	const q = `SELECT * FROM ClientApprovals
 	           WHERE clientUUID=$1 AND accountUUID=$2`
@@ -122,4 +123,41 @@ func (req *GrantRequest) GetClientApproval() (*ClientApproval, bool) {
 	}
 
 	return approval, err == nil
+}
+
+// ApproveScopes checks for a matching client approval, approves the requested
+// scope and saves the result.
+func (req *GrantRequest) ApproveScopes() bool {
+	approval, ok := req.GetClientApproval()
+	if !ok {
+		return false
+	}
+
+	var approved bool
+	for _, s := range req.ScopeRequested {
+		approved = util.StringInSlice(approval.Scope, s)
+		if !approved {
+			break
+		}
+	}
+	if !approved {
+		return false
+	}
+
+	req.ScopeApproved = req.ScopeRequested
+	err := req.Update()
+	return err == nil
+}
+
+// IsApproved just looks up whether the requested scope is in
+// the approved scope.
+func (req *GrantRequest) IsApproved() bool {
+	var approved bool
+	for _, s := range req.ScopeRequested {
+		approved = util.StringInSlice(req.ScopeApproved, s)
+		if !approved {
+			break
+		}
+	}
+	return approved
 }
