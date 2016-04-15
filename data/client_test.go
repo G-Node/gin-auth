@@ -63,6 +63,31 @@ func TestGetClientByName(t *testing.T) {
 	}
 }
 
+func TestExistsScope(t *testing.T) {
+	defer failOnPanic(t)
+	initTestDb(t)
+
+	exists := ExistsScope(SqlStringSlice{"repo-read", "repo-write"})
+	if !exists {
+		t.Error("Scope does not exist")
+	}
+
+	exists = ExistsScope(SqlStringSlice{"repo-read", "something-wrong"})
+	if exists {
+		t.Error("Scope should not exist")
+	}
+
+	exists = ExistsScope(SqlStringSlice{"something-wrong"})
+	if exists {
+		t.Error("Scope should not exist")
+	}
+
+	exists = ExistsScope(SqlStringSlice{})
+	if exists {
+		t.Error("Scope should not exist")
+	}
+}
+
 func TestCreateClient(t *testing.T) {
 	initTestDb(t)
 

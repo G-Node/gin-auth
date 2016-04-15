@@ -8,10 +8,9 @@
 
 package data
 
-// TODO rename to client!!!
-
 import (
 	"database/sql"
+	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
 	"time"
 )
@@ -66,6 +65,36 @@ func GetClientByName(name string) (*Client, bool) {
 	}
 
 	return client, err == nil
+}
+
+// ExistsScope checks whether a certain scope exists by searching
+// through all provided scopes from registered clients.
+func ExistsScope(scope SqlStringSlice) bool {
+	const q = `SELECT scopeProvided FROM Clients
+	           WHERE scopeProvided && $1`
+
+	if len(scope) == 0 {
+		return false
+	}
+
+	all := make([]SqlStringSlice, 0)
+	database.Select(&all, q, scope)
+
+	if len(all) == 0 {
+		return false
+	}
+	flat := all[0]
+	for i := 1; i < len(all); i++ {
+		flat = append(flat, all[i]...)
+	}
+
+	for _, s := range scope {
+		if !util.StringInSlice(flat, s) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Create stores a new client in the database.
