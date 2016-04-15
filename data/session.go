@@ -79,6 +79,7 @@ func (sess *Session) Create() error {
 	           VALUES ($1, $2, $3, now(), now())
 	           RETURNING *`
 
+	sess.Expires = time.Now().Add(defaultSessionLifeTime)
 	if sess.Token == "" {
 		sess.Token = util.RandomToken()
 	}
