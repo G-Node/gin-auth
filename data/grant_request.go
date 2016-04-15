@@ -24,7 +24,7 @@ type GrantRequest struct {
 	ScopeApproved  SqlStringSlice
 	RedirectURI    string
 	ClientUUID     string
-	AccountUUID    string
+	AccountUUID    sql.NullString
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }

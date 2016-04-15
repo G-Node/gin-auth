@@ -20,6 +20,8 @@ install:
  - go get gopkg.in/yaml.v2
  - go get github.com/pborman/uuid
  - go get golang.org/x/crypto/bcrypt
+ - go get github.com/gorilla/mux
+ - go get github.com/gorilla/handlers
 
 before_script:
  - psql -c "CREATE ROLE test WITH LOGIN PASSWORD 'test';" -U postgres

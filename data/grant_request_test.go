@@ -9,6 +9,7 @@
 package data
 
 import (
+	"database/sql"
 	"github.com/G-Node/gin-auth/util"
 	"testing"
 )
@@ -59,7 +60,7 @@ func TestCreateGrantRequest(t *testing.T) {
 		ScopeRequested: SqlStringSlice{"foo-read", "foo-write", "foo-admin"},
 		ScopeApproved:  SqlStringSlice{"foo-read"},
 		ClientUUID:     uuidClientGin,
-		AccountUUID:    uuidAlice}
+		AccountUUID:    sql.NullString{String: uuidAlice, Valid: true}}
 
 	err := fresh.Create()
 	if err != nil {
