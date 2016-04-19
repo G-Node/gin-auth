@@ -1,15 +1,12 @@
 package web
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"strings"
 	"testing"
 
-	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
 	"encoding/json"
@@ -23,8 +20,7 @@ func InitTestHttpHandler(t *testing.T) http.Handler {
 	router := mux.NewRouter()
 	router.NotFoundHandler = &NotFoundHandler{}
 	RegisterRoutes(router)
-	handler := handlers.LoggingHandler(os.Stdout, router)
-	return handler
+	return router
 }
 
 func newAuthQuery() url.Values {
@@ -57,7 +53,6 @@ func TestAuthorize(t *testing.T) {
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusBadRequest {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
-		fmt.Println(response.Body)
 	}
 
 	// wrong response type
@@ -69,7 +64,6 @@ func TestAuthorize(t *testing.T) {
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusBadRequest {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
-		fmt.Println(response.Body)
 	}
 
 	// wrong client id
@@ -81,7 +75,6 @@ func TestAuthorize(t *testing.T) {
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusBadRequest {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
-		fmt.Println(response.Body)
 	}
 
 	// wrong redirect
@@ -93,7 +86,6 @@ func TestAuthorize(t *testing.T) {
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusBadRequest {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
-		fmt.Println(response.Body)
 	}
 
 	// all OK
@@ -220,8 +212,6 @@ func TestApprove(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
 	}
 	redirect, err := url.Parse(response.Header().Get("Location"))
-	fmt.Println(redirect)
-	fmt.Println(redirect.Query())
 	if err != nil {
 		t.Error(err)
 	}
