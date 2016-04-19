@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/G-Node/gin-auth/util"
 	"html/template"
@@ -41,55 +42,77 @@ var codes = map[int]string{
 	500: "Internal Server Error",
 }
 
-// Error404 handles not found errors
-type Error404 struct {
-}
+// NotFoundHandler deals with not found errors
+type NotFoundHandler struct{}
 
-// ServeHTTP implements HandleFunc for Error404
-func (err *Error404) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(404)
-	fmt.Fprintf(w, "<h1>Does not exist</h1><p>%s</p>", r.URL)
+// ServeHTTP implements HandleFunc for NotFoundHandler
+func (err *NotFoundHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	PrintErrorHTML(w, r, "The requested site does not exist.", http.StatusNotFound)
 }
 
 type errorData struct {
-	Code     int
-	HeadLine string
-	Message  string
-	Reasons  []string
-	Referrer string
+	Code    int               `json:"code"`
+	Error   string            `json:"error"`
+	Message string            `json:"message"`
+	Reasons map[string]string `json:"reasons"`
 }
 
-func PrintErrorHTML(w http.ResponseWriter, r *http.Request, err interface{}, code int) {
+func (dat *errorData) FillFrom(err interface{}, code int) {
+	dat.Code = code
 	head, ok := codes[code]
-	if !ok {
-		head = "Unknown Error"
-	}
-
-	data := &errorData{
-		Code:     code,
-		HeadLine: head,
-		Referrer: r.Referer(),
-		Reasons:  make([]string, 0),
+	if ok {
+		dat.Error = head
+	} else {
+		if code > 500 {
+			dat.Error = "Internal Server Error"
+		} else {
+			dat.Error = "Unknown Error"
+		}
 	}
 
 	switch err := err.(type) {
 	case *util.ValidationError:
-		data.Message = err.Message
-		for field, msg := range err.FieldErrors {
-			data.Reasons = append(data.Reasons, fmt.Sprintf("%s: %s", field, msg))
-		}
+		dat.Message = err.Message
+		dat.Reasons = err.FieldErrors
 	case error:
-		data.Message = err.Error()
+		dat.Message = err.Error()
 	case fmt.Stringer:
-		data.Message = err.String()
+		dat.Message = err.String()
 	case string:
-		data.Message = err
+		dat.Message = err
 	}
+}
+
+type htmlErrorData struct {
+	errorData
+	Referrer string
+}
+
+// PrintErrorHTML shows an html error page.
+func PrintErrorHTML(w http.ResponseWriter, r *http.Request, err interface{}, code int) {
+	errData := &htmlErrorData{Referrer: r.Referer()}
+	errData.FillFrom(err, code)
 
 	tmpl, err := template.ParseFiles("assets/html/layout.html", "assets/html/error.html")
 
-	w.WriteHeader(code)
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "text/html")
-	tmpl.ExecuteTemplate(w, "layout", data)
+	w.WriteHeader(code)
+	tmpl.ExecuteTemplate(w, "layout", errData)
+}
+
+// PrintErrorJSON writes an JSON error response.
+func PrintErrorJSON(w http.ResponseWriter, r *http.Request, err interface{}, code int) {
+	errData := &errorData{}
+	errData.FillFrom(err, code)
+	for k, v := range errData.Reasons {
+		delete(errData.Reasons, k)
+		errData.Reasons[util.ToSnakeCase(k)] = v
+	}
+
+	w.Header().Add("Cache-Control", "no-cache")
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(code)
+	enc := json.NewEncoder(w)
+	enc.Encode(errData)
 }
