@@ -18,8 +18,8 @@ const (
 )
 
 func TestListRefreshTokens(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	refreshTokens := ListRefreshTokens()
 	if len(refreshTokens) != 2 {
@@ -28,8 +28,8 @@ func TestListRefreshTokens(t *testing.T) {
 }
 
 func TestGetRefreshToken(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	tok, ok := GetRefreshToken(refreshTokenAlice)
 	if !ok {
@@ -46,7 +46,7 @@ func TestGetRefreshToken(t *testing.T) {
 }
 
 func TestCreateRefreshToken(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	token := util.RandomToken()
 	fresh := RefreshToken{
@@ -73,7 +73,7 @@ func TestCreateRefreshToken(t *testing.T) {
 }
 
 func TestRefreshTokenDelete(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	tok, ok := GetRefreshToken(refreshTokenAlice)
 	if !ok {

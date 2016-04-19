@@ -6,34 +6,16 @@
 // modification, are permitted under the terms of the BSD License. See
 // LICENSE file in the root of the Project.
 
-package data
+package util
 
 import (
-	"io/ioutil"
 	"testing"
 )
 
-func failOnPanic(t *testing.T) {
+// FailOnPanic can be used in tests in order to recover from
+// a panic and make a test fail.
+func FailOnPanic(t *testing.T) {
 	if r := recover(); r != nil {
 		t.Fatal(r)
 	}
-}
-
-func initTestDb(t *testing.T) {
-	conf, err := LoadDbConf("../conf/dbconf.yml")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	err = InitDb(conf)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	fixtures, err := ioutil.ReadFile("../conf/fixtures/testdb.sql")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	database.MustExec(string(fixtures))
 }

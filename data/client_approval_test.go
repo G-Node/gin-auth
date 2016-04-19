@@ -9,6 +9,7 @@
 package data
 
 import (
+	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
 	"testing"
 )
@@ -18,8 +19,8 @@ const (
 )
 
 func TestListClientApprovals(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	approval := ListClientApprovals()
 	if len(approval) != 1 {
@@ -28,8 +29,8 @@ func TestListClientApprovals(t *testing.T) {
 }
 
 func TestGetClientApproval(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	app, ok := GetClientApproval(approvalUuidAlice)
 	if !ok {
@@ -46,7 +47,7 @@ func TestGetClientApproval(t *testing.T) {
 }
 
 func TestClientApprovalCreate(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	uuid := uuid.NewRandom().String()
 	fresh := ClientApproval{
@@ -73,7 +74,7 @@ func TestClientApprovalCreate(t *testing.T) {
 }
 
 func TestClientApprovalUpdate(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	newScope := SqlStringSlice{"bar-read", "bar-write"}
 
@@ -102,7 +103,7 @@ func TestClientApprovalUpdate(t *testing.T) {
 }
 
 func TestClientApprovalDelete(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	app, ok := GetClientApproval(approvalUuidAlice)
 	if !ok {

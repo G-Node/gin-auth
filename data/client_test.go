@@ -9,6 +9,7 @@
 package data
 
 import (
+	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
 	"testing"
 )
@@ -18,8 +19,8 @@ const (
 )
 
 func TestListClients(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	clients := ListClients()
 	if len(clients) != 1 {
@@ -28,8 +29,8 @@ func TestListClients(t *testing.T) {
 }
 
 func TestGetClient(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	client, ok := GetClient(uuidClientGin)
 	if !ok {
@@ -46,8 +47,8 @@ func TestGetClient(t *testing.T) {
 }
 
 func TestGetClientByName(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	client, ok := GetClientByName("gin")
 	if !ok {
@@ -64,8 +65,8 @@ func TestGetClientByName(t *testing.T) {
 }
 
 func TestExistsScope(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	exists := ExistsScope(SqlStringSlice{"repo-read", "repo-write"})
 	if !exists {
@@ -89,7 +90,7 @@ func TestExistsScope(t *testing.T) {
 }
 
 func TestCreateClient(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	id := uuid.NewRandom().String()
 	fresh := Client{
@@ -123,7 +124,7 @@ func TestCreateClient(t *testing.T) {
 }
 
 func TestDeleteClient(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	client, ok := GetClient(uuidClientGin)
 	if !ok {

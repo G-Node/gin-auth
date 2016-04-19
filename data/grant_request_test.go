@@ -21,8 +21,8 @@ const (
 )
 
 func TestListGrantRequests(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	requests := ListGrantRequests()
 	if len(requests) != 2 {
@@ -31,8 +31,8 @@ func TestListGrantRequests(t *testing.T) {
 }
 
 func TestGetGrantRequest(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	req, ok := GetGrantRequest(grantReqTokenAlice)
 	if !ok {
@@ -49,8 +49,8 @@ func TestGetGrantRequest(t *testing.T) {
 }
 
 func TestGetGrantRequestByCode(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	req, ok := GetGrantRequestByCode(grantReqCodeAlice)
 	if !ok {
@@ -67,8 +67,8 @@ func TestGetGrantRequestByCode(t *testing.T) {
 }
 
 func TestGrantRequestExchangeCodeForTokens(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	req, ok := GetGrantRequest(grantReqTokenAlice)
 	if !ok {
@@ -103,7 +103,7 @@ func TestGrantRequestExchangeCodeForTokens(t *testing.T) {
 }
 
 func TestCreateGrantRequest(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	token := util.RandomToken()
 	state := util.RandomToken()
@@ -142,7 +142,7 @@ func TestCreateGrantRequest(t *testing.T) {
 }
 
 func TestUpdateGrantRequest(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	newCode := util.RandomToken()
 	newState := util.RandomToken()
@@ -173,7 +173,7 @@ func TestUpdateGrantRequest(t *testing.T) {
 }
 
 func TestDeleteGrantRequest(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	req, ok := GetGrantRequest(grantReqTokenAlice)
 	if !ok {
@@ -192,7 +192,7 @@ func TestDeleteGrantRequest(t *testing.T) {
 }
 
 func TestGrantRequestGetApproval(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	req, ok := GetGrantRequest(grantReqTokenAlice)
 	if !ok {
@@ -220,7 +220,7 @@ func TestGrantRequestGetApproval(t *testing.T) {
 }
 
 func TestGrantRequestApproveScopes(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	token := util.RandomToken()
 	request := GrantRequest{
@@ -254,7 +254,7 @@ func TestGrantRequestApproveScopes(t *testing.T) {
 }
 
 func TestGrantRequestIsApproved(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	request := GrantRequest{
 		ScopeRequested: SqlStringSlice{"repo-read"},

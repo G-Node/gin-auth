@@ -20,8 +20,8 @@ const (
 )
 
 func TestListSessions(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	sessions := ListSessions()
 	if len(sessions) != 2 {
@@ -30,8 +30,8 @@ func TestListSessions(t *testing.T) {
 }
 
 func TestGetSession(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	sess, ok := GetSession(sessionTokenAlice)
 	if !ok {
@@ -48,8 +48,8 @@ func TestGetSession(t *testing.T) {
 }
 
 func TestClearOldSessions(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	deleted := ClearOldSessions()
 	if deleted != 1 {
@@ -63,7 +63,7 @@ func TestClearOldSessions(t *testing.T) {
 }
 
 func TestCreateSession(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	token := util.RandomToken()
 	fresh := Session{
@@ -86,7 +86,7 @@ func TestCreateSession(t *testing.T) {
 }
 
 func TestSessionUpdateExpirationTime(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	sess, ok := GetSession(sessionTokenBob)
 	if !ok {
@@ -111,7 +111,7 @@ func TestSessionUpdateExpirationTime(t *testing.T) {
 }
 
 func TestSessionDelete(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	sess, ok := GetSession(sessionTokenAlice)
 	if !ok {

@@ -9,6 +9,7 @@
 package data
 
 import (
+	"github.com/G-Node/gin-auth/util"
 	"testing"
 )
 
@@ -17,8 +18,8 @@ const (
 )
 
 func TestListSSHKeys(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	keys := ListSSHKeys()
 	if len(keys) != 2 {
@@ -27,8 +28,8 @@ func TestListSSHKeys(t *testing.T) {
 }
 
 func TestGetSSHKey(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	key, ok := GetSSHKey(keyPrintAlice)
 	if !ok {
@@ -45,7 +46,7 @@ func TestGetSSHKey(t *testing.T) {
 }
 
 func TestCreateSSHKey(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	fingerprint := "SHA256:A3tkBXFQWkjU6rzhkofY55G7tPR/Lmna4B+WEGVFXOQ"
 	fresh := &SSHKey{
@@ -69,7 +70,7 @@ func TestCreateSSHKey(t *testing.T) {
 }
 
 func TestDeleteSSHKey(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	key, ok := GetSSHKey(keyPrintAlice)
 	if !ok {

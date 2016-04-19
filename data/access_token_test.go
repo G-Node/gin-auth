@@ -20,8 +20,8 @@ const (
 )
 
 func TestListAccessTokens(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	accessTokens := ListAccessTokens()
 	if len(accessTokens) != 2 {
@@ -30,8 +30,8 @@ func TestListAccessTokens(t *testing.T) {
 }
 
 func TestGetAccessToken(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	tok, ok := GetAccessToken(accessTokenAlice)
 	if !ok {
@@ -48,8 +48,8 @@ func TestGetAccessToken(t *testing.T) {
 }
 
 func TestClearOldAccessTokens(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	deleted := ClearOldAccessTokens()
 	if deleted != 1 {
@@ -63,7 +63,7 @@ func TestClearOldAccessTokens(t *testing.T) {
 }
 
 func TestCreateAccessToken(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	token := util.RandomToken()
 	fresh := AccessToken{
@@ -91,7 +91,7 @@ func TestCreateAccessToken(t *testing.T) {
 }
 
 func TestAccessTokenUpdateExpirationTime(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	tok, ok := GetAccessToken(accessTokenBob)
 	if !ok {
@@ -116,7 +116,7 @@ func TestAccessTokenUpdateExpirationTime(t *testing.T) {
 }
 
 func TestAccessTokenDelete(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	tok, ok := GetAccessToken(accessTokenAlice)
 	if !ok {
