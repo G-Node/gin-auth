@@ -16,40 +16,6 @@ import (
 	"net/http"
 )
 
-var codes = map[int]string{
-	400: "Bad Request",
-	401: "Unauthorized",
-	402: "Payment Required",
-	403: "Forbidden",
-	404: "Not Found",
-	405: "Method Not Allowed",
-	406: "Not Acceptable",
-	407: "Proxy Authentication Required",
-	408: "Request Time-out",
-	409: "Conflict",
-	410: "Gone",
-	411: "Length Required",
-	412: "Precondition Failed",
-	413: "Request Entity Too Large",
-	414: "Request-URL Too Long",
-	415: "Unsupported Media Type",
-	416: "Requested range not satisfiable",
-	417: "Expectation Failed",
-	418: "I’m a teapot",
-	420: "Policy Not Fulfilled",
-	421: "Misdirected Request",
-	422: "Unprocessable Entity",
-	423: "Locked",
-	424: "Failed Dependency",
-	425: "Unordered Collection",
-	426: "Upgrade Required",
-	428: "Precondition Required",
-	429: "Too Many Requests",
-	431: "Request Header Fields Too Large",
-	451: "Unavailable For Legal Reasons",
-	500: "Internal Server Error",
-}
-
 // NotFoundHandler deals with not found errors
 type NotFoundHandler struct{}
 
@@ -67,17 +33,7 @@ type errorData struct {
 
 func (dat *errorData) FillFrom(err interface{}, code int) {
 	dat.Code = code
-	head, ok := codes[code]
-	if ok {
-		dat.Error = head
-	} else {
-		if code > 500 {
-			dat.Error = "Internal Server Error"
-		} else {
-			dat.Error = "Unknown Error"
-		}
-	}
-
+	dat.Error = http.StatusText(code)
 	switch err := err.(type) {
 	case *util.ValidationError:
 		dat.Message = err.Message
