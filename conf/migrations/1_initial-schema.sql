@@ -49,7 +49,8 @@ CREATE TABLE ClientApprovals (
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
   createdAt         TIMESTAMP NOT NULL ,
-  updatedAt         TIMESTAMP NOT NULL
+  updatedAt         TIMESTAMP NOT NULL ,
+  UNIQUE (clientUUID, accountUUID)
 );
 
 CREATE TABLE GrantRequests (
