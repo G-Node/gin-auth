@@ -8,7 +8,10 @@
 
 package util
 
-import "testing"
+import (
+	"sort"
+	"testing"
+)
 
 func TestToSnakeCase(t *testing.T) {
 	var str string
@@ -42,5 +45,73 @@ func TestStringInSlice(t *testing.T) {
 	}
 	if StringInSlice(slice, "nothing") {
 		t.Error("String was not expected to be found")
+	}
+}
+
+func TestStringSet(t *testing.T) {
+	set := NewStringSet("a", "b")
+	if !set.Contains("a") {
+		t.Error("Set should contain 'a'")
+	}
+	if !set.Contains("b") {
+		t.Error("Set should contain 'b'")
+	}
+	if set.Contains("c") {
+		t.Error("Set should not contain 'c'")
+	}
+	if set.Len() != 2 {
+		t.Error("Set length expected to be 2")
+	}
+
+	set = set.Add("c")
+	if !set.Contains("a") {
+		t.Error("Set should contain 'a'")
+	}
+	if !set.Contains("b") {
+		t.Error("Set should contain 'b'")
+	}
+	if !set.Contains("c") {
+		t.Error("Set should contain 'c'")
+	}
+	if set.Len() != 3 {
+		t.Error("Set length expected to be 2")
+	}
+
+	set = set.Add("a")
+	if set.Len() != 3 {
+		t.Error("Set length expected to be 2")
+	}
+}
+
+func TestStringSetIsSuperset(t *testing.T) {
+	super := NewStringSet("apple", "banana", "strawberry")
+	sub := NewStringSet("apple", "strawberry")
+	if !super.IsSuperset(sub) {
+		t.Error("Should be a superset")
+	}
+	if sub.IsSuperset(super) {
+		t.Error("Should not be a superset")
+	}
+}
+
+func TestStringSetUnion(t *testing.T) {
+	set1 := NewStringSet("apple", "banana", "strawberry")
+	set2 := NewStringSet("apple", "blueberry", "strawberry")
+	uni := set1.Union(set2)
+	for _, s := range []string{"apple", "banana", "blueberry", "strawberry"} {
+		if !uni.Contains(s) {
+			t.Errorf("Union should contain '%s'", s)
+		}
+	}
+}
+
+func TestStringSetStrings(t *testing.T) {
+	set := NewStringSet("bar", "foo", "bla")
+	sorted := sort.StringSlice(set.Strings())
+	sorted.Sort()
+	for _, s := range []string{"bar", "bla", "foo"} {
+		if sorted.Search(s) >= 3 {
+			t.Errorf("'%s' was not found", s)
+		}
 	}
 }
