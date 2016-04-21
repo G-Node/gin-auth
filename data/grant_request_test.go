@@ -113,8 +113,8 @@ func TestCreateGrantRequest(t *testing.T) {
 		GrantType:      "code",
 		State:          state,
 		Code:           sql.NullString{String: code, Valid: true},
-		ScopeRequested: SqlStringSlice{"foo-read", "foo-write", "foo-admin"},
-		ScopeApproved:  SqlStringSlice{"foo-read"},
+		ScopeRequested: util.SqlStringSlice{"foo-read", "foo-write", "foo-admin"},
+		ScopeApproved:  util.SqlStringSlice{"foo-read"},
 		ClientUUID:     uuidClientGin,
 		AccountUUID:    sql.NullString{String: uuidAlice, Valid: true}}
 
@@ -227,7 +227,7 @@ func TestGrantRequestApproveScopes(t *testing.T) {
 		Token:          token,
 		GrantType:      "code",
 		State:          util.RandomToken(),
-		ScopeRequested: SqlStringSlice{"repo-read"},
+		ScopeRequested: util.SqlStringSlice{"repo-read"},
 		ClientUUID:     uuidClientGin,
 		AccountUUID:    sql.NullString{String: uuidAlice, Valid: true}}
 
@@ -257,8 +257,8 @@ func TestGrantRequestIsApproved(t *testing.T) {
 	InitTestDb(t)
 
 	request := GrantRequest{
-		ScopeRequested: SqlStringSlice{"repo-read"},
-		ScopeApproved:  SqlStringSlice{"repo-read", "something-else"},
+		ScopeRequested: util.SqlStringSlice{"repo-read"},
+		ScopeApproved:  util.SqlStringSlice{"repo-read", "something-else"},
 	}
 	ok := request.IsApproved()
 	if !ok {
@@ -266,8 +266,8 @@ func TestGrantRequestIsApproved(t *testing.T) {
 	}
 
 	request = GrantRequest{
-		ScopeRequested: SqlStringSlice{"repo-read", "repo-write"},
-		ScopeApproved:  SqlStringSlice{"repo-read", "repo-write"},
+		ScopeRequested: util.SqlStringSlice{"repo-read", "repo-write"},
+		ScopeApproved:  util.SqlStringSlice{"repo-read", "repo-write"},
 	}
 	ok = request.IsApproved()
 	if !ok {
@@ -275,8 +275,8 @@ func TestGrantRequestIsApproved(t *testing.T) {
 	}
 
 	request = GrantRequest{
-		ScopeRequested: SqlStringSlice{"repo-read", "repo-write", "something-else"},
-		ScopeApproved:  SqlStringSlice{"repo-read", "repo-write"},
+		ScopeRequested: util.SqlStringSlice{"repo-read", "repo-write", "something-else"},
+		ScopeApproved:  util.SqlStringSlice{"repo-read", "repo-write"},
 	}
 	ok = request.IsApproved()
 	if ok {
@@ -284,8 +284,8 @@ func TestGrantRequestIsApproved(t *testing.T) {
 	}
 
 	request = GrantRequest{
-		ScopeRequested: SqlStringSlice{},
-		ScopeApproved:  SqlStringSlice{},
+		ScopeRequested: util.SqlStringSlice{},
+		ScopeApproved:  util.SqlStringSlice{},
 	}
 	ok = request.IsApproved()
 	if ok {

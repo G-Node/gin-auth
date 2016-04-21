@@ -52,7 +52,7 @@ func TestClientApprovalCreate(t *testing.T) {
 	uuid := uuid.NewRandom().String()
 	fresh := ClientApproval{
 		UUID:        uuid,
-		Scope:       SqlStringSlice{"foo-read", "foo-write"},
+		Scope:       util.SqlStringSlice{"foo-read", "foo-write"},
 		ClientUUID:  uuidClientGin,
 		AccountUUID: uuidBob}
 
@@ -76,7 +76,7 @@ func TestClientApprovalCreate(t *testing.T) {
 func TestClientApprovalUpdate(t *testing.T) {
 	InitTestDb(t)
 
-	newScope := SqlStringSlice{"bar-read", "bar-write"}
+	newScope := util.SqlStringSlice{"bar-read", "bar-write"}
 
 	app, ok := GetClientApproval(approvalUuidAlice)
 	if !ok {

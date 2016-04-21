@@ -21,8 +21,8 @@ type GrantRequest struct {
 	GrantType      string
 	State          string
 	Code           sql.NullString
-	ScopeRequested SqlStringSlice
-	ScopeApproved  SqlStringSlice
+	ScopeRequested util.SqlStringSlice
+	ScopeApproved  util.SqlStringSlice
 	RedirectURI    string
 	ClientUUID     string
 	AccountUUID    sql.NullString

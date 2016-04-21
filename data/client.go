@@ -20,8 +20,8 @@ type Client struct {
 	UUID          string
 	Name          string
 	Secret        string
-	ScopeProvided SqlStringSlice
-	RedirectURIs  SqlStringSlice
+	ScopeProvided util.SqlStringSlice
+	RedirectURIs  util.SqlStringSlice
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }
@@ -69,7 +69,7 @@ func GetClientByName(name string) (*Client, bool) {
 
 // ExistsScope checks whether a certain scope exists by searching
 // through all provided scopes from registered clients.
-func ExistsScope(scope SqlStringSlice) bool {
+func ExistsScope(scope util.SqlStringSlice) bool {
 	const q = `SELECT scopeProvided FROM Clients
 	           WHERE scopeProvided && $1`
 
@@ -77,7 +77,7 @@ func ExistsScope(scope SqlStringSlice) bool {
 		return false
 	}
 
-	all := make([]SqlStringSlice, 0)
+	all := make([]util.SqlStringSlice, 0)
 	database.Select(&all, q, scope)
 
 	if len(all) == 0 {

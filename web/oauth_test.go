@@ -191,7 +191,7 @@ func TestLogin(t *testing.T) {
 
 func newApproveBody() *url.Values {
 	body := &url.Values{}
-	body.Add("request_id", "U7JIKKYI")
+	body.Add("request_id", "B4LIMIMB")
 	body.Add("scope", "repo-read")
 	body.Add("scope", "repo-write")
 	return body

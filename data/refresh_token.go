@@ -18,7 +18,7 @@ import (
 // in a `code` grant request.
 type RefreshToken struct {
 	Token       string
-	Scope       SqlStringSlice
+	Scope       util.SqlStringSlice
 	ClientUUID  string
 	AccountUUID string
 	CreatedAt   time.Time

@@ -68,22 +68,22 @@ func TestExistsScope(t *testing.T) {
 	defer util.FailOnPanic(t)
 	InitTestDb(t)
 
-	exists := ExistsScope(SqlStringSlice{"repo-read", "repo-write"})
+	exists := ExistsScope(util.SqlStringSlice{"repo-read", "repo-write"})
 	if !exists {
 		t.Error("Scope does not exist")
 	}
 
-	exists = ExistsScope(SqlStringSlice{"repo-read", "something-wrong"})
+	exists = ExistsScope(util.SqlStringSlice{"repo-read", "something-wrong"})
 	if exists {
 		t.Error("Scope should not exist")
 	}
 
-	exists = ExistsScope(SqlStringSlice{"something-wrong"})
+	exists = ExistsScope(util.SqlStringSlice{"something-wrong"})
 	if exists {
 		t.Error("Scope should not exist")
 	}
 
-	exists = ExistsScope(SqlStringSlice{})
+	exists = ExistsScope(util.SqlStringSlice{})
 	if exists {
 		t.Error("Scope should not exist")
 	}
@@ -97,8 +97,8 @@ func TestCreateClient(t *testing.T) {
 		UUID:          id,
 		Name:          "gin-foo",
 		Secret:        "secret",
-		ScopeProvided: SqlStringSlice{"foo-read", "foo-write"},
-		RedirectURIs:  SqlStringSlice{"https://foo.com/redirect"}}
+		ScopeProvided: util.SqlStringSlice{"foo-read", "foo-write"},
+		RedirectURIs:  util.SqlStringSlice{"https://foo.com/redirect"}}
 
 	err := fresh.Create()
 	if err != nil {

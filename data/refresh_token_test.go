@@ -51,7 +51,7 @@ func TestCreateRefreshToken(t *testing.T) {
 	token := util.RandomToken()
 	fresh := RefreshToken{
 		Token:       token,
-		Scope:       SqlStringSlice{"foo-read", "foo-write"},
+		Scope:       util.SqlStringSlice{"foo-read", "foo-write"},
 		ClientUUID:  uuidClientGin,
 		AccountUUID: uuidAlice}
 

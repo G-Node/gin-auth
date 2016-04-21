@@ -68,7 +68,7 @@ func TestCreateAccessToken(t *testing.T) {
 	token := util.RandomToken()
 	fresh := AccessToken{
 		Token:       token,
-		Scope:       SqlStringSlice{"foo-read", "foo-write"},
+		Scope:       util.SqlStringSlice{"foo-read", "foo-write"},
 		Expires:     time.Now().Add(time.Hour * 12),
 		ClientUUID:  uuidClientGin,
 		AccountUUID: uuidAlice}
