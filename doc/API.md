@@ -49,26 +49,40 @@ In the next step the access code can be used to obtain an access token.
 ```
 POST https://<host>/oauth/token
 ```
+
+##### Basic authorization header
+
+Send `client_id` and `client_secret` as HTTP basic authorization header.
+
 ##### Parameters (application/x-www-form-urlencoded)
 
 | Name          | Type    | Description |
 | ------------- | ------- | ---- |
-| client_id     | string  | The ID of a registered client |
-| client_secret | string  | The secret shared between client and GIN-Auth |
 | code          | string  | The code obtained in step 1 |
 | redirect_uri  | string  | URL to redirect to after authorization |
-| state         | string  | String to protect against CSRF which was used in step 1 |
 | grant_type    | string  | Must be 'authorization_code' |
 
 ##### Errors
 
-TODO
+Errors are returned encoded as json with the following format:
+
+```javascript
+{
+  "code": 400,
+  "error": "Bad Request",
+  "message": "Unable to set one or more fields",
+  "reasons": { // reasons may be null
+    "grant_type": "Field grant type was missing"
+  }
+}
+```
 
 ##### Success
 
-If successful the response body contains the parameters `access_token`, `refresh_token` and `token_type` as application/x-www-form-urlencoded.
+If successful the response body contains the parameters `access_token`, `refresh_token` and `token_type` as JSON.
 
-TODO should we also support other encodings (application/json) depending on the Accept header of the request?
+TODO should we also support other encodings (application/x-www-form-urlencoded) depending on the Accept header
+of the request?
 
 ###Authenticate: grant type implicit
 

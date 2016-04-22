@@ -10,6 +10,7 @@ package data
 
 import (
 	"database/sql"
+	"github.com/G-Node/gin-auth/util"
 	"testing"
 )
 
@@ -19,8 +20,8 @@ const (
 )
 
 func TestListAccounts(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	accounts := ListAccounts()
 	if len(accounts) != 2 {
@@ -29,8 +30,8 @@ func TestListAccounts(t *testing.T) {
 }
 
 func TestGetAccount(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	acc, ok := GetAccount(uuidAlice)
 	if !ok {
@@ -47,8 +48,8 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestGetAccountByLogin(t *testing.T) {
-	defer failOnPanic(t)
-	initTestDb(t)
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
 
 	acc, ok := GetAccountByLogin("bob")
 	if !ok {
@@ -79,7 +80,7 @@ func TestAccountPassword(t *testing.T) {
 }
 
 func TestCreateAccount(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	fresh := &Account{Login: "theo", Email: "theo@foo.com", FirstName: "Theo", LastName: "Test"}
 	fresh.SetPassword("testtest")
@@ -98,7 +99,7 @@ func TestCreateAccount(t *testing.T) {
 }
 
 func TestUpdateAccount(t *testing.T) {
-	initTestDb(t)
+	InitTestDb(t)
 
 	newLogin := "alice_in_wonderland"
 	newEmail := "alice_in_wonderland@example.com"

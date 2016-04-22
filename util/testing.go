@@ -6,14 +6,16 @@
 // modification, are permitted under the terms of the BSD License. See
 // LICENSE file in the root of the Project.
 
-package data
+package util
 
 import (
-	"os"
 	"testing"
 )
 
-func TestMain(m *testing.M) {
-	os.Chdir("..")
-	os.Exit(m.Run())
+// FailOnPanic can be used in tests in order to recover from
+// a panic and make a test fail.
+func FailOnPanic(t *testing.T) {
+	if r := recover(); r != nil {
+		t.Fatal(r)
+	}
 }

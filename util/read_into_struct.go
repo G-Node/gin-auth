@@ -1,3 +1,11 @@
+// Copyright (c) 2016, German Neuroinformatics Node (G-Node),
+//                     Adrian Stoewer <adrian.stoewer@rz.ifi.lmu.de>
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted under the terms of the BSD License. See
+// LICENSE file in the root of the Project.
+
 package util
 
 import (
@@ -6,6 +14,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 // ValidationError provides information about each field of a struct that failed.
@@ -20,14 +29,33 @@ func (err *ValidationError) Error() string {
 }
 
 // ReadQueryIntoStruct reads request query parameters into a struct with matching fields.
+// Single query values are interpreted as coma separated list of values.
 //
 // See ReadMapIntoStruct for more information.
 func ReadQueryIntoStruct(request *http.Request, dest interface{}, ignoreMissing bool) error {
 	query := request.URL.Query()
 	if query == nil {
-		return errors.New("Request has now query parameters")
+		return errors.New("Request has no query parameters")
+	}
+	for k, v := range query {
+		if len(v) == 1 {
+			query[k] = strings.Split(v[0], ",")
+		}
 	}
 	return ReadMapIntoStruct(query, dest, ignoreMissing)
+}
+
+// ReadFormIntoStruct call ParseForm on the request and reads all form data into a struct with
+// matching fields.
+//
+// See ReadMapIntoStruct for more information.
+func ReadFormIntoStruct(request *http.Request, dest interface{}, ignoreMissing bool) error {
+	request.ParseForm()
+	form := request.PostForm
+	if form == nil {
+		return errors.New("Request has no form data")
+	}
+	return ReadMapIntoStruct(form, dest, ignoreMissing)
 }
 
 // ReadMapIntoStruct reads values from a map of string slices into a struct with matching fields

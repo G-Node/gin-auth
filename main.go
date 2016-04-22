@@ -22,7 +22,7 @@ func main() {
 	}
 
 	router := mux.NewRouter()
-	router.NotFoundHandler = &web.Error404{}
+	router.NotFoundHandler = &web.NotFoundHandler{}
 
 	web.RegisterRoutes(router)
 

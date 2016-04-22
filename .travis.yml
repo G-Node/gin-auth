@@ -33,6 +33,7 @@ script:
  - go vet ./...
  - go test -v -covermode=count -coverprofile=profile-data.cov.part ./data
  - go test -v -covermode=count -coverprofile=profile-util.cov.part ./util
+ - go test -v -covermode=count -coverprofile=profile-web.cov.part ./web
 
 after_success:
  # collect all coverage profiles

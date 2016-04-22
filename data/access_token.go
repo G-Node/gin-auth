@@ -15,7 +15,9 @@ import (
 )
 
 const (
-	defaultTokenLifeTime = time.Hour * 24
+	// DefaultTokenLifeTime is the life time used for access tokens if no other
+	// life time was set.
+	DefaultTokenLifeTime = time.Hour * 24
 )
 
 // AccessToken represents an OAuth access token
@@ -80,6 +82,7 @@ func (tok *AccessToken) Create() error {
 	           VALUES ($1, $2, $3, $4, $5, now(), now())
 	           RETURNING *`
 
+	tok.Expires = time.Now().Add(DefaultTokenLifeTime)
 	if tok.Token == "" {
 		tok.Token = util.RandomToken()
 	}
@@ -94,7 +97,7 @@ func (tok *AccessToken) UpdateExpirationTime() error {
 	           WHERE token=$2
 	           RETURNING *`
 
-	return database.Get(tok, q, time.Now().Add(defaultTokenLifeTime), tok.Token)
+	return database.Get(tok, q, time.Now().Add(DefaultTokenLifeTime), tok.Token)
 }
 
 // Delete removes an access token from the database.

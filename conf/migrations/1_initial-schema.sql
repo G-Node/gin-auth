@@ -55,11 +55,11 @@ CREATE TABLE ClientApprovals (
 CREATE TABLE GrantRequests (
   token             VARCHAR(512) PRIMARY KEY ,       -- the grant request id
   grantType         VARCHAR(10) NOT NULL CHECK (grantType = 'code' OR grantType = 'token'),
-  state             VARCHAR(512) ,
+  state             VARCHAR(512) NOT NULL ,
   code              VARCHAR(512) ,
   scopeRequested    VARCHAR[] NOT NULL ,
   scopeApproved     VARCHAR[] NOT NULL ,
-  redirectURI       VARCHAR(512) ,
+  redirectURI       VARCHAR(512) NOT NULL ,
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
   createdAt         TIMESTAMP NOT NULL ,

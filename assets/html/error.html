@@ -1,0 +1,13 @@
+{{ define "content" }}
+    <h1>{{ .Error }} <small>({{ .Code }})</small></h1>
+    <hr /><br>
+
+    <p>{{ .Message }}</p>
+    {{ if .Reasons }}
+    <ul>
+        {{ range $k, $v := .Reasons }}
+        <li>{{ $v }}</li>
+        {{ end }}
+    </ul>
+    {{ end }}
+{{ end }}

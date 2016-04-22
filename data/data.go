@@ -9,11 +9,11 @@
 package data
 
 import (
-	"io/ioutil"
-
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // pg driver needs to be imported in order to load it
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"testing"
 )
 
 var database *sqlx.DB
@@ -47,4 +47,24 @@ func LoadDbConf(path string) (*DbConf, error) {
 	err = yaml.Unmarshal(content, conf)
 
 	return conf, err
+}
+
+// InitTestDb initializes a database for testing purpose.
+func InitTestDb(t *testing.T) {
+	conf, err := LoadDbConf("conf/dbconf.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = InitDb(conf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fixtures, err := ioutil.ReadFile("conf/fixtures/testdb.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	database.MustExec(string(fixtures))
 }
