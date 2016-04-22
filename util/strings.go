@@ -31,17 +31,6 @@ func ToSnakeCase(str string) string {
 	return strings.ToLower(snake)
 }
 
-// StringInSlice returns true if a specific string was found in a slice or
-// false otherwise.
-func StringInSlice(slice []string, str string) bool {
-	for _, s := range slice {
-		if s == str {
-			return true
-		}
-	}
-	return false
-}
-
 // NewStringSet creates a new StringSet from a slice of strings.
 func NewStringSet(strs ...string) StringSet {
 	set := StringSet{}
