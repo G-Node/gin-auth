@@ -17,13 +17,13 @@ import (
 
 // Client object stored in the database
 type Client struct {
-	UUID          string
-	Name          string
-	Secret        string
-	ScopeProvided util.SqlStringSlice
-	RedirectURIs  util.SqlStringSlice
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	UUID             string
+	Name             string
+	Secret           string
+	ScopeProvidedMap map[string]string
+	RedirectURIs     util.SqlStringSlice
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 // ListClients returns all registered OAuth clients ordered by name
@@ -42,72 +42,133 @@ func ListClients() []Client {
 // GetClient returns an OAuth client with a given uuid.
 // Returns false if no client with a matching uuid can be found.
 func GetClient(uuid string) (*Client, bool) {
-	const q = `SELECT * FROM Clients c WHERE c.uuid=$1`
-
-	client := &Client{}
-	err := database.Get(client, q, uuid)
-	if err != nil && err != sql.ErrNoRows {
-		panic(err)
-	}
-
-	return client, err == nil
+	const q = `SELECT * FROM Clients WHERE uuid=$1`
+	return getClient(q, uuid)
 }
 
 // GetClientByName returns an OAuth client with a given client name.
 // Returns false if no client with a matching name can be found.
 func GetClientByName(name string) (*Client, bool) {
-	const q = `SELECT * FROM Clients c WHERE c.name=$1`
+	const q = `SELECT * FROM Clients WHERE name=$1`
+	return getClient(q, name)
+}
 
-	client := &Client{}
-	err := database.Get(client, q, name)
-	if err != nil && err != sql.ErrNoRows {
+func getClient(q, parameter string) (*Client, bool) {
+	const qScope = `SELECT name, description FROM ClientScopeProvided WHERE clientUUID = $1`
+
+	client := &Client{ScopeProvidedMap: make(map[string]string)}
+	err := database.Get(client, q, parameter)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, false
+		}
 		panic(err)
 	}
 
-	return client, err == nil
+	scope := []struct {
+		Name        string
+		Description string
+	}{}
+	err = database.Select(&scope, qScope, client.UUID)
+	if err != nil {
+		panic(err)
+	}
+	for _, s := range scope {
+		client.ScopeProvidedMap[s.Name] = s.Description
+	}
+
+	return client, true
 }
 
-// ExistsScope checks whether a certain scope exists by searching
-// through all provided scopes from registered clients.
-func ExistsScope(scope util.SqlStringSlice) bool {
-	const q = `SELECT scopeProvided FROM Clients
-	           WHERE scopeProvided && $1`
+// CheckScope checks whether a certain scope exists by searching
+// through all provided scopes from all registered clients.
+func CheckScope(scope util.SqlStringSlice) bool {
+	const q = `SELECT name FROM ClientScopeProvided WHERE array_position($1, name) >= 0`
 
 	if len(scope) == 0 {
 		return false
 	}
 
-	all := make([]util.SqlStringSlice, 0)
-	database.Select(&all, q, scope)
-
-	if len(all) == 0 {
-		return false
-	}
-	flat := all[0]
-	for i := 1; i < len(all); i++ {
-		flat = append(flat, all[i]...)
+	check := []string{}
+	err := database.Select(&check, q, scope)
+	if err != nil {
+		panic(err)
 	}
 
+	global := util.NewStringSet(check...)
 	for _, s := range scope {
-		if !util.StringInSlice(flat, s) {
+		if !global.Contains(s) {
 			return false
 		}
 	}
-
 	return true
+}
+
+// DescribeScope turns a scope into a map of names to descriptions.
+// If the map is complete the second return value is true.
+func DescribeScope(scope util.SqlStringSlice) (map[string]string, bool) {
+	const q = `SELECT name, description FROM ClientScopeProvided WHERE array_position($1, name) >= 0`
+
+	desc := make(map[string]string)
+	if len(scope) == 0 {
+		return desc, false
+	}
+
+	data := []struct {
+		Name        string
+		Description string
+	}{}
+
+	err := database.Select(&data, q, scope)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, d := range data {
+		desc[d.Name] = d.Description
+	}
+	for _, s := range scope {
+		if _, ok := desc[s]; !ok {
+			return desc, false
+		}
+	}
+	return desc, true
+}
+
+func (client *Client) ScopeProvided() util.StringSet {
+	scope := make([]string, len(client.ScopeProvidedMap))
+	for s := range client.ScopeProvidedMap {
+		scope = append(scope, s)
+	}
+	return util.NewStringSet(scope...)
 }
 
 // Create stores a new client in the database.
 func (client *Client) Create() error {
-	const q = `INSERT INTO Clients (uuid, name, secret, scopeProvided, redirectURIs, createdAt, updatedAt)
-	           VALUES ($1, $2, $3, $4, $5, now(), now())
+	const q = `INSERT INTO Clients (uuid, name, secret, redirectURIs, createdAt, updatedAt)
+	           VALUES ($1, $2, $3, $4, now(), now())
 	           RETURNING *`
+	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
+					VALUES ($1, $2, $3)`
 
 	if client.UUID == "" {
 		client.UUID = uuid.NewRandom().String()
 	}
 
-	return database.Get(client, q, client.UUID, client.Name, client.Secret, client.ScopeProvided, client.RedirectURIs)
+	tx := database.MustBegin()
+	err := tx.Get(client, q, client.UUID, client.Name, client.Secret, client.RedirectURIs)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	for k, v := range client.ScopeProvidedMap {
+		_, err = tx.Exec(qScope, client.UUID, k, v)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	return tx.Commit()
 }
 
 // Delete removes an existing client from the database

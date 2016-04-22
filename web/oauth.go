@@ -46,7 +46,7 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !data.ExistsScope(authParam.Scope) {
+	if !data.CheckScope(authParam.Scope) {
 		PrintErrorHTML(w, r, fmt.Sprintf("Invalid scope %s", authParam.Scope), http.StatusBadRequest)
 		return
 	}
@@ -233,11 +233,15 @@ func ApprovePage(w http.ResponseWriter, r *http.Request) {
 		panic("Client does not exist")
 	}
 
-	approveParam := &approveData{
-		Client:    client.Name,
-		Scope:     request.ScopeRequested,
-		RequestID: request.Token,
+	description, ok := data.DescribeScope(request.ScopeRequested)
+	if !ok {
+		panic("Invalid scope")
 	}
+	pageData := struct {
+		Client    string
+		Scope     map[string]string
+		RequestID string
+	}{client.Name, description, request.Token}
 
 	tmpl, err := template.ParseFiles("assets/html/layout.html", "assets/html/approve.html")
 	if err != nil {
@@ -246,7 +250,7 @@ func ApprovePage(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
-	err = tmpl.ExecuteTemplate(w, "layout", approveParam)
+	err = tmpl.ExecuteTemplate(w, "layout", pageData)
 	if err != nil {
 		panic(err)
 	}

@@ -68,24 +68,50 @@ func TestExistsScope(t *testing.T) {
 	defer util.FailOnPanic(t)
 	InitTestDb(t)
 
-	exists := ExistsScope(util.SqlStringSlice{"repo-read", "repo-write"})
+	exists := CheckScope(util.SqlStringSlice{"repo-read", "repo-write"})
 	if !exists {
 		t.Error("Scope does not exist")
 	}
 
-	exists = ExistsScope(util.SqlStringSlice{"repo-read", "something-wrong"})
+	exists = CheckScope(util.SqlStringSlice{"repo-read", "something-wrong"})
 	if exists {
 		t.Error("Scope should not exist")
 	}
 
-	exists = ExistsScope(util.SqlStringSlice{"something-wrong"})
+	exists = CheckScope(util.SqlStringSlice{"something-wrong"})
 	if exists {
 		t.Error("Scope should not exist")
 	}
 
-	exists = ExistsScope(util.SqlStringSlice{})
+	exists = CheckScope(util.SqlStringSlice{})
 	if exists {
 		t.Error("Scope should not exist")
+	}
+}
+
+func TestDescribeScope(t *testing.T) {
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
+
+	desc, ok := DescribeScope(util.SqlStringSlice{"repo-read", "repo-write"})
+	if !ok {
+		t.Error("Scope description is not complete")
+	}
+	if s, ok := desc["repo-read"]; !ok || s == "" {
+		t.Error("Description for 'repo-read' is missing")
+	}
+	if s, ok := desc["repo-write"]; !ok || s == "" {
+		t.Error("Description for 'repo-write' is missing")
+	}
+
+	_, ok = DescribeScope(util.SqlStringSlice{"repo-read", "something-wrong"})
+	if ok {
+		t.Error("Scope description should not be complete")
+	}
+
+	_, ok = DescribeScope(util.SqlStringSlice{})
+	if ok {
+		t.Error("Scope description should not be complete")
 	}
 }
 
@@ -94,11 +120,11 @@ func TestCreateClient(t *testing.T) {
 
 	id := uuid.NewRandom().String()
 	fresh := Client{
-		UUID:          id,
-		Name:          "gin-foo",
-		Secret:        "secret",
-		ScopeProvided: util.SqlStringSlice{"foo-read", "foo-write"},
-		RedirectURIs:  util.SqlStringSlice{"https://foo.com/redirect"}}
+		UUID:             id,
+		Name:             "gin-foo",
+		Secret:           "secret",
+		ScopeProvidedMap: map[string]string{"foo-read": "Read access to foo", "foo-write": "Write access to foo"},
+		RedirectURIs:     util.SqlStringSlice{"https://foo.com/redirect"}}
 
 	err := fresh.Create()
 	if err != nil {
@@ -112,11 +138,11 @@ func TestCreateClient(t *testing.T) {
 	if check.Name != "gin-foo" {
 		t.Error("Name was expected to bo 'gin-foo'")
 	}
-	if check.ScopeProvided[0] != "foo-read" {
-		t.Error("First scope was expected to be 'foo-read'")
+	if !check.ScopeProvided().Contains("foo-read") {
+		t.Error("Scope should contain 'foo-read'")
 	}
-	if check.ScopeProvided[1] != "foo-write" {
-		t.Error("Second scope was expected to be 'foo-write")
+	if !check.ScopeProvided().Contains("foo-write") {
+		t.Error("Scope should contain 'foo-write")
 	}
 	if check.RedirectURIs[0] != "https://foo.com/redirect" {
 		t.Error("First redirect was expected to be 'https://foo.com/redirect'")
