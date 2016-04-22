@@ -23,7 +23,7 @@ const (
 // AccessToken represents an OAuth access token
 type AccessToken struct {
 	Token       string // This is just a random string not the JWT token
-	Scope       util.SqlStringSlice
+	Scope       util.StringSet
 	Expires     time.Time
 	ClientUUID  string
 	AccountUUID string

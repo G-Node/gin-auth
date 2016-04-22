@@ -38,8 +38,8 @@ func TestGetGrantRequest(t *testing.T) {
 	if !ok {
 		t.Error("Grant request does not exist")
 	}
-	if req.ScopeRequested[0] != "repo-read" {
-		t.Errorf("First requested scope was expected to be 'repo-read'")
+	if !req.ScopeRequested.Contains("repo-read") {
+		t.Errorf("Requested scope should contain 'repo-read'")
 	}
 
 	_, ok = GetGrantRequest("doesNotExist")
@@ -56,8 +56,8 @@ func TestGetGrantRequestByCode(t *testing.T) {
 	if !ok {
 		t.Error("Grant request does not exist")
 	}
-	if req.ScopeRequested[0] != "repo-read" {
-		t.Errorf("First requested scope was expected to be 'repo-read'")
+	if !req.ScopeRequested.Contains("repo-read") {
+		t.Errorf("Requested scope should contain  'repo-read'")
 	}
 
 	_, ok = GetGrantRequestByCode("doesNotExist")
@@ -113,8 +113,8 @@ func TestCreateGrantRequest(t *testing.T) {
 		GrantType:      "code",
 		State:          state,
 		Code:           sql.NullString{String: code, Valid: true},
-		ScopeRequested: util.SqlStringSlice{"foo-read", "foo-write", "foo-admin"},
-		ScopeApproved:  util.SqlStringSlice{"foo-read"},
+		ScopeRequested: util.NewStringSet("foo-read", "foo-write", "foo-admin"),
+		ScopeApproved:  util.NewStringSet("foo-read"),
 		ClientUUID:     uuidClientGin,
 		AccountUUID:    sql.NullString{String: uuidAlice, Valid: true}}
 
@@ -133,11 +133,11 @@ func TestCreateGrantRequest(t *testing.T) {
 	if check.Code.Valid && check.Code.String != code {
 		t.Error("Code does not match")
 	}
-	if check.ScopeRequested[0] != "foo-read" {
-		t.Error("First requested scope was expected to be 'foo-read'")
+	if !check.ScopeRequested.Contains("foo-read") {
+		t.Error("Requested scope should contain 'foo-read'")
 	}
-	if check.ScopeApproved[0] != "foo-read" {
-		t.Error("First approved scope was expected to be 'foo-read'")
+	if !check.ScopeApproved.Contains("foo-read") {
+		t.Error("Approved scope should contain  'foo-read'")
 	}
 }
 
@@ -227,7 +227,7 @@ func TestGrantRequestApproveScopes(t *testing.T) {
 		Token:          token,
 		GrantType:      "code",
 		State:          util.RandomToken(),
-		ScopeRequested: util.SqlStringSlice{"repo-read"},
+		ScopeRequested: util.NewStringSet("repo-read"),
 		ClientUUID:     uuidClientGin,
 		AccountUUID:    sql.NullString{String: uuidAlice, Valid: true}}
 
@@ -245,11 +245,11 @@ func TestGrantRequestApproveScopes(t *testing.T) {
 	if !ok {
 		t.Error("Grant request does not exist")
 	}
-	if len(check.ScopeApproved) != 1 {
+	if check.ScopeApproved.Len() != 1 {
 		t.Error("Approved scope should have length 1")
 	}
-	if check.ScopeApproved[0] != "repo-read" {
-		t.Errorf("First element in approved scope shoule be 'repo-read' but was '%s'", check.ScopeApproved[0])
+	if !check.ScopeApproved.Contains("repo-read") {
+		t.Error("Approved scope should contain 'repo-read'")
 	}
 }
 
@@ -257,8 +257,8 @@ func TestGrantRequestIsApproved(t *testing.T) {
 	InitTestDb(t)
 
 	request := GrantRequest{
-		ScopeRequested: util.SqlStringSlice{"repo-read"},
-		ScopeApproved:  util.SqlStringSlice{"repo-read", "something-else"},
+		ScopeRequested: util.NewStringSet("repo-read"),
+		ScopeApproved:  util.NewStringSet("repo-read", "something-else"),
 	}
 	ok := request.IsApproved()
 	if !ok {
@@ -266,8 +266,8 @@ func TestGrantRequestIsApproved(t *testing.T) {
 	}
 
 	request = GrantRequest{
-		ScopeRequested: util.SqlStringSlice{"repo-read", "repo-write"},
-		ScopeApproved:  util.SqlStringSlice{"repo-read", "repo-write"},
+		ScopeRequested: util.NewStringSet("repo-read", "repo-write"),
+		ScopeApproved:  util.NewStringSet("repo-read", "repo-write"),
 	}
 	ok = request.IsApproved()
 	if !ok {
@@ -275,8 +275,8 @@ func TestGrantRequestIsApproved(t *testing.T) {
 	}
 
 	request = GrantRequest{
-		ScopeRequested: util.SqlStringSlice{"repo-read", "repo-write", "something-else"},
-		ScopeApproved:  util.SqlStringSlice{"repo-read", "repo-write"},
+		ScopeRequested: util.NewStringSet("repo-read", "repo-write", "something-else"),
+		ScopeApproved:  util.NewStringSet("repo-read", "repo-write"),
 	}
 	ok = request.IsApproved()
 	if ok {
@@ -284,8 +284,8 @@ func TestGrantRequestIsApproved(t *testing.T) {
 	}
 
 	request = GrantRequest{
-		ScopeRequested: util.SqlStringSlice{},
-		ScopeApproved:  util.SqlStringSlice{},
+		ScopeRequested: util.NewStringSet(),
+		ScopeApproved:  util.NewStringSet(),
 	}
 	ok = request.IsApproved()
 	if ok {

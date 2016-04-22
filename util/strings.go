@@ -42,21 +42,9 @@ func StringInSlice(slice []string, str string) bool {
 	return false
 }
 
-// StringSet provides some common set operations.
-type StringSet interface {
-	Add(string) StringSet
-	Contains(string) bool
-	IsSuperset(StringSet) bool
-	Union(StringSet) StringSet
-	Len() int
-	Strings() []string
-	Value() (driver.Value, error)
-	Scan(interface{}) error
-}
-
 // NewStringSet creates a new StringSet from a slice of strings.
 func NewStringSet(strs ...string) StringSet {
-	set := mapStringSet{}
+	set := StringSet{}
 	for _, s := range strs {
 		set[s] = true
 	}
@@ -64,12 +52,12 @@ func NewStringSet(strs ...string) StringSet {
 }
 
 // StringSet is a simple set implementation based on map.
-type mapStringSet map[string]bool
+type StringSet map[string]bool
 
 // Add returns a set with one additional element.
-func (set mapStringSet) Add(s string) StringSet {
+func (set StringSet) Add(s string) StringSet {
 	if !set.Contains(s) {
-		fresh := mapStringSet{s: true}
+		fresh := StringSet{s: true}
 		for s := range set {
 			fresh[s] = true
 		}
@@ -79,7 +67,7 @@ func (set mapStringSet) Add(s string) StringSet {
 }
 
 // Contains returns true if a string is part of the set.
-func (set mapStringSet) Contains(s string) bool {
+func (set StringSet) Contains(s string) bool {
 	contains := set[s]
 	return contains
 }
@@ -98,7 +86,7 @@ func (set StringSet) IsSuperset(other StringSet) bool {
 }
 
 // Union returns a set that contains all elements from both sets.
-func (set mapStringSet) Union(other StringSet) StringSet {
+func (set StringSet) Union(other StringSet) StringSet {
 	switch other.Len() {
 	case 0:
 		return set
@@ -110,7 +98,7 @@ func (set mapStringSet) Union(other StringSet) StringSet {
 		for _, s1 := range other.Strings() {
 			if !set.Contains(s1) {
 				if !isCopy {
-					fresh := mapStringSet{}
+					fresh := StringSet{}
 					for s2 := range set {
 						fresh[s2] = true
 					}
@@ -123,12 +111,12 @@ func (set mapStringSet) Union(other StringSet) StringSet {
 }
 
 // Len returns the number of elements in the set.
-func (set mapStringSet) Len() int {
+func (set StringSet) Len() int {
 	return len(set)
 }
 
 // Strings returns all elements as slice of strings.
-func (set mapStringSet) Strings() []string {
+func (set StringSet) Strings() []string {
 	strs := make([]string, 0, len(set))
 	for s := range set {
 		strs = append(strs, s)
@@ -138,7 +126,7 @@ func (set mapStringSet) Strings() []string {
 }
 
 // Scan implements the Scanner interface.
-func (set mapStringSet) Scan(src interface{}) error {
+func (set *StringSet) Scan(src interface{}) error {
 	asBytes, ok := src.([]byte)
 	if !ok {
 		return errors.New("Souce wan not []byte")
@@ -153,17 +141,12 @@ func (set mapStringSet) Scan(src interface{}) error {
 		results = append(results, s)
 	}
 
-	for s := range set {
-		delete(set, s)
-	}
-	for _, s := range results {
-		set[s] = true
-	}
+	(*set) = NewStringSet(results...)
 	return nil
 }
 
 // Value implements the driver Valuer interface.
-func (set mapStringSet) Value() (driver.Value, error) {
+func (set StringSet) Value() (driver.Value, error) {
 	if set.Len() == 0 {
 		return `{}`, nil
 	}

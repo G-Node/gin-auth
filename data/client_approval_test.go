@@ -52,7 +52,7 @@ func TestClientApprovalCreate(t *testing.T) {
 	uuid := uuid.NewRandom().String()
 	fresh := ClientApproval{
 		UUID:        uuid,
-		Scope:       util.SqlStringSlice{"foo-read", "foo-write"},
+		Scope:       util.NewStringSet("foo-read", "foo-write"),
 		ClientUUID:  uuidClientGin,
 		AccountUUID: uuidBob}
 
@@ -68,15 +68,18 @@ func TestClientApprovalCreate(t *testing.T) {
 	if check.AccountUUID != uuidBob {
 		t.Errorf("AccountUUID is supposed to be '%s'", uuidBob)
 	}
-	if check.Scope[1] != "foo-write" {
-		t.Error("Second scope is supposed to be 'foo-write'")
+	if !check.Scope.Contains("foo-write") {
+		t.Error("Scope should contain 'foo-write'")
+	}
+	if !check.Scope.Contains("foo-read") {
+		t.Error("Scope should contain 'foo-read'")
 	}
 }
 
 func TestClientApprovalUpdate(t *testing.T) {
 	InitTestDb(t)
 
-	newScope := util.SqlStringSlice{"bar-read", "bar-write"}
+	newScope := util.NewStringSet("bar-read", "bar-write")
 
 	app, ok := GetClientApproval(approvalUuidAlice)
 	if !ok {
@@ -94,11 +97,11 @@ func TestClientApprovalUpdate(t *testing.T) {
 	if !ok {
 		t.Error("Approval does not exist")
 	}
-	if check.Scope[0] != "bar-read" {
-		t.Error("First scope expected to be 'bar-read'")
+	if !check.Scope.Contains("bar-read") {
+		t.Error("Scope should contain 'bar-read'")
 	}
-	if check.Scope[1] != "bar-write" {
-		t.Error("Second scope expected to be 'bar-write'")
+	if !check.Scope.Contains("bar-write") {
+		t.Error("Scope should contain 'bar-write'")
 	}
 }
 

@@ -51,7 +51,7 @@ func TestCreateRefreshToken(t *testing.T) {
 	token := util.RandomToken()
 	fresh := RefreshToken{
 		Token:       token,
-		Scope:       util.SqlStringSlice{"foo-read", "foo-write"},
+		Scope:       util.NewStringSet("foo-read", "foo-write"),
 		ClientUUID:  uuidClientGin,
 		AccountUUID: uuidAlice}
 
@@ -67,8 +67,8 @@ func TestCreateRefreshToken(t *testing.T) {
 	if check.AccountUUID != uuidAlice {
 		t.Errorf("AccountUUID is supposed to be '%s'", uuidAlice)
 	}
-	if check.Scope[1] != "foo-write" {
-		t.Error("Second scope is supposed to be 'foo-write'")
+	if !check.Scope.Contains("foo-write") {
+		t.Error("Scope should contain 'foo-write'")
 	}
 }
 

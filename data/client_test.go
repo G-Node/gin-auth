@@ -68,22 +68,22 @@ func TestExistsScope(t *testing.T) {
 	defer util.FailOnPanic(t)
 	InitTestDb(t)
 
-	exists := CheckScope(util.SqlStringSlice{"repo-read", "repo-write"})
+	exists := CheckScope(util.NewStringSet("repo-read", "repo-write"))
 	if !exists {
 		t.Error("Scope does not exist")
 	}
 
-	exists = CheckScope(util.SqlStringSlice{"repo-read", "something-wrong"})
+	exists = CheckScope(util.NewStringSet("repo-read", "something-wrong"))
 	if exists {
 		t.Error("Scope should not exist")
 	}
 
-	exists = CheckScope(util.SqlStringSlice{"something-wrong"})
+	exists = CheckScope(util.NewStringSet("something-wrong"))
 	if exists {
 		t.Error("Scope should not exist")
 	}
 
-	exists = CheckScope(util.SqlStringSlice{})
+	exists = CheckScope(util.NewStringSet())
 	if exists {
 		t.Error("Scope should not exist")
 	}
@@ -93,7 +93,7 @@ func TestDescribeScope(t *testing.T) {
 	defer util.FailOnPanic(t)
 	InitTestDb(t)
 
-	desc, ok := DescribeScope(util.SqlStringSlice{"repo-read", "repo-write"})
+	desc, ok := DescribeScope(util.NewStringSet("repo-read", "repo-write"))
 	if !ok {
 		t.Error("Scope description is not complete")
 	}
@@ -104,12 +104,12 @@ func TestDescribeScope(t *testing.T) {
 		t.Error("Description for 'repo-write' is missing")
 	}
 
-	_, ok = DescribeScope(util.SqlStringSlice{"repo-read", "something-wrong"})
+	_, ok = DescribeScope(util.NewStringSet("repo-read", "something-wrong"))
 	if ok {
 		t.Error("Scope description should not be complete")
 	}
 
-	_, ok = DescribeScope(util.SqlStringSlice{})
+	_, ok = DescribeScope(util.NewStringSet())
 	if ok {
 		t.Error("Scope description should not be complete")
 	}
@@ -124,7 +124,7 @@ func TestCreateClient(t *testing.T) {
 		Name:             "gin-foo",
 		Secret:           "secret",
 		ScopeProvidedMap: map[string]string{"foo-read": "Read access to foo", "foo-write": "Write access to foo"},
-		RedirectURIs:     util.SqlStringSlice{"https://foo.com/redirect"}}
+		RedirectURIs:     util.NewStringSet("https://foo.com/redirect")}
 
 	err := fresh.Create()
 	if err != nil {
@@ -144,8 +144,8 @@ func TestCreateClient(t *testing.T) {
 	if !check.ScopeProvided().Contains("foo-write") {
 		t.Error("Scope should contain 'foo-write")
 	}
-	if check.RedirectURIs[0] != "https://foo.com/redirect" {
-		t.Error("First redirect was expected to be 'https://foo.com/redirect'")
+	if !check.RedirectURIs.Contains("https://foo.com/redirect") {
+		t.Error("Redirect URIs should contain 'https://foo.com/redirect'")
 	}
 }
 

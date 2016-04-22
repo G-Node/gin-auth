@@ -21,7 +21,7 @@ type Client struct {
 	Name             string
 	Secret           string
 	ScopeProvidedMap map[string]string
-	RedirectURIs     util.SqlStringSlice
+	RedirectURIs     util.StringSet
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 }
@@ -82,10 +82,10 @@ func getClient(q, parameter string) (*Client, bool) {
 
 // CheckScope checks whether a certain scope exists by searching
 // through all provided scopes from all registered clients.
-func CheckScope(scope util.SqlStringSlice) bool {
+func CheckScope(scope util.StringSet) bool {
 	const q = `SELECT name FROM ClientScopeProvided WHERE array_position($1, name) >= 0`
 
-	if len(scope) == 0 {
+	if scope.Len() == 0 {
 		return false
 	}
 
@@ -96,21 +96,16 @@ func CheckScope(scope util.SqlStringSlice) bool {
 	}
 
 	global := util.NewStringSet(check...)
-	for _, s := range scope {
-		if !global.Contains(s) {
-			return false
-		}
-	}
-	return true
+	return global.IsSuperset(scope)
 }
 
 // DescribeScope turns a scope into a map of names to descriptions.
 // If the map is complete the second return value is true.
-func DescribeScope(scope util.SqlStringSlice) (map[string]string, bool) {
+func DescribeScope(scope util.StringSet) (map[string]string, bool) {
 	const q = `SELECT name, description FROM ClientScopeProvided WHERE array_position($1, name) >= 0`
 
 	desc := make(map[string]string)
-	if len(scope) == 0 {
+	if scope.Len() == 0 {
 		return desc, false
 	}
 
@@ -124,15 +119,14 @@ func DescribeScope(scope util.SqlStringSlice) (map[string]string, bool) {
 		panic(err)
 	}
 
-	for _, d := range data {
+	names := make([]string, len(data))
+	for i, d := range data {
+		names[i] = d.Name
 		desc[d.Name] = d.Description
 	}
-	for _, s := range scope {
-		if _, ok := desc[s]; !ok {
-			return desc, false
-		}
-	}
-	return desc, true
+	global := util.NewStringSet(names...)
+
+	return desc, global.IsSuperset(scope)
 }
 
 func (client *Client) ScopeProvided() util.StringSet {

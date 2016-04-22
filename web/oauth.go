@@ -46,12 +46,13 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !data.CheckScope(authParam.Scope) {
+	scope := util.NewStringSet(authParam.Scope...)
+	if !data.CheckScope(scope) {
 		PrintErrorHTML(w, r, fmt.Sprintf("Invalid scope %s", authParam.Scope), http.StatusBadRequest)
 		return
 	}
 
-	grantRequest := &data.GrantRequest{ScopeRequested: authParam.Scope}
+	grantRequest := &data.GrantRequest{ScopeRequested: scope}
 	grantRequest.GrantType = authParam.ResponseType
 
 	client, ok := data.GetClientByName(authParam.ClientId)
@@ -61,7 +62,7 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 	}
 	grantRequest.ClientUUID = client.UUID
 
-	if !util.StringInSlice(client.RedirectURIs, authParam.RedirectURI) {
+	if !client.RedirectURIs.Contains(authParam.RedirectURI) {
 		PrintErrorHTML(w, r, fmt.Sprintf("Redirect URI '%s' not registered for client", authParam.RedirectURI), http.StatusBadRequest)
 		return
 	}
@@ -172,7 +173,7 @@ func finishCodeRequest(w http.ResponseWriter, r *http.Request, request *data.Gra
 		panic(err)
 	}
 
-	scope := url.QueryEscape(strings.Join(request.ScopeApproved, ","))
+	scope := url.QueryEscape(strings.Join(request.ScopeApproved.Strings(), ","))
 	state := url.QueryEscape(request.State)
 	url := fmt.Sprintf("%s?scope=%s&state=%s&code=%s", request.RedirectURI, scope, state, request.Code.String)
 
@@ -198,7 +199,7 @@ func finishImplicitRequest(w http.ResponseWriter, r *http.Request, request *data
 		panic(err)
 	}
 
-	scope := url.QueryEscape(strings.Join(token.Scope, ","))
+	scope := url.QueryEscape(strings.Join(token.Scope.Strings(), ","))
 	state := url.QueryEscape(request.State)
 	url := fmt.Sprintf("%s?token_type=bearer&scope=%s&state=%s&access_token=%s", request.RedirectURI, scope, state, token.Token)
 
@@ -271,7 +272,7 @@ func Approve(w http.ResponseWriter, r *http.Request) {
 
 	// create approval
 	approval := &data.ClientApproval{
-		Scope:       approveParam.Scope,
+		Scope:       util.NewStringSet(approveParam.Scope...),
 		ClientUUID:  request.ClientUUID,
 		AccountUUID: request.AccountUUID.String,
 	}

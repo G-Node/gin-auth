@@ -21,8 +21,8 @@ type GrantRequest struct {
 	GrantType      string
 	State          string
 	Code           sql.NullString
-	ScopeRequested util.SqlStringSlice
-	ScopeApproved  util.SqlStringSlice
+	ScopeRequested util.StringSet
+	ScopeApproved  util.StringSet
 	RedirectURI    string
 	ClientUUID     string
 	AccountUUID    sql.NullString
@@ -196,13 +196,7 @@ func (req *GrantRequest) ApproveScopes() bool {
 		return false
 	}
 
-	var approved bool
-	for _, s := range req.ScopeRequested {
-		approved = util.StringInSlice(approval.Scope, s)
-		if !approved {
-			break
-		}
-	}
+	approved := approval.Scope.IsSuperset(req.ScopeRequested)
 	if !approved {
 		return false
 	}
@@ -215,12 +209,8 @@ func (req *GrantRequest) ApproveScopes() bool {
 // IsApproved just looks up whether the requested scope is in
 // the approved scope.
 func (req *GrantRequest) IsApproved() bool {
-	var approved bool
-	for _, s := range req.ScopeRequested {
-		approved = util.StringInSlice(req.ScopeApproved, s)
-		if !approved {
-			break
-		}
+	if req.ScopeRequested.Len() == 0 || req.ScopeApproved.Len() == 0 {
+		return false
 	}
-	return approved
+	return req.ScopeApproved.IsSuperset(req.ScopeRequested)
 }
