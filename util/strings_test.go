@@ -115,3 +115,43 @@ func TestStringSetStrings(t *testing.T) {
 		}
 	}
 }
+
+func TestStringSetScan(t *testing.T) {
+	set := NewStringSet()
+	set.Scan([]byte(`{"foo","\"bar",bla,"\\blub"}`))
+
+	if set.Len() != 4 {
+		t.Error("The set should contain four elements")
+	}
+	if !set.Contains(`foo`) {
+		t.Errorf(`Set does not contain 'foo'`)
+	}
+	if !set.Contains(`\"bar`) {
+		t.Errorf(`Set does not contain '\"bar'`)
+	}
+	if !set.Contains(`bla`) {
+		t.Errorf(`Set does not contain 'bla'`)
+	}
+	if !set.Contains(`foo`) {
+		t.Errorf(`Set does not contain 'foo'`)
+	}
+	if !set.Contains(`\\blub`) {
+		t.Errorf(`Set does not contain '\\blub'`)
+	}
+}
+
+func TestStringSetValue(t *testing.T) {
+	slice := NewStringSet(`bar\`, `blub"`, `foo`)
+
+	value, err := slice.Value()
+	if err != nil {
+		t.Error(err)
+	}
+	str, ok := value.(string)
+	if !ok {
+		t.Error("Unable to converto into bytes")
+	}
+	if str != `{"bar\\","blub\"","foo"}` {
+		t.Error(`str was supposed to be '{"bar\\","blub\"","foo"}'`)
+	}
+}

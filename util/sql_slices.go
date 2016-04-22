@@ -15,15 +15,11 @@ import (
 	"strings"
 
 	"database/sql/driver"
-	"regexp"
 )
 
 // SqlStringSlice is a slice with support for postgres arrays
 // Inspired by https://gist.github.com/adharris/4163702
 type SqlStringSlice []string
-
-var arrayRegex = regexp.MustCompile(`((((([^",\\{}\s(NULL)])+|"([^"\\]|\\"|\\\\)*")))(,)?)`)
-var regexValIndex = 3
 
 // Scan implements the Scanner interface.
 func (s *SqlStringSlice) Scan(src interface{}) error {

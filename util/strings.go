@@ -10,9 +10,16 @@ package util
 
 import (
 	"database/sql/driver"
+	"errors"
+	"fmt"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 )
+
+var arrayRegex = regexp.MustCompile(`((((([^",\\{}\s(NULL)])+|"([^"\\]|\\"|\\\\)*")))(,)?)`)
+var regexValIndex = 3
 
 var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
 var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
@@ -56,7 +63,7 @@ func NewStringSet(strs ...string) StringSet {
 	return set
 }
 
-// Implements StringSet based on a sorted slice of strings.
+// StringSet is a simple set implementation based on map.
 type mapStringSet map[string]bool
 
 // Add returns a set with one additional element.
@@ -78,7 +85,10 @@ func (set mapStringSet) Contains(s string) bool {
 }
 
 // IsSuperset returns true if the set is a superset of the other set.
-func (set mapStringSet) IsSuperset(other StringSet) bool {
+func (set StringSet) IsSuperset(other StringSet) bool {
+	if set.Len() == 0 {
+		return false
+	}
 	for _, s := range other.Strings() {
 		if !set.Contains(s) {
 			return false
@@ -123,20 +133,30 @@ func (set mapStringSet) Strings() []string {
 	for s := range set {
 		strs = append(strs, s)
 	}
+	sort.StringSlice(strs).Sort()
 	return strs
 }
 
 // Scan implements the Scanner interface.
 func (set mapStringSet) Scan(src interface{}) error {
-	var strs SqlStringSlice
-	err := strs.Scan(src)
-	if err != nil {
-		return err
+	asBytes, ok := src.([]byte)
+	if !ok {
+		return errors.New("Souce wan not []byte")
 	}
+
+	asStr := string(asBytes)
+	results := make([]string, 0)
+	matches := arrayRegex.FindAllStringSubmatch(asStr, -1)
+	for _, match := range matches {
+		s := match[regexValIndex]
+		s = strings.Trim(s, "\"")
+		results = append(results, s)
+	}
+
 	for s := range set {
 		delete(set, s)
 	}
-	for _, s := range strs {
+	for _, s := range results {
 		set[s] = true
 	}
 	return nil
@@ -144,5 +164,14 @@ func (set mapStringSet) Scan(src interface{}) error {
 
 // Value implements the driver Valuer interface.
 func (set mapStringSet) Value() (driver.Value, error) {
-	return SqlStringSlice(set.Strings()).Value()
+	if set.Len() == 0 {
+		return `{}`, nil
+	}
+
+	quoted := make([]string, set.Len(), set.Len())
+	for i, s := range set.Strings() {
+		quoted[i] = fmt.Sprintf(strconv.Quote(s))
+	}
+
+	return fmt.Sprintf("{%s}", strings.Join(quoted, ",")), nil
 }
