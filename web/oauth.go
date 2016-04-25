@@ -23,58 +23,38 @@ import (
 	"strings"
 )
 
-type authorizeData struct {
-	ResponseType string
-	ClientId     string
-	RedirectURI  string
-	State        string
-	Scope        []string
-}
-
 // Authorize handles the beginning of an OAuth grant request following the schema
 // of 'implicit' or 'code' grant types.
 func Authorize(w http.ResponseWriter, r *http.Request) {
-	authParam := &authorizeData{}
-	err := util.ReadQueryIntoStruct(r, authParam, false)
+	param := &struct {
+		ResponseType string
+		ClientId     string
+		RedirectURI  string
+		State        string
+		Scope        []string
+	}{}
+
+	err := util.ReadQueryIntoStruct(r, param, false)
 	if err != nil {
 		PrintErrorHTML(w, r, err, 400)
 		return
 	}
 
-	if !(authParam.ResponseType == "code" || authParam.ResponseType == "token") {
-		PrintErrorHTML(w, r, "Parameter response_type must be 'code' or 'token'", http.StatusBadRequest)
-		return
-	}
-
-	scope := util.NewStringSet(authParam.Scope...)
-	if !data.CheckScope(scope) {
-		PrintErrorHTML(w, r, fmt.Sprintf("Invalid scope %s", authParam.Scope), http.StatusBadRequest)
-		return
-	}
-
-	grantRequest := &data.GrantRequest{ScopeRequested: scope}
-	grantRequest.GrantType = authParam.ResponseType
-
-	client, ok := data.GetClientByName(authParam.ClientId)
+	client, ok := data.GetClientByName(param.ClientId)
 	if !ok {
-		PrintErrorHTML(w, r, fmt.Sprintf("Client '%s' does not exist", authParam.ClientId), http.StatusBadRequest)
+		PrintErrorHTML(w, r, fmt.Sprintf("Client '%s' does not exist", param.ClientId), http.StatusBadRequest)
 		return
 	}
-	grantRequest.ClientUUID = client.UUID
 
-	if !client.RedirectURIs.Contains(authParam.RedirectURI) {
-		PrintErrorHTML(w, r, fmt.Sprintf("Redirect URI '%s' not registered for client", authParam.RedirectURI), http.StatusBadRequest)
-		return
-	}
-	grantRequest.RedirectURI = authParam.RedirectURI
-
-	err = grantRequest.Create()
+	scope := util.NewStringSet(param.Scope...)
+	request, err := client.CreateGrantRequest(param.ResponseType, param.RedirectURI, param.State, scope)
 	if err != nil {
-		panic("Unable to save grant request")
+		PrintErrorHTML(w, r, err, http.StatusBadRequest)
+		return
 	}
 
 	w.Header().Add("Cache-Control", "no-store")
-	http.Redirect(w, r, "/oauth/login_page?request_id="+grantRequest.Token, http.StatusFound)
+	http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusFound)
 }
 
 type loginData struct {

@@ -10,6 +10,8 @@ package data
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
 	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
 	"time"
@@ -163,6 +165,28 @@ func (client *Client) Create() error {
 		}
 	}
 	return tx.Commit()
+}
+
+func (client *Client) CreateGrantRequest(responseType, redirectURI, state string, scope util.StringSet) (*GrantRequest, error) {
+	if !(responseType == "code" || responseType == "token") {
+		return nil, errors.New("Response type expected to be 'code' or 'token'")
+	}
+	if !client.RedirectURIs.Contains(redirectURI) {
+		return nil, errors.New(fmt.Sprintf("Redirect URI invalid: '%s'", redirectURI))
+	}
+	if !CheckScope(scope) {
+		return nil, errors.New("Invalid scope")
+	}
+
+	request := &GrantRequest{
+		GrantType:      responseType,
+		RedirectURI:    redirectURI,
+		State:          state,
+		ScopeRequested: scope,
+		ClientUUID:     client.UUID}
+	err := request.Create()
+
+	return request, err
 }
 
 // Delete removes an existing client from the database
