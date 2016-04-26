@@ -191,7 +191,7 @@ func ApprovePage(w http.ResponseWriter, r *http.Request) {
 	data.ClearOldGrantRequests()
 
 	query := r.URL.Query()
-	if query == nil {
+	if query == nil || len(query) == 0 {
 		PrintErrorHTML(w, r, "Query parameter 'request_id' was missing", http.StatusBadRequest)
 		return
 	}
