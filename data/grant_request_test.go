@@ -102,7 +102,7 @@ func TestGrantRequestExchangeCodeForTokens(t *testing.T) {
 	}
 }
 
-func TestCreateGrantRequest(t *testing.T) {
+func TestGrantRequestCreate(t *testing.T) {
 	InitTestDb(t)
 
 	token := util.RandomToken()
@@ -114,7 +114,6 @@ func TestCreateGrantRequest(t *testing.T) {
 		State:          state,
 		Code:           sql.NullString{String: code, Valid: true},
 		ScopeRequested: util.NewStringSet("foo-read", "foo-write", "foo-admin"),
-		ScopeApproved:  util.NewStringSet("foo-read"),
 		ClientUUID:     uuidClientGin,
 		AccountUUID:    sql.NullString{String: uuidAlice, Valid: true}}
 
@@ -136,12 +135,24 @@ func TestCreateGrantRequest(t *testing.T) {
 	if !check.ScopeRequested.Contains("foo-read") {
 		t.Error("Requested scope should contain 'foo-read'")
 	}
-	if !check.ScopeApproved.Contains("foo-read") {
-		t.Error("Approved scope should contain  'foo-read'")
+}
+
+func TestGrantRequestClient(t *testing.T) {
+	InitTestDb(t)
+	defer util.FailOnPanic(t)
+
+	req, ok := GetGrantRequest(grantReqTokenAlice)
+	if !ok {
+		t.Error("Grant request does not exist")
+	}
+
+	client := req.Client()
+	if client.Name != "gin" {
+		t.Error("Client name expected to be 'gin'")
 	}
 }
 
-func TestUpdateGrantRequest(t *testing.T) {
+func TestGrantRequestUpdate(t *testing.T) {
 	InitTestDb(t)
 
 	newCode := util.RandomToken()
@@ -172,7 +183,27 @@ func TestUpdateGrantRequest(t *testing.T) {
 	}
 }
 
-func TestDeleteGrantRequest(t *testing.T) {
+func TestGrantRequestIsApproved(t *testing.T) {
+	InitTestDb(t)
+
+	request, ok := GetGrantRequest(grantReqTokenAlice)
+	if !ok {
+		t.Error("Grant request does not exist")
+	}
+	if !request.IsApproved() {
+		t.Error("Grant request should be approved")
+	}
+
+	request, ok = GetGrantRequest(grantReqTokenBob)
+	if !ok {
+		t.Error("Grant request does not exist")
+	}
+	if request.IsApproved() {
+		t.Error("Grant request should not be approved")
+	}
+}
+
+func TestGrantRequestDelete(t *testing.T) {
 	InitTestDb(t)
 
 	req, ok := GetGrantRequest(grantReqTokenAlice)
@@ -188,107 +219,5 @@ func TestDeleteGrantRequest(t *testing.T) {
 	_, ok = GetGrantRequest(uuidClientGin)
 	if ok {
 		t.Error("Grant request should not exist")
-	}
-}
-
-func TestGrantRequestGetApproval(t *testing.T) {
-	InitTestDb(t)
-
-	req, ok := GetGrantRequest(grantReqTokenAlice)
-	if !ok {
-		t.Error("Grant request does not exist")
-	}
-	cli, ok := req.GetClientApproval()
-	if !ok {
-		t.Error("Approval does not exist")
-	}
-	if cli.ClientUUID != req.ClientUUID {
-		t.Errorf("Client UUID should be '%s' but was '%s'", req.ClientUUID, cli.ClientUUID)
-	}
-	if cli.AccountUUID != uuidAlice {
-		t.Errorf("Account UUID should be '%s' but was '%s'", uuidAlice, cli.AccountUUID)
-	}
-
-	req, ok = GetGrantRequest(grantReqTokenBob)
-	if !ok {
-		t.Error("Grant request does not exist")
-	}
-	cli, ok = req.GetClientApproval()
-	if ok {
-		t.Error("Approval should not exist")
-	}
-}
-
-func TestGrantRequestApproveScopes(t *testing.T) {
-	InitTestDb(t)
-
-	token := util.RandomToken()
-	request := GrantRequest{
-		Token:          token,
-		GrantType:      "code",
-		State:          util.RandomToken(),
-		ScopeRequested: util.NewStringSet("repo-read"),
-		ClientUUID:     uuidClientGin,
-		AccountUUID:    sql.NullString{String: uuidAlice, Valid: true}}
-
-	err := request.Create()
-	if err != nil {
-		t.Error(err)
-	}
-
-	ok := request.ApproveScopes()
-	if !ok {
-		t.Error("Scopes not approved")
-	}
-
-	check, ok := GetGrantRequest(token)
-	if !ok {
-		t.Error("Grant request does not exist")
-	}
-	if check.ScopeApproved.Len() != 1 {
-		t.Error("Approved scope should have length 1")
-	}
-	if !check.ScopeApproved.Contains("repo-read") {
-		t.Error("Approved scope should contain 'repo-read'")
-	}
-}
-
-func TestGrantRequestIsApproved(t *testing.T) {
-	InitTestDb(t)
-
-	request := GrantRequest{
-		ScopeRequested: util.NewStringSet("repo-read"),
-		ScopeApproved:  util.NewStringSet("repo-read", "something-else"),
-	}
-	ok := request.IsApproved()
-	if !ok {
-		t.Error("Grant request should be approved")
-	}
-
-	request = GrantRequest{
-		ScopeRequested: util.NewStringSet("repo-read", "repo-write"),
-		ScopeApproved:  util.NewStringSet("repo-read", "repo-write"),
-	}
-	ok = request.IsApproved()
-	if !ok {
-		t.Error("Grant request should be approved")
-	}
-
-	request = GrantRequest{
-		ScopeRequested: util.NewStringSet("repo-read", "repo-write", "something-else"),
-		ScopeApproved:  util.NewStringSet("repo-read", "repo-write"),
-	}
-	ok = request.IsApproved()
-	if ok {
-		t.Error("Grant request should not be approved")
-	}
-
-	request = GrantRequest{
-		ScopeRequested: util.NewStringSet(),
-		ScopeApproved:  util.NewStringSet(),
-	}
-	ok = request.IsApproved()
-	if ok {
-		t.Error("Grant request should not be approved")
 	}
 }

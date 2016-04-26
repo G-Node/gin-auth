@@ -11,8 +11,9 @@ package data
 import (
 	"database/sql"
 	"errors"
-	"github.com/G-Node/gin-auth/util"
 	"time"
+
+	"github.com/G-Node/gin-auth/util"
 )
 
 // GrantRequest contains data about an ongoing authorization grant request.
@@ -22,7 +23,6 @@ type GrantRequest struct {
 	State          string
 	Code           sql.NullString
 	ScopeRequested util.StringSet
-	ScopeApproved  util.StringSet
 	RedirectURI    string
 	ClientUUID     string
 	AccountUUID    sql.NullString
@@ -108,12 +108,12 @@ func (req *GrantRequest) ExchangeCodeForTokens() (string, string, error) {
 
 	refresh := &RefreshToken{
 		Token:       util.RandomToken(),
-		Scope:       req.ScopeApproved,
+		Scope:       req.ScopeRequested,
 		ClientUUID:  req.ClientUUID,
 		AccountUUID: req.AccountUUID.String}
 	access := &AccessToken{
 		Token:       util.RandomToken(),
-		Scope:       req.ScopeApproved,
+		Scope:       req.ScopeRequested,
 		Expires:     time.Now().Add(DefaultTokenLifeTime),
 		ClientUUID:  req.ClientUUID,
 		AccountUUID: req.AccountUUID.String}
@@ -130,38 +130,34 @@ func (req *GrantRequest) ExchangeCodeForTokens() (string, string, error) {
 		return "", "", err
 	}
 	err = tx.Commit()
-	if err != nil {
-		tx.Rollback()
-		return "", "", err
-	}
 
-	return access.Token, refresh.Token, nil
+	return access.Token, refresh.Token, err
 }
 
 // Create stores a new grant request.
 func (req *GrantRequest) Create() error {
-	const q = `INSERT INTO GrantRequests (token, grantType, state, code, scopeRequested, scopeApproved, redirectUri,
+	const q = `INSERT INTO GrantRequests (token, grantType, state, code, scopeRequested, redirectUri,
 	                                      clientUUID, accountUUID, createdAt, updatedAt)
-	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now())
+	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now(), now())
 	           RETURNING *`
 
 	if req.Token == "" {
 		req.Token = util.RandomToken()
 	}
 
-	return database.Get(req, q, req.Token, req.GrantType, req.State, req.Code, req.ScopeRequested, req.ScopeApproved,
+	return database.Get(req, q, req.Token, req.GrantType, req.State, req.Code, req.ScopeRequested,
 		req.RedirectURI, req.ClientUUID, req.AccountUUID)
 }
 
 // Update an existing grant request.
 func (req *GrantRequest) Update() error {
 	const q = `UPDATE GrantRequests gr
-	           SET (grantType, state, code, scopeRequested, scopeApproved, redirectUri, clientUUID, accountUUID, updatedAt) =
-	               ($1, $2, $3, $4, $5, $6, $7, $8, now())
-	           WHERE token=$9
+	           SET (grantType, state, code, scopeRequested, redirectUri, clientUUID, accountUUID, updatedAt) =
+	               ($1, $2, $3, $4, $5, $6, $7, now())
+	           WHERE token=$8
 	           RETURNING *`
 
-	return database.Get(req, q, req.GrantType, req.State, req.Code, req.ScopeRequested, req.ScopeApproved, req.RedirectURI,
+	return database.Get(req, q, req.GrantType, req.State, req.Code, req.ScopeRequested, req.RedirectURI,
 		req.ClientUUID, req.AccountUUID, req.Token)
 }
 
@@ -173,44 +169,29 @@ func (req *GrantRequest) Delete() error {
 	return err
 }
 
-// GetClientApproval gets a matching client approval from the database
-func (req *GrantRequest) GetClientApproval() (*ClientApproval, bool) {
-	const q = `SELECT * FROM ClientApprovals
-	           WHERE clientUUID=$1 AND accountUUID=$2`
-
-	approval := &ClientApproval{}
-	err := database.Get(approval, q, req.ClientUUID, req.AccountUUID)
-
-	if err != nil && err != sql.ErrNoRows {
-		panic(err)
-	}
-
-	return approval, err == nil
-}
-
-// ApproveScopes checks for a matching client approval, approves the requested
-// scope and saves the result.
-func (req *GrantRequest) ApproveScopes() bool {
-	approval, ok := req.GetClientApproval()
+// Client returns the client associated with the grant request.
+func (req *GrantRequest) Client() *Client {
+	client, ok := GetClient(req.ClientUUID)
 	if !ok {
-		return false
+		panic("Unable to retrieve client for grant request")
 	}
-
-	approved := approval.Scope.IsSuperset(req.ScopeRequested)
-	if !approved {
-		return false
-	}
-
-	req.ScopeApproved = req.ScopeRequested
-	err := req.Update()
-	return err == nil
+	return client
 }
 
-// IsApproved just looks up whether the requested scope is in
-// the approved scope.
+// IsApproved just looks up whether the requested scope is covered by the scope
+// of an existing approval
 func (req *GrantRequest) IsApproved() bool {
-	if req.ScopeRequested.Len() == 0 || req.ScopeApproved.Len() == 0 {
+	const q = `SELECT scope FROM ClientApprovals WHERE clientUUID = $1 AND accountUUID = $2`
+
+	if !req.AccountUUID.Valid {
 		return false
 	}
-	return req.ScopeApproved.IsSuperset(req.ScopeRequested)
+
+	scope := util.NewStringSet()
+	err := database.Get(&scope, q, req.ClientUUID, req.AccountUUID.String)
+	if err != nil {
+		return false
+	}
+
+	return scope.IsSuperset(req.ScopeRequested)
 }
