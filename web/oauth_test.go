@@ -116,6 +116,34 @@ func TestAuthorize(t *testing.T) {
 	}
 }
 
+func TestLoginPage(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	// missing query param
+	request, _ := http.NewRequest("GET", "/oauth/login_page", strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// missing query param
+	request, _ = http.NewRequest("GET", "/oauth/login_page?request_id=doesnotexist", strings.NewReader(""))
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// missing query param
+	request, _ = http.NewRequest("GET", "/oauth/login_page?request_id=U7JIKKYI", strings.NewReader(""))
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+}
+
 func newLoginBody() *url.Values {
 	body := &url.Values{}
 	body.Add("request_id", "U7JIKKYI")
