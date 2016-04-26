@@ -283,7 +283,12 @@ func TestToken(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-	data := &responseTokenData{}
+
+	data := &struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		TokenType    string `json:"token_type"`
+	}{}
 	json.Unmarshal(response.Body.Bytes(), data)
 	if data.AccessToken == "" {
 		t.Error("No token recieved")

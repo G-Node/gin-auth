@@ -97,29 +97,29 @@ func LoginPage(w http.ResponseWriter, r *http.Request) {
 func Login(w http.ResponseWriter, r *http.Request) {
 	data.ClearOldGrantRequests()
 
-	loginParam := &loginData{}
-	err := util.ReadFormIntoStruct(r, loginParam, false)
+	param := &loginData{}
+	err := util.ReadFormIntoStruct(r, param, false)
 	if err != nil {
 		PrintErrorHTML(w, r, err, http.StatusBadRequest)
 		return
 	}
 
 	// look for existing grant request
-	request, ok := data.GetGrantRequest(loginParam.RequestID)
+	request, ok := data.GetGrantRequest(param.RequestID)
 	if !ok {
 		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusNotFound)
 		return
 	}
 
 	// verify login data
-	account, ok := data.GetAccountByLogin(loginParam.Login)
+	account, ok := data.GetAccountByLogin(param.Login)
 	if !ok {
 		w.Header().Add("Cache-Control", "no-store")
 		http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusUnauthorized)
 		return
 	}
 
-	ok = account.VerifyPassword(loginParam.Password)
+	ok = account.VerifyPassword(param.Password)
 	if !ok {
 		w.Header().Add("Cache-Control", "no-store")
 		http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusUnauthorized)
@@ -133,8 +133,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// if approved finish the grant request, otherwise redirect to approve page
-	approved := request.ApproveScopes()
-	if approved {
+	if request.IsApproved() {
 		if request.GrantType == "code" {
 			finishCodeRequest(w, r, request)
 		} else {
@@ -153,7 +152,7 @@ func finishCodeRequest(w http.ResponseWriter, r *http.Request, request *data.Gra
 		panic(err)
 	}
 
-	scope := url.QueryEscape(strings.Join(request.ScopeApproved.Strings(), ","))
+	scope := url.QueryEscape(strings.Join(request.ScopeRequested.Strings(), ","))
 	state := url.QueryEscape(request.State)
 	url := fmt.Sprintf("%s?scope=%s&state=%s&code=%s", request.RedirectURI, scope, state, request.Code.String)
 
@@ -171,7 +170,7 @@ func finishImplicitRequest(w http.ResponseWriter, r *http.Request, request *data
 		Token:       util.RandomToken(),
 		ClientUUID:  request.ClientUUID,
 		AccountUUID: request.AccountUUID.String,
-		Scope:       request.ScopeApproved,
+		Scope:       request.ScopeRequested,
 	}
 
 	err = token.Create()
@@ -185,12 +184,6 @@ func finishImplicitRequest(w http.ResponseWriter, r *http.Request, request *data
 
 	w.Header().Add("Cache-Control", "no-store")
 	http.Redirect(w, r, url, http.StatusFound)
-}
-
-type approveData struct {
-	Client    string
-	RequestID string
-	Scope     []string
 }
 
 // ApprovePage shows a page where the user can approve client access.
@@ -209,7 +202,8 @@ func ApprovePage(w http.ResponseWriter, r *http.Request) {
 		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusNotFound)
 		return
 	}
-	client, ok := data.GetClient(request.ClientUUID)
+
+	client := request.Client()
 	if !ok {
 		panic("Client does not exist")
 	}
@@ -241,30 +235,40 @@ func ApprovePage(w http.ResponseWriter, r *http.Request) {
 func Approve(w http.ResponseWriter, r *http.Request) {
 	data.ClearOldGrantRequests()
 
-	approveParam := &approveData{}
-	util.ReadFormIntoStruct(r, approveParam, true)
+	param := &struct {
+		Client    string
+		RequestID string
+		Scope     []string
+	}{}
+	util.ReadFormIntoStruct(r, param, true)
 
-	request, ok := data.GetGrantRequest(approveParam.RequestID)
+	request, ok := data.GetGrantRequest(param.RequestID)
 	if !ok {
 		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusNotFound)
 		return
 	}
 
-	// create approval
-	approval := &data.ClientApproval{
-		Scope:       util.NewStringSet(approveParam.Scope...),
-		ClientUUID:  request.ClientUUID,
-		AccountUUID: request.AccountUUID.String,
+	if !request.AccountUUID.Valid {
+		PrintErrorHTML(w, r, "Grant request is not authenticated", http.StatusUnauthorized)
+		return
 	}
-	err := approval.Create()
+
+	scope := util.NewStringSet(param.Scope...)
+	if !scope.IsSuperset(request.ScopeRequested) {
+		PrintErrorHTML(w, r, "Requested scope was not approved", http.StatusUnauthorized)
+		return
+	}
+
+	// create approval
+	client := request.Client()
+	err := client.Approve(request.AccountUUID.String, request.ScopeRequested)
 	if err != nil {
 		panic(err)
 	}
 
 	// if approved finish the grant request
-	approved := request.ApproveScopes()
-	if !approved {
-		panic("Unable to approve requested scope")
+	if !request.IsApproved() {
+		panic("Requested scope should be approved but was not")
 	}
 
 	if request.GrantType == "code" {
@@ -272,18 +276,6 @@ func Approve(w http.ResponseWriter, r *http.Request) {
 	} else {
 		finishImplicitRequest(w, r, request)
 	}
-}
-
-type requestTokenData struct {
-	RedirectURI string
-	Code        string
-	GrantType   string
-}
-
-type responseTokenData struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	TokenType    string `json:"token_type"`
 }
 
 // Token exchanges a grant code for an access and refresh token
@@ -306,18 +298,22 @@ func Token(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestData := &requestTokenData{}
-	err := util.ReadFormIntoStruct(r, requestData, false)
+	param := &struct {
+		RedirectURI string
+		Code        string
+		GrantType   string
+	}{}
+	err := util.ReadFormIntoStruct(r, param, false)
 	if err != nil {
 		PrintErrorJSON(w, r, err, 400)
 		return
 	}
-	if requestData.GrantType != "authorization_code" {
+	if param.GrantType != "authorization_code" {
 		PrintErrorJSON(w, r, "Unsupported grant type", http.StatusBadRequest)
 		return
 	}
 
-	request, ok := data.GetGrantRequestByCode(requestData.Code)
+	request, ok := data.GetGrantRequestByCode(param.Code)
 	if !ok {
 		PrintErrorJSON(w, r, "Invalid grant code", http.StatusUnauthorized)
 		return
@@ -329,10 +325,15 @@ func Token(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := responseTokenData{
+	response := struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+		TokenType    string `json:"token_type"`
+	}{
 		TokenType:    "Bearer",
 		AccessToken:  access,
-		RefreshToken: refresh}
+		RefreshToken: refresh,
+	}
 
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
