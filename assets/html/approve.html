@@ -5,11 +5,11 @@
     The client <strong>{{ .Client }}</strong> requests your approval for accessing the following scopes on your behalf:
 </p>
 <form action="/oauth/approve" method="post">
-    {{ range .Scope }}
+    {{ range $scope, $description := .Scope }}
     <div class="form-group">
-        <label class="larger" for="scope-{{ . }}">
-            <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> {{ . }}
-            <input type="hidden" id="scope-{{ . }}" name="scope" value="{{ . }}">
+        <label for="scope-{{ $scope }}">
+            <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> {{ $description }}
+            <input type="hidden" id="scope-{{ $scope }}" name="scope" value="{{ $scope }}">
         </label>
     </div>
     {{ end }}

@@ -10,20 +10,23 @@ package data
 
 import (
 	"database/sql"
-	"github.com/G-Node/gin-auth/util"
+	"errors"
+	"fmt"
 	"github.com/pborman/uuid"
 	"time"
+
+	"github.com/G-Node/gin-auth/util"
 )
 
 // Client object stored in the database
 type Client struct {
-	UUID          string
-	Name          string
-	Secret        string
-	ScopeProvided SqlStringSlice
-	RedirectURIs  SqlStringSlice
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	UUID             string
+	Name             string
+	Secret           string
+	ScopeProvidedMap map[string]string
+	RedirectURIs     util.StringSet
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 // ListClients returns all registered OAuth clients ordered by name
@@ -42,72 +45,192 @@ func ListClients() []Client {
 // GetClient returns an OAuth client with a given uuid.
 // Returns false if no client with a matching uuid can be found.
 func GetClient(uuid string) (*Client, bool) {
-	const q = `SELECT * FROM Clients c WHERE c.uuid=$1`
-
-	client := &Client{}
-	err := database.Get(client, q, uuid)
-	if err != nil && err != sql.ErrNoRows {
-		panic(err)
-	}
-
-	return client, err == nil
+	const q = `SELECT * FROM Clients WHERE uuid=$1`
+	return getClient(q, uuid)
 }
 
 // GetClientByName returns an OAuth client with a given client name.
 // Returns false if no client with a matching name can be found.
 func GetClientByName(name string) (*Client, bool) {
-	const q = `SELECT * FROM Clients c WHERE c.name=$1`
+	const q = `SELECT * FROM Clients WHERE name=$1`
+	return getClient(q, name)
+}
 
-	client := &Client{}
-	err := database.Get(client, q, name)
-	if err != nil && err != sql.ErrNoRows {
+func getClient(q, parameter string) (*Client, bool) {
+	const qScope = `SELECT name, description FROM ClientScopeProvided WHERE clientUUID = $1`
+
+	client := &Client{ScopeProvidedMap: make(map[string]string)}
+	err := database.Get(client, q, parameter)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, false
+		}
 		panic(err)
 	}
 
-	return client, err == nil
+	scope := []struct {
+		Name        string
+		Description string
+	}{}
+	err = database.Select(&scope, qScope, client.UUID)
+	if err != nil {
+		panic(err)
+	}
+	for _, s := range scope {
+		client.ScopeProvidedMap[s.Name] = s.Description
+	}
+
+	return client, true
 }
 
-// ExistsScope checks whether a certain scope exists by searching
-// through all provided scopes from registered clients.
-func ExistsScope(scope SqlStringSlice) bool {
-	const q = `SELECT scopeProvided FROM Clients
-	           WHERE scopeProvided && $1`
+// CheckScope checks whether a certain scope exists by searching
+// through all provided scopes from all registered clients.
+func CheckScope(scope util.StringSet) bool {
+	const q = `SELECT name FROM ClientScopeProvided`
 
-	if len(scope) == 0 {
+	if scope.Len() == 0 {
 		return false
 	}
 
-	all := make([]SqlStringSlice, 0)
-	database.Select(&all, q, scope)
-
-	if len(all) == 0 {
-		return false
-	}
-	flat := all[0]
-	for i := 1; i < len(all); i++ {
-		flat = append(flat, all[i]...)
+	check := []string{}
+	err := database.Select(&check, q)
+	if err != nil {
+		panic(err)
 	}
 
-	for _, s := range scope {
-		if !util.StringInSlice(flat, s) {
-			return false
-		}
+	global := util.NewStringSet(check...)
+	return global.IsSuperset(scope)
+}
+
+// DescribeScope turns a scope into a map of names to descriptions.
+// If the map is complete the second return value is true.
+func DescribeScope(scope util.StringSet) (map[string]string, bool) {
+	const q = `SELECT name, description FROM ClientScopeProvided`
+
+	desc := make(map[string]string)
+	if scope.Len() == 0 {
+		return desc, false
 	}
 
-	return true
+	data := []struct {
+		Name        string
+		Description string
+	}{}
+
+	err := database.Select(&data, q)
+	if err != nil {
+		panic(err)
+	}
+
+	names := make([]string, len(data))
+	for i, d := range data {
+		names[i] = d.Name
+		desc[d.Name] = d.Description
+	}
+	global := util.NewStringSet(names...)
+
+	return desc, global.IsSuperset(scope)
+}
+
+// ScopeProvided the scope provided by this client as a StringSet.
+// The scope is extracted from the clients ScopeProvidedMap.
+func (client *Client) ScopeProvided() util.StringSet {
+	scope := make([]string, 0, len(client.ScopeProvidedMap))
+	for s := range client.ScopeProvidedMap {
+		scope = append(scope, s)
+	}
+	return util.NewStringSet(scope...)
 }
 
 // Create stores a new client in the database.
 func (client *Client) Create() error {
-	const q = `INSERT INTO Clients (uuid, name, secret, scopeProvided, redirectURIs, createdAt, updatedAt)
-	           VALUES ($1, $2, $3, $4, $5, now(), now())
+	const q = `INSERT INTO Clients (uuid, name, secret, redirectURIs, createdAt, updatedAt)
+	           VALUES ($1, $2, $3, $4, now(), now())
 	           RETURNING *`
+	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
+					VALUES ($1, $2, $3)`
 
 	if client.UUID == "" {
 		client.UUID = uuid.NewRandom().String()
 	}
 
-	return database.Get(client, q, client.UUID, client.Name, client.Secret, client.ScopeProvided, client.RedirectURIs)
+	tx := database.MustBegin()
+	err := tx.Get(client, q, client.UUID, client.Name, client.Secret, client.RedirectURIs)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	for k, v := range client.ScopeProvidedMap {
+		_, err = tx.Exec(qScope, client.UUID, k, v)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+// ApprovalForAccount gets a client approval for this client which was
+// approved for a specific account.
+func (client *Client) ApprovalForAccount(accountUUID string) (*ClientApproval, bool) {
+	const q = `SELECT * FROM ClientApprovals WHERE clientUUID = $1 AND accountUUID = $2`
+
+	approval := &ClientApproval{}
+	err := database.Get(approval, q, client.UUID, accountUUID)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+	return approval, err == nil
+}
+
+// Approve creates a new client approval or extends an existing approval, such that the
+// given scope is is approved for the given account.
+func (client *Client) Approve(accountUUID string, scope util.StringSet) (err error) {
+	if !CheckScope(scope) {
+		return errors.New("Invalid scope")
+	}
+
+	approval, ok := client.ApprovalForAccount(accountUUID)
+	if ok {
+		// approval exists
+		if !approval.Scope.IsSuperset(scope) {
+			approval.Scope = approval.Scope.Union(scope)
+			err = approval.Update()
+		}
+	} else {
+		// create new approval
+		approval = &ClientApproval{
+			ClientUUID:  client.UUID,
+			AccountUUID: accountUUID,
+			Scope:       scope,
+		}
+		err = approval.Create()
+	}
+	return err
+}
+
+// CreateGrantRequest check whether response type, redirect URI and scope are valid and creates a new
+// grant request for this client.
+func (client *Client) CreateGrantRequest(responseType, redirectURI, state string, scope util.StringSet) (*GrantRequest, error) {
+	if !(responseType == "code" || responseType == "token") {
+		return nil, errors.New("Response type expected to be 'code' or 'token'")
+	}
+	if !client.RedirectURIs.Contains(redirectURI) {
+		return nil, fmt.Errorf("Redirect URI invalid: '%s'", redirectURI)
+	}
+	if !CheckScope(scope) {
+		return nil, errors.New("Invalid scope")
+	}
+
+	request := &GrantRequest{
+		GrantType:      responseType,
+		RedirectURI:    redirectURI,
+		State:          state,
+		ScopeRequested: scope,
+		ClientUUID:     client.UUID}
+	err := request.Create()
+
+	return request, err
 }
 
 // Delete removes an existing client from the database

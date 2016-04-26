@@ -2,7 +2,9 @@
   Name: gin
   Secret: secret
   ScopeProvided:
-  - repo-read
-  - repo-write
+    account-read: Read access to your account data
+    account-write: Write access to your account data
+    repo-read: Read access to your repositories and repositories shared with you
+    repo-write: Write acces to your repositories and repositories you have write access to
   RedirectURIs:
   - https://localhost:8081/login

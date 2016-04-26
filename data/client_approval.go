@@ -10,6 +10,7 @@ package data
 
 import (
 	"database/sql"
+	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
 	"time"
 )
@@ -19,7 +20,7 @@ import (
 // First Use (TOFU).
 type ClientApproval struct {
 	UUID        string
-	Scope       SqlStringSlice
+	Scope       util.StringSet
 	ClientUUID  string
 	AccountUUID string
 	CreatedAt   time.Time

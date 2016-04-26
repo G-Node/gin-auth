@@ -68,37 +68,63 @@ func TestExistsScope(t *testing.T) {
 	defer util.FailOnPanic(t)
 	InitTestDb(t)
 
-	exists := ExistsScope(SqlStringSlice{"repo-read", "repo-write"})
+	exists := CheckScope(util.NewStringSet("repo-read", "repo-write"))
 	if !exists {
 		t.Error("Scope does not exist")
 	}
 
-	exists = ExistsScope(SqlStringSlice{"repo-read", "something-wrong"})
+	exists = CheckScope(util.NewStringSet("repo-read", "something-wrong"))
 	if exists {
 		t.Error("Scope should not exist")
 	}
 
-	exists = ExistsScope(SqlStringSlice{"something-wrong"})
+	exists = CheckScope(util.NewStringSet("something-wrong"))
 	if exists {
 		t.Error("Scope should not exist")
 	}
 
-	exists = ExistsScope(SqlStringSlice{})
+	exists = CheckScope(util.NewStringSet())
 	if exists {
 		t.Error("Scope should not exist")
 	}
 }
 
-func TestCreateClient(t *testing.T) {
+func TestDescribeScope(t *testing.T) {
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
+
+	desc, ok := DescribeScope(util.NewStringSet("repo-read", "repo-write"))
+	if !ok {
+		t.Error("Scope description is not complete")
+	}
+	if s, ok := desc["repo-read"]; !ok || s == "" {
+		t.Error("Description for 'repo-read' is missing")
+	}
+	if s, ok := desc["repo-write"]; !ok || s == "" {
+		t.Error("Description for 'repo-write' is missing")
+	}
+
+	_, ok = DescribeScope(util.NewStringSet("repo-read", "something-wrong"))
+	if ok {
+		t.Error("Scope description should not be complete")
+	}
+
+	_, ok = DescribeScope(util.NewStringSet())
+	if ok {
+		t.Error("Scope description should not be complete")
+	}
+}
+
+func TestClientCreate(t *testing.T) {
 	InitTestDb(t)
 
 	id := uuid.NewRandom().String()
 	fresh := Client{
-		UUID:          id,
-		Name:          "gin-foo",
-		Secret:        "secret",
-		ScopeProvided: SqlStringSlice{"foo-read", "foo-write"},
-		RedirectURIs:  SqlStringSlice{"https://foo.com/redirect"}}
+		UUID:             id,
+		Name:             "gin-foo",
+		Secret:           "secret",
+		ScopeProvidedMap: map[string]string{"foo-read": "Read access to foo", "foo-write": "Write access to foo"},
+		RedirectURIs:     util.NewStringSet("https://foo.com/redirect")}
 
 	err := fresh.Create()
 	if err != nil {
@@ -112,18 +138,128 @@ func TestCreateClient(t *testing.T) {
 	if check.Name != "gin-foo" {
 		t.Error("Name was expected to bo 'gin-foo'")
 	}
-	if check.ScopeProvided[0] != "foo-read" {
-		t.Error("First scope was expected to be 'foo-read'")
+	if !check.ScopeProvided().Contains("foo-read") {
+		t.Error("Scope should contain 'foo-read'")
 	}
-	if check.ScopeProvided[1] != "foo-write" {
-		t.Error("Second scope was expected to be 'foo-write")
+	if !check.ScopeProvided().Contains("foo-write") {
+		t.Error("Scope should contain 'foo-write")
 	}
-	if check.RedirectURIs[0] != "https://foo.com/redirect" {
-		t.Error("First redirect was expected to be 'https://foo.com/redirect'")
+	if !check.RedirectURIs.Contains("https://foo.com/redirect") {
+		t.Error("Redirect URIs should contain 'https://foo.com/redirect'")
 	}
 }
 
-func TestDeleteClient(t *testing.T) {
+func TestClientApprovalForAccountAndApprove(t *testing.T) {
+	InitTestDb(t)
+
+	client, ok := GetClient(uuidClientGin)
+	if !ok {
+		t.Error("Client does not exist")
+	}
+
+	approval, ok := client.ApprovalForAccount(uuidAlice)
+	if !ok {
+		t.Error("Approval does not exist")
+	}
+	if approval.AccountUUID != uuidAlice {
+		t.Error("Wrong account uuid")
+	}
+	if approval.ClientUUID != client.UUID {
+		t.Error("Wrong client uuid")
+	}
+
+	approval, ok = client.ApprovalForAccount(uuidBob)
+	if ok {
+		t.Error("Approval should not exist")
+	}
+
+	client.Approve(uuidBob, util.NewStringSet("repo-read"))
+	approval, ok = client.ApprovalForAccount(uuidBob)
+	if !ok {
+		t.Error("Approval does not exist")
+	}
+	if !approval.Scope.Contains("repo-read") {
+		t.Error("Approval scope should contain 'repo-read'")
+	}
+	if approval.Scope.Contains("repo-write") {
+		t.Error("Approval scope should not contain 'repo-write'")
+	}
+
+	client.Approve(uuidBob, util.NewStringSet("repo-read", "repo-write"))
+	approval, ok = client.ApprovalForAccount(uuidBob)
+	if !ok {
+		t.Error("Approval does not exist")
+	}
+	if !approval.Scope.Contains("repo-read") {
+		t.Error("Approval scope should contain 'repo-read'")
+	}
+	if !approval.Scope.Contains("repo-write") {
+		t.Error("Approval scope should contain 'repo-write'")
+	}
+}
+
+func TestClientCreateGrantRequest(t *testing.T) {
+	InitTestDb(t)
+
+	client, ok := GetClient(uuidClientGin)
+	if !ok {
+		t.Error("Client does not exist")
+	}
+
+	state := util.RandomToken()
+
+	// wrong response type
+	request, err := client.CreateGrantRequest("foo", client.RedirectURIs.Strings()[0], state, util.NewStringSet("repo-read"))
+	if err == nil {
+		t.Error("Error expected")
+	}
+
+	// wrong redirect
+	request, err = client.CreateGrantRequest("foo", "https://doesnotexist.com/callback", state, util.NewStringSet("repo-read"))
+	if err == nil {
+		t.Error("Error expected")
+	}
+
+	// wrong scope
+	request, err = client.CreateGrantRequest("foo", client.RedirectURIs.Strings()[0], state, util.NewStringSet("foo-read"))
+	if err == nil {
+		t.Error("Error expected")
+	}
+
+	// all OK
+	request, err = client.CreateGrantRequest("code", client.RedirectURIs.Strings()[0], state, util.NewStringSet("repo-read"))
+	if err != nil {
+		t.Error(err)
+	}
+	if request.ClientUUID != client.UUID {
+		t.Error("Client UUID does not match")
+	}
+	if !request.ScopeRequested.Contains("repo-read") {
+		t.Error("The requested scope should contain 'repo-read'")
+	}
+	if request.State != state {
+		t.Error("State does not match")
+	}
+}
+
+func TestClientScopeProvided(t *testing.T) {
+	InitTestDb(t)
+
+	client := &Client{ScopeProvidedMap: map[string]string{"foo": "Foo", "bar": "Bar"}}
+	scope := client.ScopeProvided()
+
+	if scope.Len() != 2 {
+		t.Errorf("Scope should have 2 elements but has %d", scope.Len())
+	}
+	if !scope.Contains("foo") {
+		t.Error("Scope should contain 'foo'")
+	}
+	if !scope.Contains("bar") {
+		t.Error("Scope should contain 'bar'")
+	}
+}
+
+func TestClientDelete(t *testing.T) {
 	InitTestDb(t)
 
 	client, ok := GetClient(uuidClientGin)

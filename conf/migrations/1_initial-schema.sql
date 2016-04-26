@@ -37,10 +37,15 @@ CREATE TABLE Clients (
   uuid              VARCHAR(36) PRIMARY KEY ,
   name              VARCHAR(512) NOT NULL UNIQUE ,      -- in oauth lingo this is the client_id
   secret            VARCHAR(512) ,
-  scopeProvided     VARCHAR[] NOT NULL ,
   redirectURIs      VARCHAR[] NOT NULL ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
+);
+
+CREATE TABLE ClientScopeProvided (
+  clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
+  name              VARCHAR(512) NOT NULL UNIQUE ,
+  description       VARCHAR(1024) NOT NULL
 );
 
 CREATE TABLE ClientApprovals (
@@ -49,7 +54,8 @@ CREATE TABLE ClientApprovals (
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
   createdAt         TIMESTAMP NOT NULL ,
-  updatedAt         TIMESTAMP NOT NULL
+  updatedAt         TIMESTAMP NOT NULL ,
+  UNIQUE (clientUUID, accountUUID)
 );
 
 CREATE TABLE GrantRequests (
@@ -58,7 +64,6 @@ CREATE TABLE GrantRequests (
   state             VARCHAR(512) NOT NULL ,
   code              VARCHAR(512) ,
   scopeRequested    VARCHAR[] NOT NULL ,
-  scopeApproved     VARCHAR[] NOT NULL ,
   redirectURI       VARCHAR(512) NOT NULL ,
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
@@ -102,6 +107,7 @@ DROP TABLE IF EXISTS AccessTokens CASCADE;
 DROP TABLE IF EXISTS RefreshTokens CASCADE;
 DROP TABLE IF EXISTS ClientApprovals CASCADE;
 DROP TABLE IF EXISTS GrantRequests CASCADE;
+DROP TABLE IF EXISTS ClientScopeProvided CASCADE;
 DROP TABLE IF EXISTS Clients CASCADE;
 DROP TABLE IF EXISTS SSHKeys CASCADE;
 DROP TABLE IF EXISTS Accounts CASCADE;
