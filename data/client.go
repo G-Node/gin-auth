@@ -86,14 +86,14 @@ func getClient(q, parameter string) (*Client, bool) {
 // CheckScope checks whether a certain scope exists by searching
 // through all provided scopes from all registered clients.
 func CheckScope(scope util.StringSet) bool {
-	const q = `SELECT name FROM ClientScopeProvided WHERE array_position($1, name) >= 0`
+	const q = `SELECT name FROM ClientScopeProvided`
 
 	if scope.Len() == 0 {
 		return false
 	}
 
 	check := []string{}
-	err := database.Select(&check, q, scope)
+	err := database.Select(&check, q)
 	if err != nil {
 		panic(err)
 	}
@@ -105,7 +105,7 @@ func CheckScope(scope util.StringSet) bool {
 // DescribeScope turns a scope into a map of names to descriptions.
 // If the map is complete the second return value is true.
 func DescribeScope(scope util.StringSet) (map[string]string, bool) {
-	const q = `SELECT name, description FROM ClientScopeProvided WHERE array_position($1, name) >= 0`
+	const q = `SELECT name, description FROM ClientScopeProvided`
 
 	desc := make(map[string]string)
 	if scope.Len() == 0 {
@@ -117,7 +117,7 @@ func DescribeScope(scope util.StringSet) (map[string]string, bool) {
 		Description string
 	}{}
 
-	err := database.Select(&data, q, scope)
+	err := database.Select(&data, q)
 	if err != nil {
 		panic(err)
 	}
