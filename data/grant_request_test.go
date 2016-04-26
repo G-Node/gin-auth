@@ -25,7 +25,7 @@ func TestListGrantRequests(t *testing.T) {
 	InitTestDb(t)
 
 	requests := ListGrantRequests()
-	if len(requests) != 2 {
+	if len(requests) != 3 {
 		t.Error("Exactly two grant requests expected in list")
 	}
 }
@@ -63,6 +63,22 @@ func TestGetGrantRequestByCode(t *testing.T) {
 	_, ok = GetGrantRequestByCode("doesNotExist")
 	if ok {
 		t.Error("Grant request should not exist")
+	}
+}
+
+func TestClearOldGrantRequests(t *testing.T) {
+	InitTestDb(t)
+
+	all := ListGrantRequests()
+	if len(all) != 3 {
+		t.Error("There should be two grant requests")
+	}
+
+	ClearOldGrantRequests()
+
+	all = ListGrantRequests()
+	if len(all) != 2 {
+		t.Error("There should be exactly one grant requests")
 	}
 }
 
