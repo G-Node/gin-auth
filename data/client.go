@@ -12,9 +12,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
 	"time"
+
+	"github.com/G-Node/gin-auth/util"
 )
 
 // Client object stored in the database
@@ -131,8 +132,10 @@ func DescribeScope(scope util.StringSet) (map[string]string, bool) {
 	return desc, global.IsSuperset(scope)
 }
 
+// ScopeProvided the scope provided by this client as a StringSet.
+// The scope is extracted from the clients ScopeProvidedMap.
 func (client *Client) ScopeProvided() util.StringSet {
-	scope := make([]string, len(client.ScopeProvidedMap))
+	scope := make([]string, 0, len(client.ScopeProvidedMap))
 	for s := range client.ScopeProvidedMap {
 		scope = append(scope, s)
 	}
@@ -167,12 +170,53 @@ func (client *Client) Create() error {
 	return tx.Commit()
 }
 
+// ApprovalForAccount gets a client approval for this client which was
+// approved for a specific account.
+func (client *Client) ApprovalForAccount(accountUUID string) (*ClientApproval, bool) {
+	const q = `SELECT * FROM ClientApprovals WHERE clientUUID = $1 AND accountUUID = $2`
+
+	approval := &ClientApproval{}
+	err := database.Get(approval, q, client.UUID, accountUUID)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+	return approval, err == nil
+}
+
+// Approve creates a new client approval or extends an existing approval, such that the
+// given scope is is approved for the given account.
+func (client *Client) Approve(accountUUID string, scope util.StringSet) (err error) {
+	if !CheckScope(scope) {
+		return errors.New("Invalid scope")
+	}
+
+	approval, ok := client.ApprovalForAccount(accountUUID)
+	if ok {
+		// approval exists
+		if !approval.Scope.IsSuperset(scope) {
+			approval.Scope = approval.Scope.Union(scope)
+			err = approval.Update()
+		}
+	} else {
+		// create new approval
+		approval = &ClientApproval{
+			ClientUUID:  client.UUID,
+			AccountUUID: accountUUID,
+			Scope:       scope,
+		}
+		err = approval.Create()
+	}
+	return err
+}
+
+// CreateGrantRequest check whether response type, redirect URI and scope are valid and creates a new
+// grant request for this client.
 func (client *Client) CreateGrantRequest(responseType, redirectURI, state string, scope util.StringSet) (*GrantRequest, error) {
 	if !(responseType == "code" || responseType == "token") {
 		return nil, errors.New("Response type expected to be 'code' or 'token'")
 	}
 	if !client.RedirectURIs.Contains(redirectURI) {
-		return nil, errors.New(fmt.Sprintf("Redirect URI invalid: '%s'", redirectURI))
+		return nil, fmt.Errorf("Redirect URI invalid: '%s'", redirectURI)
 	}
 	if !CheckScope(scope) {
 		return nil, errors.New("Invalid scope")
