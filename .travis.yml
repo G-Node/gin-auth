@@ -26,7 +26,7 @@ install:
 before_script:
  - psql -c "CREATE ROLE test WITH LOGIN PASSWORD 'test';" -U postgres
  - psql -c "CREATE DATABASE gin_auth OWNER test;" -U postgres
- - goose -path conf up
+ - goose -path resources/conf up
 
 script:
  - fgt golint -min_confidence 0.9 ./...
@@ -34,6 +34,7 @@ script:
  - go test -v -covermode=count -coverprofile=profile-data.cov.part ./data
  - go test -v -covermode=count -coverprofile=profile-util.cov.part ./util
  - go test -v -covermode=count -coverprofile=profile-web.cov.part ./web
+ - go test -v -covermode=count -coverprofile=profile-conf.cov.part ./conf
 
 after_success:
  # collect all coverage profiles
