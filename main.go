@@ -7,22 +7,24 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
+	"fmt"
+	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
 	"github.com/G-Node/gin-auth/web"
 )
 
 func main() {
-	conf, err := data.LoadDbConf("conf/dbconf.yml")
-	if err != nil {
-		panic(err)
-	}
-	err = data.InitDb(conf)
+	srvConf := conf.GetServerConfig()
+	dbConf := conf.GetDbConfig()
+
+	err := data.InitDb(dbConf)
 	if err != nil {
 		panic(err)
 	}
 
 	router := mux.NewRouter()
 	router.NotFoundHandler = &web.NotFoundHandler{}
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("resources/static/"))))
 
 	web.RegisterRoutes(router)
 
@@ -30,7 +32,7 @@ func main() {
 	handler = handlers.LoggingHandler(os.Stdout, handler)
 
 	server := http.Server{
-		Addr:    ":8080",
+		Addr:    fmt.Sprintf("%s:%d", srvConf.Host, srvConf.Port),
 		Handler: handler,
 	}
 	err = server.ListenAndServe()

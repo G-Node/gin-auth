@@ -355,7 +355,7 @@ Returns a list of all accounts as JSON:
        "url":  "https://<host>/api/accounts/<login>",
        "uuid": "...",
        "login": "<login>",
-       "tile": "...",
+       "title": "...",
        "first_name": "...",
        "middle_name": "...",
        "last_name": "...",
@@ -387,7 +387,7 @@ Returns an account object as JSON:
    "url":  "https://<host>/api/accounts/<login>",
    "uuid": "...",
    "login": "<login>",
-   "tile": "...",
+   "title": "...",
    "first_name": "...",
    "middle_name": "...",
    "last_name": "...",
@@ -416,7 +416,7 @@ Additional attributes may be present, but will be ignored.
 
 ```json
 {
-   "tile": "...",
+   "title": "...",
    "first_name": "...",
    "middle_name": "...",
    "last_name": "..."
