@@ -17,3 +17,14 @@ func TestMain(m *testing.M) {
 	os.Chdir("..")
 	os.Exit(m.Run())
 }
+
+func TestMakeUrl(t *testing.T) {
+	u := MakeUrl("/foo/%d", 200)
+	if u != "http://localhost:8080/foo/200" {
+		t.Error("Wrong url")
+	}
+	u = MakeUrl("/foo/%s", "some string")
+	if u != "http://localhost:8080/foo/some+string" {
+		t.Error("Wrong url")
+	}
+}
