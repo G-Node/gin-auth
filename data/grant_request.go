@@ -13,6 +13,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/util"
 )
 
@@ -114,7 +115,7 @@ func (req *GrantRequest) ExchangeCodeForTokens() (string, string, error) {
 	access := &AccessToken{
 		Token:       util.RandomToken(),
 		Scope:       req.ScopeRequested,
-		Expires:     time.Now().Add(DefaultTokenLifeTime),
+		Expires:     time.Now().Add(conf.GetServerConfig().GrantReqLifeTime),
 		ClientUUID:  req.ClientUUID,
 		AccountUUID: req.AccountUUID.String}
 

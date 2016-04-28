@@ -10,14 +10,10 @@ package data
 
 import (
 	"database/sql"
-	"github.com/G-Node/gin-auth/util"
 	"time"
-)
 
-const (
-	// DefaultSessionLifeTime is the life time used for sessions if no other
-	// life time was set.
-	DefaultSessionLifeTime = time.Hour * 48
+	"github.com/G-Node/gin-auth/conf"
+	"github.com/G-Node/gin-auth/util"
 )
 
 // Session contains data about session tokens used to identify
@@ -81,7 +77,7 @@ func (sess *Session) Create() error {
 	           VALUES ($1, $2, $3, now(), now())
 	           RETURNING *`
 
-	sess.Expires = time.Now().Add(DefaultSessionLifeTime)
+	sess.Expires = time.Now().Add(conf.GetServerConfig().SessionLifeTime)
 	if sess.Token == "" {
 		sess.Token = util.RandomToken()
 	}
@@ -96,7 +92,7 @@ func (sess *Session) UpdateExpirationTime() error {
 	           WHERE token=$2
 	           RETURNING *`
 
-	return database.Get(sess, q, time.Now().Add(DefaultSessionLifeTime), sess.Token)
+	return database.Get(sess, q, time.Now().Add(conf.GetServerConfig().SessionLifeTime), sess.Token)
 }
 
 // Delete removes a session from the database.
