@@ -8,21 +8,21 @@
 
 package web
 
-// TODO Extend existing approvals
 // TODO Add session cookie for SSO like feature
 
 import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/G-Node/gin-auth/data"
-	"github.com/G-Node/gin-auth/util"
-	"github.com/gorilla/mux"
 	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/G-Node/gin-auth/data"
+	"github.com/G-Node/gin-auth/util"
+	"github.com/gorilla/mux"
 )
 
 // Authorize handles the beginning of an OAuth grant request following the schema
@@ -343,7 +343,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(response)
 }
 
-// Validate validates a token and returns information about the it as JSON
+// Validate validates a token and returns information about it as JSON
 func Validate(w http.ResponseWriter, r *http.Request) {
 	data.ClearOldAccessTokens()
 
