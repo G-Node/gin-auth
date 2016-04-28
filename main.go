@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	conf, err := data.LoadDbConf("conf/dbconf.yml")
+	conf, err := data.LoadDbConf("resources/conf/dbconf.yml")
 	if err != nil {
 		panic(err)
 	}
@@ -23,6 +23,7 @@ func main() {
 
 	router := mux.NewRouter()
 	router.NotFoundHandler = &web.NotFoundHandler{}
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("resources/static/"))))
 
 	web.RegisterRoutes(router)
 
