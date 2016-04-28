@@ -80,7 +80,7 @@ func LoginPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles("assets/html/layout.html", "assets/html/login.html")
+	tmpl, err := template.ParseFiles("resources/templates/layout.html", "resources/templates/login.html")
 	if err != nil {
 		panic(err)
 	}
@@ -218,7 +218,7 @@ func ApprovePage(w http.ResponseWriter, r *http.Request) {
 		RequestID string
 	}{client.Name, description, request.Token}
 
-	tmpl, err := template.ParseFiles("assets/html/layout.html", "assets/html/approve.html")
+	tmpl, err := template.ParseFiles("resources/templates/layout.html", "resources/templates/approve.html")
 	if err != nil {
 		panic(err)
 	}

@@ -51,7 +51,7 @@ func LoadDbConf(path string) (*DbConf, error) {
 
 // InitTestDb initializes a database for testing purpose.
 func InitTestDb(t *testing.T) {
-	conf, err := LoadDbConf("conf/dbconf.yml")
+	conf, err := LoadDbConf("resources/conf/dbconf.yml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,7 +61,7 @@ func InitTestDb(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fixtures, err := ioutil.ReadFile("conf/fixtures/testdb.sql")
+	fixtures, err := ioutil.ReadFile("resources/fixtures/testdb.sql")
 	if err != nil {
 		t.Fatal(err)
 	}

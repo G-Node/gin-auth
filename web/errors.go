@@ -57,7 +57,7 @@ func PrintErrorHTML(w http.ResponseWriter, r *http.Request, err interface{}, cod
 	errData := &htmlErrorData{Referrer: r.Referer()}
 	errData.FillFrom(err, code)
 
-	tmpl, err := template.ParseFiles("assets/html/layout.html", "assets/html/error.html")
+	tmpl, err := template.ParseFiles("resources/templates/layout.html", "resources/templates/error.html")
 
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "text/html")

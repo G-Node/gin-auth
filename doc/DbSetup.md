@@ -26,8 +26,8 @@ For database migrations GIN-Auth uses [goose](https://github.com/CloudCom/goose)
 To apply/unapply all available migrations use the following commands:
 
 ```
-goose -path ./conf up
-goose -path ./conf down
+goose -path resources/conf up
+goose -path resources/conf down
 ```
 
 The migration tool *goose* uses the configuration
