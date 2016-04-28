@@ -22,3 +22,10 @@ func TestGetServerConfig(t *testing.T) {
 		t.Error("BaseURL expected to be 'http://localhost:8080'")
 	}
 }
+
+func TestGetDbConfig(t *testing.T) {
+	config := GetDbConfig()
+	if config.Driver != "postgres" {
+		t.Error("Driver expected to be 'postgres'")
+	}
+}

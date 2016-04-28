@@ -8,6 +8,15 @@ import (
 	"time"
 )
 
+const (
+	serverConfigFile        = "resources/conf/server.yml"
+	dbConfigFile            = "resources/conf/dbconf.yml"
+	defaultSessionLifeTime  = 2880
+	defaultTokenLifeTime    = 1440
+	defaultGrantReqLifeTime = 15
+)
+
+// ServerConfig provides several general configuration parameters for gin-auth
 type ServerConfig struct {
 	Host             string
 	Port             int
@@ -17,16 +26,22 @@ type ServerConfig struct {
 	GrantReqLifeTime time.Duration
 }
 
-const (
-	serverConfigFile        = "resources/conf/server.yml"
-	defaultSessionLifeTime  = 2880
-	defaultTokenLifeTime    = 1440
-	defaultGrantReqLifeTime = 15
-)
-
-var serverConfig *ServerConfig = nil
+var serverConfig *ServerConfig
 var serverConfigLock = sync.Mutex{}
 
+// DbConfig contains data needed to connect to a SQL database.
+// The struct contains yaml annotations in order to be compatible with gooses
+// database configuration file (resources/conf/dbconf.yml)
+type DbConfig struct {
+	Driver string `yaml:"driver"`
+	Open   string `yaml:"open"`
+}
+
+var dbConfig *DbConfig
+var dbConfigLock = sync.Mutex{}
+
+// GetServerConfig loads the server configuration from a yaml file when called the first time.
+// Returns a struct with configuration information.
 func GetServerConfig() *ServerConfig {
 	serverConfigLock.Lock()
 	defer serverConfigLock.Unlock()
@@ -79,4 +94,28 @@ func GetServerConfig() *ServerConfig {
 	}
 
 	return serverConfig
+}
+
+// GetDbConfig loads a database configuration from a yaml file when called the first time.
+// Returns a struct with configuration information.
+func GetDbConfig() *DbConfig {
+	dbConfigLock.Lock()
+	defer dbConfigLock.Unlock()
+
+	if dbConfig == nil {
+		content, err := ioutil.ReadFile(dbConfigFile)
+		if err != nil {
+			panic(err)
+		}
+
+		config := &DbConfig{}
+		err = yaml.Unmarshal(content, config)
+		if err != nil {
+			panic(err)
+		}
+
+		dbConfig = config
+	}
+
+	return dbConfig
 }
