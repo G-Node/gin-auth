@@ -17,10 +17,12 @@ import (
 	"fmt"
 	"github.com/G-Node/gin-auth/data"
 	"github.com/G-Node/gin-auth/util"
+	"github.com/gorilla/mux"
 	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // Authorize handles the beginning of an OAuth grant request following the schema
@@ -333,6 +335,48 @@ func Token(w http.ResponseWriter, r *http.Request) {
 		TokenType:    "Bearer",
 		AccessToken:  access,
 		RefreshToken: refresh,
+	}
+
+	w.Header().Add("Cache-Control", "no-cache")
+	w.Header().Add("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	enc.Encode(response)
+}
+
+// Validate validates a token and returns information about the it as JSON
+func Validate(w http.ResponseWriter, r *http.Request) {
+	data.ClearOldAccessTokens()
+
+	tokenStr := mux.Vars(r)["token"]
+	token, ok := data.GetAccessToken(tokenStr)
+	if !ok {
+		PrintErrorJSON(w, r, "The requested token does not exist", http.StatusNotFound)
+		return
+	}
+
+	account, ok := data.GetAccount(token.AccountUUID)
+	if !ok {
+		// this really should not happen
+		PrintErrorJSON(w, r, "Unable to find account associated with the request", http.StatusInternalServerError)
+		return
+	}
+
+	response := &struct {
+		URL        string    `json:"url"`
+		JTI        string    `json:"jti"`
+		EXP        time.Time `json:"exp"`
+		ISS        string    `json:"iss"`
+		Login      string    `json:"login"`
+		AccountURL string    `json:"account_url"`
+		Scope      []string  `json:"scope"`
+	}{
+		URL:        MakeUrl("/oauth/validate/%s", token.Token),
+		JTI:        token.Token,
+		EXP:        token.Expires,
+		ISS:        "gin-auth",
+		Login:      account.Login,
+		AccountURL: MakeUrl("/api/accounts/%s", account.Login),
+		Scope:      token.Scope.Strings(),
 	}
 
 	w.Header().Add("Cache-Control", "no-cache")
