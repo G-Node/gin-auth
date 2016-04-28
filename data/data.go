@@ -21,22 +21,22 @@ var database *sqlx.DB
 
 // InitDb initializes a global database connection.
 // An existing connection will be closed.
-func InitDb(config *conf.DbConfig) (err error) {
+func InitDb(config *conf.DbConfig) {
 	if database != nil {
 		database.Close()
 	}
+
+	var err error
 	database, err = sqlx.Connect(config.Driver, config.Open)
-	return err
+	if err != nil {
+		panic(err)
+	}
 }
 
 // InitTestDb initializes a database for testing purpose.
 func InitTestDb(t *testing.T) {
 	config := conf.GetDbConfig()
-
-	err := InitDb(config)
-	if err != nil {
-		t.Fatal(err)
-	}
+	InitDb(config)
 
 	fixtures, err := ioutil.ReadFile("resources/fixtures/testdb.sql")
 	if err != nil {

@@ -17,10 +17,7 @@ func main() {
 	srvConf := conf.GetServerConfig()
 	dbConf := conf.GetDbConfig()
 
-	err := data.InitDb(dbConf)
-	if err != nil {
-		panic(err)
-	}
+	data.InitDb(dbConf)
 
 	router := mux.NewRouter()
 	router.NotFoundHandler = &web.NotFoundHandler{}
@@ -35,7 +32,7 @@ func main() {
 		Addr:    fmt.Sprintf("%s:%d", srvConf.Host, srvConf.Port),
 		Handler: handler,
 	}
-	err = server.ListenAndServe()
+	err := server.ListenAndServe()
 	if err != nil {
 		panic(err)
 	}
