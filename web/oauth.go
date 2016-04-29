@@ -8,8 +8,6 @@
 
 package web
 
-// TODO Add session cookie for SSO like feature
-
 import (
 	"database/sql"
 	"encoding/json"
@@ -18,12 +16,84 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/G-Node/gin-auth/data"
 	"github.com/G-Node/gin-auth/util"
 	"github.com/gorilla/mux"
 )
+
+// OAuthInfo provides information about an authorized access token
+type OAuthInfo struct {
+	Match util.StringSet
+	Token *data.AccessToken
+}
+
+// OAuthToken gets an access token registered by an OAuthHandler.
+func OAuthToken(r *http.Request) (*OAuthInfo, bool) {
+	tokens.Lock()
+	tok, ok := tokens.store[r]
+	tokens.Unlock()
+
+	return tok, ok
+}
+
+// Synchronized store for access tokens.
+var tokens = struct {
+	sync.Mutex
+	store map[*http.Request]*OAuthInfo
+}{store: make(map[*http.Request]*OAuthInfo)}
+
+// OAuthHandler processes a request and extracts a bearer token from the authorization
+// header. If the bearer token is valid and has a matching scope the respective AccessToken
+// data can later be obtained using the OAuthToken function.
+func OAuthHandler(scope ...string) func(http.Handler) http.Handler {
+	return func(handler http.Handler) http.Handler {
+		return oauth{scope: util.NewStringSet(scope...), handler: handler}
+	}
+}
+
+// The actual OAuth handler
+type oauth struct {
+	scope   util.StringSet
+	handler http.Handler
+}
+
+// ServeHTTP implements http.Handler for oauth.
+func (o oauth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	tokenStr := r.Header.Get("Authorization")
+	if tokenStr == "" || !strings.HasPrefix(tokenStr, "Bearer ") {
+		PrintErrorJSON(w, r, "No bearer token", http.StatusUnauthorized)
+		return
+	}
+
+	tokenStr = strings.Trim(tokenStr[6:], " ")
+	data.ClearOldAccessTokens()
+	token, ok := data.GetAccessToken(tokenStr)
+	if !ok {
+		PrintErrorJSON(w, r, "Invalid bearer token", http.StatusUnauthorized)
+		return
+	}
+
+	match := token.Scope.Intersect(o.scope)
+	if match.Len() < 1 {
+		PrintErrorJSON(w, r, "Insufficient scope", http.StatusUnauthorized)
+		return
+	}
+
+	tokens.Lock()
+	tokens.store[r] = &OAuthInfo{Match: match, Token: token}
+	tokens.Unlock()
+
+	defer func() {
+		tokens.Lock()
+		delete(tokens.store, r)
+		tokens.Unlock()
+	}()
+
+	o.handler.ServeHTTP(w, r)
+}
 
 // Authorize handles the beginning of an OAuth grant request following the schema
 // of 'implicit' or 'code' grant types.
