@@ -99,6 +99,22 @@ func (set StringSet) Union(other StringSet) StringSet {
 	}
 }
 
+// Intersect returns a new set containing only the elements contained in both
+// original sets
+func (set StringSet) Intersect(other StringSet) StringSet {
+	a, b := set, other
+	if a.Len() > b.Len() {
+		a, b = b, a
+	}
+	inter := make([]string, 0, a.Len())
+	for s := range a {
+		if b.Contains(s) {
+			inter = append(inter, s)
+		}
+	}
+	return NewStringSet(inter...)
+}
+
 // Len returns the number of elements in the set.
 func (set StringSet) Len() int {
 	return len(set)

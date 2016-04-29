@@ -94,6 +94,39 @@ func TestStringSetUnion(t *testing.T) {
 	}
 }
 
+func TestStringSetIntersect(t *testing.T) {
+	set1 := NewStringSet("apple", "banana", "strawberry")
+	set2 := NewStringSet("apple", "blueberry", "strawberry", "peach")
+
+	inter := set1.Intersect(set2)
+	if inter.Len() != 2 {
+		t.Error("Intersection should have two elements")
+	}
+	if !inter.Contains("apple") {
+		t.Error("Intersection should contain 'apple'")
+	}
+	if !inter.Contains("strawberry") {
+		t.Error("Intersection should contain 'strawberry'")
+	}
+
+	inter = set2.Intersect(set1)
+	if inter.Len() != 2 {
+		t.Error("Intersection should have two elements")
+	}
+	if !inter.Contains("apple") {
+		t.Error("Intersection should contain 'apple'")
+	}
+	if !inter.Contains("strawberry") {
+		t.Error("Intersection should contain 'strawberry'")
+	}
+
+	set2 = NewStringSet()
+	inter = set1.Intersect(set2)
+	if inter.Len() != 0 {
+		t.Error("Intersection should be empty")
+	}
+}
+
 func TestStringSetStrings(t *testing.T) {
 	set := NewStringSet("bar", "foo", "bla")
 	sorted := sort.StringSlice(set.Strings())
