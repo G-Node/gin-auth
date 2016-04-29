@@ -10,14 +10,10 @@ package data
 
 import (
 	"database/sql"
-	"github.com/G-Node/gin-auth/util"
 	"time"
-)
 
-const (
-	// DefaultTokenLifeTime is the life time used for access tokens if no other
-	// life time was set.
-	DefaultTokenLifeTime = time.Hour * 24
+	"github.com/G-Node/gin-auth/conf"
+	"github.com/G-Node/gin-auth/util"
 )
 
 // AccessToken represents an OAuth access token
@@ -82,7 +78,7 @@ func (tok *AccessToken) Create() error {
 	           VALUES ($1, $2, $3, $4, $5, now(), now())
 	           RETURNING *`
 
-	tok.Expires = time.Now().Add(DefaultTokenLifeTime)
+	tok.Expires = time.Now().Add(conf.GetServerConfig().TokenLifeTime)
 	if tok.Token == "" {
 		tok.Token = util.RandomToken()
 	}
@@ -97,7 +93,7 @@ func (tok *AccessToken) UpdateExpirationTime() error {
 	           WHERE token=$2
 	           RETURNING *`
 
-	return database.Get(tok, q, time.Now().Add(DefaultTokenLifeTime), tok.Token)
+	return database.Get(tok, q, time.Now().Add(conf.GetServerConfig().TokenLifeTime), tok.Token)
 }
 
 // Delete removes an access token from the database.

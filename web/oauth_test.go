@@ -9,16 +9,16 @@
 package web
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/gorilla/mux"
-
-	"encoding/json"
 	"github.com/G-Node/gin-auth/data"
+	"github.com/gorilla/mux"
 )
 
 // InitTestHttpHandler initializes a handler with all registered routes and returns it
@@ -63,7 +63,7 @@ func TestAuthorize(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
 	}
 
-	// wrong response type
+	// wrong scope
 	query = newAuthQuery()
 	query.Set("scope", "foo,bar")
 	request, _ = http.NewRequest("GET", "/oauth/authorize", strings.NewReader(""))
@@ -127,7 +127,7 @@ func TestLoginPage(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
 	}
 
-	// missing query param
+	// wrong request_id
 	request, _ = http.NewRequest("GET", "/oauth/login_page?request_id=doesnotexist", strings.NewReader(""))
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -135,7 +135,7 @@ func TestLoginPage(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
 	}
 
-	// missing query param
+	// valid request_id
 	request, _ = http.NewRequest("GET", "/oauth/login_page?request_id=U7JIKKYI", strings.NewReader(""))
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -228,7 +228,7 @@ func TestApprovePage(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
 	}
 
-	// missing query param
+	// wrong request_id
 	request, _ = http.NewRequest("GET", "/oauth/approve_page?request_id=doesnotexist", strings.NewReader(""))
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -236,7 +236,7 @@ func TestApprovePage(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
 	}
 
-	// missing query param
+	// valid request_id
 	request, _ = http.NewRequest("GET", "/oauth/approve_page?request_id=U7JIKKYI", strings.NewReader(""))
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -354,5 +354,63 @@ func TestToken(t *testing.T) {
 	}
 	if data.TokenType != "Bearer" {
 		t.Error("Token type is supposed to be 'Bearer'")
+	}
+}
+
+type testValidateResponse struct {
+	URL        string    `json:"url"`
+	JTI        string    `json:"jti"`
+	EXP        time.Time `json:"exp"`
+	ISS        string    `json:"iss"`
+	Login      string    `json:"login"`
+	AccountURL string    `json:"account_url"`
+	Scope      []string  `json:"scope"`
+}
+
+func TestValidate(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	// wrong token
+	request, _ := http.NewRequest("GET", "/oauth/validate/doesnotexist", strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// expired token
+	request, _ = http.NewRequest("GET", "/oauth/validate/LJ3W7ZFK", strings.NewReader(""))
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// valid token
+	request, _ = http.NewRequest("GET", "/oauth/validate/3N7MP7M7", strings.NewReader(""))
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	result := &struct {
+		URL        string    `json:"url"`
+		JTI        string    `json:"jti"`
+		EXP        time.Time `json:"exp"`
+		ISS        string    `json:"iss"`
+		Login      string    `json:"login"`
+		AccountURL string    `json:"account_url"`
+		Scope      []string  `json:"scope"`
+	}{}
+	json.Unmarshal(response.Body.Bytes(), result)
+	if result.JTI != "3N7MP7M7" {
+		t.Errorf("JTI expected to be '3N7MP7M7' but was '%s'", result.JTI)
+	}
+	if result.ISS != "gin-auth" {
+		t.Errorf("ISS expected to be 'gin-auth' but was '%s'", result.ISS)
+	}
+	if result.Login != "alice" {
+		t.Errorf("Login expected to be 'alice' but was '%s'", result.Login)
 	}
 }
