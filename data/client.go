@@ -12,10 +12,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/pborman/uuid"
+	"io/ioutil"
 	"time"
 
 	"github.com/G-Node/gin-auth/util"
+	"github.com/jmoiron/sqlx"
+	"github.com/pborman/uuid"
+	"gopkg.in/yaml.v2"
 )
 
 // Client object stored in the database
@@ -31,6 +34,8 @@ type Client struct {
 
 // ListClients returns all registered OAuth clients ordered by name
 func ListClients() []Client {
+	// TODO remove once this is replaced by private listClients method
+	// and the tests have been modified.
 	const q = `SELECT * FROM Clients ORDER BY name`
 
 	clients := make([]Client, 0)
@@ -40,6 +45,20 @@ func ListClients() []Client {
 	}
 
 	return clients
+}
+
+// listClientUUIDs returns a StringSet of the UUIDs of clients currently
+// in the database.
+func listClientUUIDs() util.StringSet {
+	const q = "SELECT uuid FROM Clients"
+
+	clients := make([]string, 0)
+	err := database.Select(&clients, q)
+	if err != nil {
+		panic(err)
+	}
+
+	return util.NewStringSet(clients...)
 }
 
 // GetClient returns an OAuth client with a given uuid.
@@ -143,7 +162,33 @@ func (client *Client) ScopeProvided() util.StringSet {
 }
 
 // Create stores a new client in the database.
+func (client *Client) create(tx *sqlx.Tx) error {
+	const q = `INSERT INTO Clients (uuid, name, secret, redirectURIs, createdAt, updatedAt)
+	           VALUES ($1, $2, $3, $4, now(), now())
+	           RETURNING *`
+	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
+					VALUES ($1, $2, $3)`
+
+	if client.UUID == "" {
+		client.UUID = uuid.NewRandom().String()
+	}
+
+	err := tx.Get(client, q, client.UUID, client.Name, client.Secret, client.RedirectURIs)
+	if err == nil {
+		for k, v := range client.ScopeProvidedMap {
+			_, err = tx.Exec(qScope, client.UUID, k, v)
+			if err != nil {
+				break
+			}
+		}
+	}
+
+	return err
+}
+
+// Create stores a new client in the database.
 func (client *Client) Create() error {
+// TODO remove after refactoring of tests that use this method
 	const q = `INSERT INTO Clients (uuid, name, secret, redirectURIs, createdAt, updatedAt)
 	           VALUES ($1, $2, $3, $4, now(), now())
 	           RETURNING *`
@@ -169,6 +214,7 @@ func (client *Client) Create() error {
 	}
 	return tx.Commit()
 }
+
 
 // ApprovalForAccount gets a client approval for this client which was
 // approved for a specific account.
@@ -240,3 +286,175 @@ func (client *Client) Delete() error {
 	_, err := database.Exec(q, client.UUID)
 	return err
 }
+
+// delete removes and existing client from the database using a transaction.
+func (client *Client) delete(tx *sqlx.Tx) error {
+	const q = `DELETE FROM Clients c WHERE c.uuid=$1`
+
+	_, err := tx.Exec(q, client.UUID)
+
+	return err
+}
+
+func (client *Client) deleteScope(tx *sqlx.Tx) error {
+	const q = `DELETE FROM ClientScopeProvided WHERE clientuuid=$1`
+
+	_, err := tx.Exec(q, client.UUID)
+
+	return err
+}
+
+func (client *Client) createScope(tx *sqlx.Tx) error {
+	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
+					VALUES ($1, $2, $3)`
+
+	var err error
+	for k, v := range client.ScopeProvidedMap {
+		_, err = tx.Exec(qScope, client.UUID, k, v)
+		if err != nil {
+			break
+		}
+	}
+	return err
+}
+
+func (client *Client) update(tx *sqlx.Tx) error {
+	const q = `UPDATE Clients c (name, secret, redirectURIs, updatedAt)
+	           VALUES ($2, $3, $4, now())
+	           WHERE c.uuid=$1`
+
+	err := client.deleteScope(tx)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(q, client.UUID, client.Name, client.Secret, client.RedirectURIs, time.Now())
+	if err != nil {
+		return err
+	}
+
+	if len(client.ScopeProvidedMap) > 0 {
+		err = client.createScope(tx)
+	}
+
+	return err
+}
+
+type initClient struct{
+	UUID          	string				`yaml:"UUID"`
+	Name          	string				`yaml:"Name"`
+	Secret        	string				`yaml:"Secret"`
+	ScopeProvided	map[string]string	`yaml:"ScopeProvided"`
+	RedirectURIs	[]string			`yaml:"RedirectURIs"`
+}
+
+// InitClients loads client information from a yaml configuration file
+// and updates the corresponding entries in the database.
+func InitClients(path string) {
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+
+	var confClients []initClient
+
+	err = yaml.Unmarshal(content, &confClients)
+	if err != nil {
+		panic(err)
+	}
+
+	ClientToDatabase(confClients)
+}
+
+// ClientToDatabase writes client information from an initClient slice to the database.
+func ClientToDatabase(confClients []initClient) {
+	// TODO rename
+	fmt.Printf("[Dev] Size: %d, Content: %v\n", len(confClients), confClients)
+
+	clientIDs := make([]string, len(confClients), len(confClients))
+	for i, v := range confClients {
+		fmt.Printf("[Dev] Index: %d, UUID: '%s'\n", i, v.UUID)
+		clientIDs[i] = v.UUID
+	}
+
+	confClientIDs := util.NewStringSet(clientIDs...)
+
+	// TODO check how to lock the database, so that no changes can be made
+	// after the UUIDs of the clients in the database have been collected
+	// until the database transactions have been successfully executed.
+
+	dbClientIDs := listClientUUIDs()
+	fmt.Printf("[Dev] Size dbClients: %d\n\tClient: %v\n", len(dbClientIDs), dbClientIDs)
+
+	fmt.Printf("[Dev] Get to be removed.")
+	removeDbClients := Difference(confClientIDs, dbClientIDs)
+
+	// Get transaction
+	tx := database.MustBegin()
+
+	var err error
+	//1 remove all clients from the database, that are not in the config clients list
+	if len(removeDbClients) > 0 {
+		for currUUID := range removeDbClients {
+			fmt.Printf("[Dev] Remove ID: '%s'\n", currUUID)
+			remClient, clientExists := GetClient(currUUID)
+			if clientExists {
+				fmt.Printf("[Dev] Remove actual client: %v\n", remClient)
+				//err = remClient.delete(&tx)
+				if err != nil {
+					break
+				}
+			}
+		}
+	}
+
+	//2 loop through all config client entries, check if already existent in the database
+	for ind, cl := range confClients {
+		// TODO better mapping of confClient to actual client
+		var currClient Client
+		currClient.UUID = cl.UUID
+		currClient.Name = cl.Name
+		currClient.Secret = cl.Secret
+		currClient.ScopeProvidedMap = cl.ScopeProvided
+		currClient.RedirectURIs = util.NewStringSet(cl.RedirectURIs...)
+		fmt.Printf("[Dev] curr new client: %v\n", currClient)
+
+		fmt.Printf("[Dev] Handle client #%d, ID: '%s'\n", ind, currClient.UUID)
+		if dbClientIDs.Contains(currClient.UUID) {
+			//2.1 if already exist, update clients
+			//2.1.1 check if config has scopes; if yes remove all entries from db and insert new ones
+			fmt.Printf("[Dev]\t Client in db update\n")
+			//err = currClient.update(&tx)
+		} else {
+			//2.2 if no, insert clients && clientScopeProvided
+			fmt.Printf("[Dev]\t Client not yet in db, insert\n")
+			//err = currClient.create(&tx)
+		}
+		if err != nil {
+			break
+		}
+	}
+
+	if err != nil {
+		tx.Rollback()
+		panic(err)
+	}
+
+	//3 only if no err or panic, commit
+	err = tx.Commit()
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Difference returns the set difference for util.StringSet.
+func Difference(mainSet util.StringSet, getDiff util.StringSet) util.StringSet {
+	ret := make([]string, 0, len(getDiff))
+	for k := range getDiff {
+		if !mainSet.Contains(k) {
+			ret = append(ret, k)
+		}
+	}
+	return util.NewStringSet(ret...)
+}
+
