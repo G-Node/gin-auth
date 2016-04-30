@@ -1,0 +1,56 @@
+- UUID: 8b14d6bb-cae7-4163-bbd1-f3be46e43e31
+  Name: gin
+  Secret: secret
+  ScopeProvided:
+    account-read: Read access to your account data
+    account-write: Write access to your account data
+    repo-read: Read access to your repositories and repositories shared with you
+    repo-write: Write acces to your repositories and repositories you have write access to
+  RedirectURIs:
+  - https://localhost:8081/login
+- UUID: 2
+  Name: someOther
+  Secret: secret
+  ScopeProvided:
+    account-read: Read access to your account data
+    repo-read: Read access to your repositories and repositories shared with you
+  RedirectURIs:
+  - https://localhost:8081/login
+  - https://golang.org/doc/effective_go.html
+- UUID: 8b14d6bb-cae7-4163-bbd1-f3be46e43e31
+  Name: gin
+  Secret: secret
+  ScopeProvided:
+    account-read: Read access to your account data
+    account-write: Write access to your account data
+    repo-read: Read access to your repositories and repositories shared with you
+    repo-write: Write acces to your repositories and repositories you have write access to
+  RedirectURIs:
+  - https://localhost:8081/login
+- UUID: invalid01
+- UUID: invalid02
+  Name: someOther
+- UUID: invalid03
+  Name: someOther
+  RedirectURIs:
+  - https://localhost:8081/login
+  - https://golang.org/doc/effective_go.html
+- UUID: invalid04
+  Name: someOther
+  ScopeProvided:
+    account-read: Read access to your account data
+    repo-read: Read access to your repositories and repositories shared with you
+- Name: Invalid05
+  Secret: secret
+  ScopeProvided:
+    account-read: Read access to your account data
+  RedirectURIs:
+  - https://localhost:8081/login
+- UUID: Invalid06
+  Name: gin
+  Secret: secret
+  ScopeProvided:
+    account-read: Read access to your account data
+    account-read: Read access to your account data
+  RedirectURIs:
+  - https://localhost:8081/login

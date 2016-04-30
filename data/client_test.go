@@ -18,6 +18,7 @@ const (
 	uuidClientGin = "8b14d6bb-cae7-4163-bbd1-f3be46e43e31"
 )
 
+// TODO remove function
 func TestListClients(t *testing.T) {
 	defer util.FailOnPanic(t)
 	InitTestDb(t)
@@ -25,6 +26,16 @@ func TestListClients(t *testing.T) {
 	clients := ListClients()
 	if len(clients) != 1 {
 		t.Error("Exactly one client expected in list")
+	}
+}
+
+func TestListClientUUIDs(t *testing.T) {
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
+
+	clientList := listClientUUIDs()
+	if len(clientList) != 1 && !clientList.Contains(uuidClientGin) {
+		t.Error("listClientUUIDs returned incomplete list.")
 	}
 }
 
@@ -276,4 +287,46 @@ func TestClientDelete(t *testing.T) {
 	if ok {
 		t.Error("Client should not exist")
 	}
+}
+
+// Tests that InitClients panics correctly, if the clients
+// file does not exist.
+func TestInitClientsMissingFile(t *testing.T) {
+	const nonExisting string = "iDoNotExist"
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Error("Missing panic on non existing config file.")
+		}
+	}()
+
+	InitClients(nonExisting)
+}
+
+// Tests that InitClients panics correctly, if the provided
+// clients file is not a yaml file.
+func TestInitClientsInvalidYaml(t *testing.T) {
+	const invalidYaml string = "resources/fixtures/invalidYaml.txt"
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Error("Missing panic on invalid yaml file.")
+		}
+	}()
+
+	InitClients(invalidYaml)
+}
+
+// Tests that InitClients opens a proper clients yaml correctly.
+func TestInitClientsYaml(t *testing.T) {
+	const clientsYaml string = "resources/fixtures/testClients.yml"
+	defer func() {
+		if r := recover(); r != nil {
+			t.Errorf("Panic trying to open clients yaml file '%s': '%v'\n", clientsYaml, r)
+		}
+	}()
+
+	InitTestDb(t)
+
+	InitClients(clientsYaml)
 }
