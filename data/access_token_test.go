@@ -24,7 +24,7 @@ func TestListAccessTokens(t *testing.T) {
 	InitTestDb(t)
 
 	accessTokens := ListAccessTokens()
-	if len(accessTokens) != 2 {
+	if len(accessTokens) != 3 {
 		t.Error("Exactly to access tokens expected in slice")
 	}
 }
