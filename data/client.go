@@ -34,8 +34,6 @@ type Client struct {
 
 // ListClients returns all registered OAuth clients ordered by name
 func ListClients() []Client {
-	// TODO remove once this is replaced by private listClients method
-	// and the tests have been modified.
 	const q = `SELECT * FROM Clients ORDER BY name`
 
 	clients := make([]Client, 0)
@@ -188,7 +186,6 @@ func (client *Client) create(tx *sqlx.Tx) error {
 
 // Create stores a new client in the database.
 func (client *Client) Create() error {
-// TODO remove after refactoring of tests that use this method
 	const q = `INSERT INTO Clients (uuid, name, secret, redirectURIs, createdAt, updatedAt)
 	           VALUES ($1, $2, $3, $4, now(), now())
 	           RETURNING *`
@@ -287,7 +284,7 @@ func (client *Client) Delete() error {
 	return err
 }
 
-// delete removes and existing client from the database using a transaction.
+// delete removes a client from a database via a transaction.
 func (client *Client) delete(tx *sqlx.Tx) error {
 	const q = `DELETE FROM Clients c WHERE c.uuid=$1`
 
@@ -319,9 +316,8 @@ func (client *Client) createScope(tx *sqlx.Tx) error {
 }
 
 func (client *Client) update(tx *sqlx.Tx) error {
-	const q = `UPDATE Clients c (name, secret, redirectURIs, updatedAt)
-	           VALUES ($2, $3, $4, now())
-	           WHERE c.uuid=$1`
+	const q = `UPDATE Clients SET name=$2, secret=$3, redirecturis=$4, updatedat=$5
+	           WHERE uuid=$1`
 
 	err := client.deleteScope(tx)
 	if err != nil {
@@ -340,14 +336,6 @@ func (client *Client) update(tx *sqlx.Tx) error {
 	return err
 }
 
-type initClient struct{
-	UUID          	string				`yaml:"UUID"`
-	Name          	string				`yaml:"Name"`
-	Secret        	string				`yaml:"Secret"`
-	ScopeProvided	map[string]string	`yaml:"ScopeProvided"`
-	RedirectURIs	[]string			`yaml:"RedirectURIs"`
-}
-
 // InitClients loads client information from a yaml configuration file
 // and updates the corresponding entries in the database.
 func InitClients(path string) {
@@ -356,51 +344,51 @@ func InitClients(path string) {
 		panic(err)
 	}
 
-	var confClients []initClient
+	confClients := make([]struct {
+		UUID          	string				`yaml:"UUID"`
+		Name          	string				`yaml:"Name"`
+		Secret        	string				`yaml:"Secret"`
+		ScopeProvided	map[string]string	`yaml:"ScopeProvided"`
+		RedirectURIs	[]string			`yaml:"RedirectURIs"`
+	}, 0)
 
 	err = yaml.Unmarshal(content, &confClients)
 	if err != nil {
 		panic(err)
 	}
 
-	ClientToDatabase(confClients)
+	clients := make([]Client, len(confClients), len(confClients))
+	for ind, cl := range confClients {
+		clients[ind].UUID = cl.UUID
+		clients[ind].Name = cl.Name
+		clients[ind].Secret = cl.Secret
+		clients[ind].ScopeProvidedMap = cl.ScopeProvided
+		clients[ind].RedirectURIs = util.NewStringSet(cl.RedirectURIs...)
+	}
+
+	updateClients(clients)
 }
 
-// ClientToDatabase writes client information from an initClient slice to the database.
-func ClientToDatabase(confClients []initClient) {
-	// TODO rename
-	fmt.Printf("[Dev] Size: %d, Content: %v\n", len(confClients), confClients)
-
+// updateDatabase updates the clients and clientScopeProvided tables
+// with the contents of []Client.
+func updateClients(confClients []Client) {
 	clientIDs := make([]string, len(confClients), len(confClients))
 	for i, v := range confClients {
-		fmt.Printf("[Dev] Index: %d, UUID: '%s'\n", i, v.UUID)
 		clientIDs[i] = v.UUID
 	}
 
 	confClientIDs := util.NewStringSet(clientIDs...)
-
-	// TODO check how to lock the database, so that no changes can be made
-	// after the UUIDs of the clients in the database have been collected
-	// until the database transactions have been successfully executed.
-
 	dbClientIDs := listClientUUIDs()
-	fmt.Printf("[Dev] Size dbClients: %d\n\tClient: %v\n", len(dbClientIDs), dbClientIDs)
+	removeDbClients := dbClientIDs.Difference(confClientIDs)
 
-	fmt.Printf("[Dev] Get to be removed.")
-	removeDbClients := Difference(confClientIDs, dbClientIDs)
-
-	// Get transaction
 	tx := database.MustBegin()
 
 	var err error
-	//1 remove all clients from the database, that are not in the config clients list
 	if len(removeDbClients) > 0 {
-		for currUUID := range removeDbClients {
-			fmt.Printf("[Dev] Remove ID: '%s'\n", currUUID)
-			remClient, clientExists := GetClient(currUUID)
+		for remID := range removeDbClients {
+			remClient, clientExists := GetClient(remID)
 			if clientExists {
-				fmt.Printf("[Dev] Remove actual client: %v\n", remClient)
-				//err = remClient.delete(&tx)
+				err = remClient.delete(tx)
 				if err != nil {
 					break
 				}
@@ -408,27 +396,11 @@ func ClientToDatabase(confClients []initClient) {
 		}
 	}
 
-	//2 loop through all config client entries, check if already existent in the database
-	for ind, cl := range confClients {
-		// TODO better mapping of confClient to actual client
-		var currClient Client
-		currClient.UUID = cl.UUID
-		currClient.Name = cl.Name
-		currClient.Secret = cl.Secret
-		currClient.ScopeProvidedMap = cl.ScopeProvided
-		currClient.RedirectURIs = util.NewStringSet(cl.RedirectURIs...)
-		fmt.Printf("[Dev] curr new client: %v\n", currClient)
-
-		fmt.Printf("[Dev] Handle client #%d, ID: '%s'\n", ind, currClient.UUID)
-		if dbClientIDs.Contains(currClient.UUID) {
-			//2.1 if already exist, update clients
-			//2.1.1 check if config has scopes; if yes remove all entries from db and insert new ones
-			fmt.Printf("[Dev]\t Client in db update\n")
-			//err = currClient.update(&tx)
+	for _, cl := range confClients {
+		if dbClientIDs.Contains(cl.UUID) {
+			err = cl.update(tx)
 		} else {
-			//2.2 if no, insert clients && clientScopeProvided
-			fmt.Printf("[Dev]\t Client not yet in db, insert\n")
-			//err = currClient.create(&tx)
+			err = cl.create(tx)
 		}
 		if err != nil {
 			break
@@ -440,21 +412,8 @@ func ClientToDatabase(confClients []initClient) {
 		panic(err)
 	}
 
-	//3 only if no err or panic, commit
 	err = tx.Commit()
 	if err != nil {
 		panic(err)
 	}
 }
-
-// Difference returns the set difference for util.StringSet.
-func Difference(mainSet util.StringSet, getDiff util.StringSet) util.StringSet {
-	ret := make([]string, 0, len(getDiff))
-	for k := range getDiff {
-		if !mainSet.Contains(k) {
-			ret = append(ret, k)
-		}
-	}
-	return util.NewStringSet(ret...)
-}
-
