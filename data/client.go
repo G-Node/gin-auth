@@ -159,60 +159,6 @@ func (client *Client) ScopeProvided() util.StringSet {
 	return util.NewStringSet(scope...)
 }
 
-// Create stores a new client in the database.
-func (client *Client) create(tx *sqlx.Tx) error {
-	const q = `INSERT INTO Clients (uuid, name, secret, redirectURIs, createdAt, updatedAt)
-	           VALUES ($1, $2, $3, $4, now(), now())
-	           RETURNING *`
-	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
-					VALUES ($1, $2, $3)`
-
-	if client.UUID == "" {
-		client.UUID = uuid.NewRandom().String()
-	}
-
-	err := tx.Get(client, q, client.UUID, client.Name, client.Secret, client.RedirectURIs)
-	if err == nil {
-		for k, v := range client.ScopeProvidedMap {
-			_, err = tx.Exec(qScope, client.UUID, k, v)
-			if err != nil {
-				break
-			}
-		}
-	}
-
-	return err
-}
-
-// Create stores a new client in the database.
-func (client *Client) Create() error {
-	const q = `INSERT INTO Clients (uuid, name, secret, redirectURIs, createdAt, updatedAt)
-	           VALUES ($1, $2, $3, $4, now(), now())
-	           RETURNING *`
-	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
-					VALUES ($1, $2, $3)`
-
-	if client.UUID == "" {
-		client.UUID = uuid.NewRandom().String()
-	}
-
-	tx := database.MustBegin()
-	err := tx.Get(client, q, client.UUID, client.Name, client.Secret, client.RedirectURIs)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	for k, v := range client.ScopeProvidedMap {
-		_, err = tx.Exec(qScope, client.UUID, k, v)
-		if err != nil {
-			tx.Rollback()
-			return err
-		}
-	}
-	return tx.Commit()
-}
-
-
 // ApprovalForAccount gets a client approval for this client which was
 // approved for a specific account.
 func (client *Client) ApprovalForAccount(accountUUID string) (*ClientApproval, bool) {
@@ -276,14 +222,6 @@ func (client *Client) CreateGrantRequest(responseType, redirectURI, state string
 	return request, err
 }
 
-// Delete removes an existing client from the database
-func (client *Client) Delete() error {
-	const q = `DELETE FROM Clients c WHERE c.uuid=$1`
-
-	_, err := database.Exec(q, client.UUID)
-	return err
-}
-
 // delete removes a client from a database via a transaction.
 func (client *Client) delete(tx *sqlx.Tx) error {
 	const q = `DELETE FROM Clients c WHERE c.uuid=$1`
@@ -293,6 +231,32 @@ func (client *Client) delete(tx *sqlx.Tx) error {
 	return err
 }
 
+// create stores a new client in the database.
+func (client *Client) create(tx *sqlx.Tx) error {
+	const q = `INSERT INTO Clients (uuid, name, secret, redirectURIs, createdAt, updatedAt)
+	           VALUES ($1, $2, $3, $4, now(), now())
+	           RETURNING *`
+	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
+					VALUES ($1, $2, $3)`
+
+	if client.UUID == "" {
+		client.UUID = uuid.NewRandom().String()
+	}
+
+	err := tx.Get(client, q, client.UUID, client.Name, client.Secret, client.RedirectURIs)
+	if err == nil {
+		for k, v := range client.ScopeProvidedMap {
+			_, err = tx.Exec(qScope, client.UUID, k, v)
+			if err != nil {
+				break
+			}
+		}
+	}
+
+	return err
+}
+
+// deleteScope removes all scopes corresponding to a client uuid from the database.
 func (client *Client) deleteScope(tx *sqlx.Tx) error {
 	const q = `DELETE FROM ClientScopeProvided WHERE clientuuid=$1`
 
@@ -301,6 +265,7 @@ func (client *Client) deleteScope(tx *sqlx.Tx) error {
 	return err
 }
 
+// createScope adds all client scopes from a Client to the database.
 func (client *Client) createScope(tx *sqlx.Tx) error {
 	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
 					VALUES ($1, $2, $3)`
@@ -315,6 +280,8 @@ func (client *Client) createScope(tx *sqlx.Tx) error {
 	return err
 }
 
+// update removes all scopes associated with a specific Client from the database,
+// updates all client database fields and adds new scopes with data from this Client.
 func (client *Client) update(tx *sqlx.Tx) error {
 	const q = `UPDATE Clients SET name=$2, secret=$3, redirecturis=$4, updatedat=$5
 	           WHERE uuid=$1`

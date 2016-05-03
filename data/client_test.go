@@ -9,9 +9,10 @@
 package data
 
 import (
+	"testing"
+
 	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
-	"testing"
 )
 
 const (
@@ -125,40 +126,6 @@ func TestDescribeScope(t *testing.T) {
 	}
 }
 
-func TestClientCreate(t *testing.T) {
-	InitTestDb(t)
-
-	id := uuid.NewRandom().String()
-	fresh := Client{
-		UUID:             id,
-		Name:             "gin-foo",
-		Secret:           "secret",
-		ScopeProvidedMap: map[string]string{"foo-read": "Read access to foo", "foo-write": "Write access to foo"},
-		RedirectURIs:     util.NewStringSet("https://foo.com/redirect")}
-
-	err := fresh.Create()
-	if err != nil {
-		t.Error(err)
-	}
-
-	check, ok := GetClient(id)
-	if !ok {
-		t.Error("Client does not exist")
-	}
-	if check.Name != "gin-foo" {
-		t.Error("Name was expected to bo 'gin-foo'")
-	}
-	if !check.ScopeProvided().Contains("foo-read") {
-		t.Error("Scope should contain 'foo-read'")
-	}
-	if !check.ScopeProvided().Contains("foo-write") {
-		t.Error("Scope should contain 'foo-write")
-	}
-	if !check.RedirectURIs.Contains("https://foo.com/redirect") {
-		t.Error("Redirect URIs should contain 'https://foo.com/redirect'")
-	}
-}
-
 func TestClientApprovalForAccountAndApprove(t *testing.T) {
 	InitTestDb(t)
 
@@ -266,25 +233,6 @@ func TestClientScopeProvided(t *testing.T) {
 	}
 	if !scope.Contains("bar") {
 		t.Error("Scope should contain 'bar'")
-	}
-}
-
-func TestClientDelete(t *testing.T) {
-	InitTestDb(t)
-
-	client, ok := GetClient(uuidClientGin)
-	if !ok {
-		t.Error("Client does not exist")
-	}
-
-	err := client.Delete()
-	if err != nil {
-		t.Error(err)
-	}
-
-	_, ok = GetClient(uuidClientGin)
-	if ok {
-		t.Error("Client should not exist")
 	}
 }
 
