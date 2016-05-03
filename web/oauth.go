@@ -19,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
 	"github.com/G-Node/gin-auth/util"
 	"github.com/gorilla/mux"
@@ -187,14 +188,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	account, ok := data.GetAccountByLogin(param.Login)
 	if !ok {
 		w.Header().Add("Cache-Control", "no-store")
-		http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusUnauthorized)
+		http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusFound)
 		return
 	}
 
 	ok = account.VerifyPassword(param.Password)
 	if !ok {
 		w.Header().Add("Cache-Control", "no-store")
-		http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusUnauthorized)
+		http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusFound)
 		return
 	}
 
@@ -440,12 +441,12 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 		AccountURL string    `json:"account_url"`
 		Scope      []string  `json:"scope"`
 	}{
-		URL:        MakeUrl("/oauth/validate/%s", token.Token),
+		URL:        conf.MakeUrl("/oauth/validate/%s", token.Token),
 		JTI:        token.Token,
 		EXP:        token.Expires,
 		ISS:        "gin-auth",
 		Login:      account.Login,
-		AccountURL: MakeUrl("/api/accounts/%s", account.Login),
+		AccountURL: conf.MakeUrl("/api/accounts/%s", account.Login),
 		Scope:      token.Scope.Strings(),
 	}
 

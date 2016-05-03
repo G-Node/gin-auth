@@ -31,6 +31,68 @@ func InitTestHttpHandler(t *testing.T) http.Handler {
 	return router
 }
 
+func TestOAuthHandler(t *testing.T) {
+	data.InitTestDb(t)
+
+	r := mux.NewRouter()
+	r.NotFoundHandler = &NotFoundHandler{}
+
+	var called, authorized bool
+	protected := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		called = true
+		_, authorized = OAuthToken(r)
+	})
+
+	handler := OAuthHandler("account-admin")(protected)
+
+	// missing authorization header
+	called, authorized = false, false
+	request, _ := http.NewRequest("GET", "/", strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if called || authorized || response.Code != http.StatusUnauthorized {
+		t.Error("Request should not be authorized")
+	}
+
+	// wrong authorization header
+	called, authorized = false, false
+	request, _ = http.NewRequest("GET", "/", strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer doesnotexist")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if called || authorized || response.Code != http.StatusUnauthorized {
+		t.Error("Request should not be authorized")
+	}
+
+	// insufficient scope
+	called, authorized = false, false
+	request, _ = http.NewRequest("GET", "/", strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer 3N7MP7M7")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if called || authorized || response.Code != http.StatusUnauthorized {
+		t.Error("Request should not be authorized")
+	}
+
+	handler = OAuthHandler("account-read")(protected)
+
+	// all OK
+	called, authorized = false, false
+	request, _ = http.NewRequest("GET", "/", strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer 3N7MP7M7")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if !called || !authorized || response.Code != http.StatusOK {
+		t.Error("Request should be authorized")
+	}
+
+	// is oauth info deleted
+	_, ok := OAuthToken(request)
+	if ok {
+		t.Error("OAuth info should be removed")
+	}
+}
+
 func newAuthQuery() url.Values {
 	query := url.Values{}
 	query.Add("response_type", "code")
@@ -182,8 +244,8 @@ func TestLogin(t *testing.T) {
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	if response.Code != http.StatusFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
 	}
 
 	// wrong password
@@ -193,8 +255,8 @@ func TestLogin(t *testing.T) {
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	if response.Code != http.StatusFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
 	}
 
 	// all OK

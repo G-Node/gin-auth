@@ -18,7 +18,7 @@ import (
 	"strings"
 )
 
-var arrayRegex = regexp.MustCompile(`((((([^",\\{}\s(NULL)])+|"([^"\\]|\\"|\\\\)*")))(,)?)`)
+var arrayRegex = regexp.MustCompile(`((((([^",\\{}\s]|NULL)+|"([^"\\]|\\"|\\\\)*")))(,)?)`)
 var regexValIndex = 3
 
 var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
