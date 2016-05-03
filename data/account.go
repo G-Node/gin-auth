@@ -10,8 +10,10 @@ package data
 
 import (
 	"database/sql"
+	"encoding/json"
 	"time"
 
+	"github.com/G-Node/gin-auth/conf"
 	"github.com/pborman/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -25,7 +27,7 @@ type Account struct {
 	FirstName      string
 	MiddleName     sql.NullString
 	LastName       string
-	PWHash         string
+	PWHash         string `json:"-"` // safety net
 	ActivationCode sql.NullString
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
@@ -122,4 +124,61 @@ func (acc *Account) Update() error {
 
 	// TODO There is a lot of room for improvement here concerning errors about constraints for certain fields
 	return err
+}
+
+type jsonAccount struct {
+	URL        string    `json:"url"`
+	UUID       string    `json:"uuid"`
+	Login      string    `json:"login"`
+	Title      *string   `json:"title"`
+	FirstName  string    `json:"first_name"`
+	MiddleName *string   `json:"middle_name"`
+	LastName   string    `json:"last_name"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+// MarshalJSON implements Marshaler for Account
+func (acc *Account) MarshalJSON() ([]byte, error) {
+	jsonData := &jsonAccount{
+		URL:       conf.MakeUrl("/api/accounts/%s", acc.Login),
+		UUID:      acc.UUID,
+		Login:     acc.Login,
+		FirstName: acc.FirstName,
+		LastName:  acc.LastName,
+		CreatedAt: acc.CreatedAt,
+		UpdatedAt: acc.UpdatedAt,
+	}
+	if acc.Title.Valid {
+		jsonData.Title = &acc.Title.String
+	}
+	if acc.MiddleName.Valid {
+		jsonData.MiddleName = &acc.MiddleName.String
+	}
+	return json.Marshal(jsonData)
+}
+
+// UnmarshalJSON implements Unmarshaler for Account.
+// Only parses updatable fields: Title, FirstName, MiddleName and LastName
+func (acc *Account) UnmarshalJSON(bytes []byte) error {
+	jsonData := &jsonAccount{}
+	err := json.Unmarshal(bytes, jsonData)
+	if err != nil {
+		return err
+	}
+
+	if jsonData.Title != nil {
+		acc.Title = sql.NullString{String: *jsonData.Title, Valid: true}
+	} else {
+		acc.Title = sql.NullString{}
+	}
+	acc.FirstName = jsonData.FirstName
+	if jsonData.MiddleName != nil {
+		acc.MiddleName = sql.NullString{String: *jsonData.MiddleName, Valid: true}
+	} else {
+		acc.MiddleName = sql.NullString{}
+	}
+	acc.LastName = jsonData.LastName
+
+	return nil
 }
