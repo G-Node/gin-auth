@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"sync"
 	"time"
 
 	"github.com/G-Node/gin-auth/util"
@@ -21,8 +20,6 @@ import (
 	"github.com/pborman/uuid"
 	"gopkg.in/yaml.v2"
 )
-
-var initClientsLock = sync.Mutex{}
 
 // Client object stored in the database
 type Client struct {
@@ -240,7 +237,7 @@ func (client *Client) create(tx *sqlx.Tx) error {
 	           VALUES ($1, $2, $3, $4, now(), now())
 	           RETURNING *`
 	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
-					VALUES ($1, $2, $3)`
+	                VALUES ($1, $2, $3)`
 
 	if client.UUID == "" {
 		client.UUID = uuid.NewRandom().String()
@@ -271,7 +268,7 @@ func (client *Client) deleteScope(tx *sqlx.Tx) error {
 // createScope adds all client scopes from a Client to the database.
 func (client *Client) createScope(tx *sqlx.Tx) error {
 	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
-					VALUES ($1, $2, $3)`
+	                VALUES ($1, $2, $3)`
 
 	var err error
 	for k, v := range client.ScopeProvidedMap {
@@ -309,8 +306,6 @@ func (client *Client) update(tx *sqlx.Tx) error {
 // InitClients loads client information from a yaml configuration file
 // and updates the corresponding entries in the database.
 func InitClients(path string) {
-	initClientsLock.Lock()
-	defer initClientsLock.Unlock()
 
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -318,11 +313,11 @@ func InitClients(path string) {
 	}
 
 	confClients := make([]struct {
-		UUID          	string				`yaml:"UUID"`
-		Name          	string				`yaml:"Name"`
-		Secret        	string				`yaml:"Secret"`
-		ScopeProvided	map[string]string	`yaml:"ScopeProvided"`
-		RedirectURIs	[]string			`yaml:"RedirectURIs"`
+		UUID          string            `yaml:"UUID"`
+		Name          string            `yaml:"Name"`
+		Secret        string            `yaml:"Secret"`
+		ScopeProvided map[string]string `yaml:"ScopeProvided"`
+		RedirectURIs  []string          `yaml:"RedirectURIs"`
 	}, 0)
 
 	err = yaml.Unmarshal(content, &confClients)

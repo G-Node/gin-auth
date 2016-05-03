@@ -270,14 +270,14 @@ func TestClient_create(t *testing.T) {
 
 	const (
 		testScope = "testEntry"
-		testUri = "https://testRedirecturi.com/somewhere"
+		testUri   = "https://testRedirecturi.com/somewhere"
 	)
 
 	var client = new(Client)
 	client.UUID = uuid.NewRandom().String()
 	client.Name = "TestClient" + client.UUID
 	client.Secret = "TestSecret"
-	client.ScopeProvidedMap = map[string]string{testScope:testScope}
+	client.ScopeProvidedMap = map[string]string{testScope: testScope}
 	client.RedirectURIs = util.NewStringSet(testUri)
 
 	tx := database.MustBegin()
@@ -324,7 +324,7 @@ func TestClient_createFail(t *testing.T) {
 
 	const (
 		testScope = "testEntry"
-		testUri = "https://testRedirecturi.com/somewhere"
+		testUri   = "https://testRedirecturi.com/somewhere"
 	)
 
 	var client = new(Client)
@@ -332,7 +332,7 @@ func TestClient_createFail(t *testing.T) {
 	client.Name = "TestClient" + client.UUID
 	client.Secret = "TestSecret"
 	client.RedirectURIs = util.NewStringSet(testUri)
-	client.ScopeProvidedMap = map[string]string{testScope : testScope}
+	client.ScopeProvidedMap = map[string]string{testScope: testScope}
 
 	tx := database.MustBegin()
 	err := client.create(tx)
@@ -370,7 +370,7 @@ func TestClient_createFail(t *testing.T) {
 
 	// Test fail duplicate client scope
 	tx = database.MustBegin()
-	client.Name = "TestClient"+ client.UUID
+	client.Name = "TestClient" + client.UUID
 	err = client.create(tx)
 	if err == nil {
 		t.Error("Missing error on duplicate client scope.")
@@ -385,7 +385,7 @@ func TestClient_delete(t *testing.T) {
 
 	const (
 		testScope = "testEntry"
-		testUri = "https://testRedirecturi.com/somewhere"
+		testUri   = "https://testRedirecturi.com/somewhere"
 	)
 
 	var client = new(Client)
@@ -393,7 +393,7 @@ func TestClient_delete(t *testing.T) {
 	client.Name = "TestClient" + client.UUID
 	client.Secret = "TestSecret"
 	client.RedirectURIs = util.NewStringSet(testUri)
-	client.ScopeProvidedMap = map[string]string{testScope : testScope}
+	client.ScopeProvidedMap = map[string]string{testScope: testScope}
 
 	originalScope, _ := DescribeScope(util.NewStringSet(""))
 
@@ -410,7 +410,7 @@ func TestClient_delete(t *testing.T) {
 	}
 
 	currScope, _ := DescribeScope(util.NewStringSet(""))
-	if len(currScope) != len(originalScope) + len(client.ScopeProvidedMap) {
+	if len(currScope) != len(originalScope)+len(client.ScopeProvidedMap) {
 		t.Error("Number of scopes does not match expected number.")
 	}
 
@@ -438,10 +438,10 @@ func TestClient_update(t *testing.T) {
 	InitTestDb(t)
 
 	const (
-		scopeOne = "testScope1"
- 		scopeTwo = "testScope2"
+		scopeOne   = "testScope1"
+		scopeTwo   = "testScope2"
 		scopeThree = "testScope3"
-		testUri = "https://testRedirecturi.com/somewhere"
+		testUri    = "https://testRedirecturi.com/somewhere"
 		testUriNew = "https://testRedirecturi.com/somewhere/else"
 	)
 
@@ -450,7 +450,7 @@ func TestClient_update(t *testing.T) {
 	client.Name = "TestClient" + client.UUID
 	client.Secret = "TestSecret"
 	client.RedirectURIs = util.NewStringSet(testUri)
-	client.ScopeProvidedMap = map[string]string{scopeOne : scopeOne}
+	client.ScopeProvidedMap = map[string]string{scopeOne: scopeOne}
 
 	tx := database.MustBegin()
 	err := client.create(tx)
@@ -464,7 +464,7 @@ func TestClient_update(t *testing.T) {
 	clUpdate.Name = "TestClient_up" + client.UUID
 	clUpdate.Secret = "TestSecret_up"
 	clUpdate.RedirectURIs = util.NewStringSet(testUriNew)
-	clUpdate.ScopeProvidedMap = map[string]string{scopeTwo : scopeTwo, scopeThree : scopeThree}
+	clUpdate.ScopeProvidedMap = map[string]string{scopeTwo: scopeTwo, scopeThree: scopeThree}
 
 	tx = database.MustBegin()
 	err = clUpdate.update(tx)
@@ -516,9 +516,9 @@ func TestClient_updateClients(t *testing.T) {
 	InitTestDb(t)
 
 	const (
-		scopeOne = "testScope1"
-		scopeTwo = "testScope2"
-		testUri = "https://testRedirecturi.com/somewhere"
+		scopeOne      = "testScope1"
+		scopeTwo      = "testScope2"
+		testUri       = "https://testRedirecturi.com/somewhere"
 		testUriUpdate = "https://testRedirecturi.com/somewhere/else"
 	)
 
@@ -532,7 +532,7 @@ func TestClient_updateClients(t *testing.T) {
 	addClient.Name = "TestClient" + addClient.UUID
 	addClient.Secret = "TestSecret"
 	addClient.RedirectURIs = util.NewStringSet(testUri)
-	addClient.ScopeProvidedMap = map[string]string{scopeOne : scopeOne}
+	addClient.ScopeProvidedMap = map[string]string{scopeOne: scopeOne}
 
 	clients := make([]Client, 0)
 	clients = append(clients, *dbClient, *addClient)
@@ -556,7 +556,7 @@ func TestClient_updateClients(t *testing.T) {
 	updClient.Name = "TestClient_upd" + addClient.UUID
 	updClient.Secret = "TestSecret_upd"
 	updClient.RedirectURIs = util.NewStringSet(testUriUpdate)
-	updClient.ScopeProvidedMap = map[string]string{scopeTwo : scopeTwo}
+	updClient.ScopeProvidedMap = map[string]string{scopeTwo: scopeTwo}
 
 	updClients := make([]Client, 0)
 	updClients = append(updClients, *dbClient, *updClient)
@@ -604,7 +604,7 @@ func TestClient_updateClientsFailInsert(t *testing.T) {
 	addClient.Name = "TestClient" + addClient.UUID
 	addClient.Secret = "TestSecret"
 	addClient.RedirectURIs = util.NewStringSet("https://uri.com/toNowhere")
-	addClient.ScopeProvidedMap = map[string]string{"entry1" : "entry1"}
+	addClient.ScopeProvidedMap = map[string]string{"entry1": "entry1"}
 
 	failClient := new(Client)
 	failClient.UUID = uuid.NewRandom().String()
@@ -647,13 +647,13 @@ func TestClient_updateClientsFailUpdate(t *testing.T) {
 	addClient.UUID = uuid.NewRandom().String()
 	addClient.Name = "TestAddClient" + addClient.UUID
 	addClient.RedirectURIs = util.NewStringSet("https://uri.com/toNowhere")
-	addClient.ScopeProvidedMap = map[string]string{"entry1" : "entry1"}
+	addClient.ScopeProvidedMap = map[string]string{"entry1": "entry1"}
 
 	failClient := new(Client)
 	failClient.UUID = uuid.NewRandom().String()
 	failClient.Name = "TestFailClient" + failClient.UUID
 	failClient.RedirectURIs = util.NewStringSet("https://uri.com/toNowhere")
-	failClient.ScopeProvidedMap = map[string]string{"entry2" : "entry2"}
+	failClient.ScopeProvidedMap = map[string]string{"entry2": "entry2"}
 
 	clients := make([]Client, 0)
 	clients = append(clients, *dbClient, *addClient, *failClient)
