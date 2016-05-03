@@ -188,14 +188,14 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	account, ok := data.GetAccountByLogin(param.Login)
 	if !ok {
 		w.Header().Add("Cache-Control", "no-store")
-		http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusUnauthorized)
+		http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusFound)
 		return
 	}
 
 	ok = account.VerifyPassword(param.Password)
 	if !ok {
 		w.Header().Add("Cache-Control", "no-store")
-		http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusUnauthorized)
+		http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusFound)
 		return
 	}
 

@@ -244,8 +244,8 @@ func TestLogin(t *testing.T) {
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	if response.Code != http.StatusFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
 	}
 
 	// wrong password
@@ -255,8 +255,8 @@ func TestLogin(t *testing.T) {
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	if response.Code != http.StatusFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
 	}
 
 	// all OK
