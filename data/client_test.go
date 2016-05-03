@@ -320,8 +320,10 @@ func TestInitClientsInvalidYaml(t *testing.T) {
 func TestClient_create(t *testing.T) {
 	InitTestDb(t)
 
-	const testScope = "testEntry"
-	const testUri = "https://testRedirecturi.com/somewhere"
+	const (
+		testScope = "testEntry"
+		testUri = "https://testRedirecturi.com/somewhere"
+	)
 
 	var client = new(Client)
 	client.UUID = uuid.NewRandom().String()
@@ -372,8 +374,10 @@ func TestClient_create(t *testing.T) {
 func TestClient_createFail(t *testing.T) {
 	InitTestDb(t)
 
-	const testScope = "testEntry"
-	const testUri = "https://testRedirecturi.com/somewhere"
+	const (
+		testScope = "testEntry"
+		testUri = "https://testRedirecturi.com/somewhere"
+	)
 
 	var client = new(Client)
 	client.UUID = uuid.NewRandom().String()
@@ -388,6 +392,24 @@ func TestClient_createFail(t *testing.T) {
 		t.Errorf("Error creating client '%s': '%v'", client.UUID, err)
 	}
 	tx.Commit()
+
+	// Test fail on incorrect uuid length
+	tx = database.MustBegin()
+	client.UUID = "1"
+	err = client.create(tx)
+	if err == nil {
+		t.Errorf("Missing error on invalid UUID length: %v", client)
+	}
+	tx.Rollback()
+
+	// Test fail on incorrect name length
+	tx = database.MustBegin()
+	client.UUID = uuid.NewRandom().String()
+	client.Name = ""
+	err = client.create(tx)
+	if err == nil {
+		t.Errorf("Missing error on invalid name length: %v", client)
+	}
 
 	// Test fail on duplicate name entry
 	tx = database.MustBegin()
@@ -413,8 +435,10 @@ func TestClient_createFail(t *testing.T) {
 func TestClient_delete(t *testing.T) {
 	InitTestDb(t)
 
-	const testScope = "testEntry"
-	const testUri = "https://testRedirecturi.com/somewhere"
+	const (
+		testScope = "testEntry"
+		testUri = "https://testRedirecturi.com/somewhere"
+	)
 
 	var client = new(Client)
 	client.UUID = uuid.NewRandom().String()
@@ -654,7 +678,6 @@ func TestClient_updateClientsFailInsert(t *testing.T) {
 	if initClientNum != insertClientNum {
 		t.Error("Number of clients does not match expected number.")
 	}
-
 }
 
 // Tests that a failing client update does a proper rollback before raising panic.
