@@ -9,9 +9,10 @@
 package data
 
 import (
+	"testing"
+
 	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
-	"testing"
 )
 
 const (
@@ -25,6 +26,16 @@ func TestListClients(t *testing.T) {
 	clients := ListClients()
 	if len(clients) != 1 {
 		t.Error("Exactly one client expected in list")
+	}
+}
+
+func TestListClientUUIDs(t *testing.T) {
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
+
+	clientList := listClientUUIDs()
+	if len(clientList) != 1 || !clientList.Contains(uuidClientGin) {
+		t.Error("listClientUUIDs returned incomplete list.")
 	}
 }
 
@@ -112,40 +123,6 @@ func TestDescribeScope(t *testing.T) {
 	_, ok = DescribeScope(util.NewStringSet())
 	if ok {
 		t.Error("Scope description should not be complete")
-	}
-}
-
-func TestClientCreate(t *testing.T) {
-	InitTestDb(t)
-
-	id := uuid.NewRandom().String()
-	fresh := Client{
-		UUID:             id,
-		Name:             "gin-foo",
-		Secret:           "secret",
-		ScopeProvidedMap: map[string]string{"foo-read": "Read access to foo", "foo-write": "Write access to foo"},
-		RedirectURIs:     util.NewStringSet("https://foo.com/redirect")}
-
-	err := fresh.Create()
-	if err != nil {
-		t.Error(err)
-	}
-
-	check, ok := GetClient(id)
-	if !ok {
-		t.Error("Client does not exist")
-	}
-	if check.Name != "gin-foo" {
-		t.Error("Name was expected to bo 'gin-foo'")
-	}
-	if !check.ScopeProvided().Contains("foo-read") {
-		t.Error("Scope should contain 'foo-read'")
-	}
-	if !check.ScopeProvided().Contains("foo-write") {
-		t.Error("Scope should contain 'foo-write")
-	}
-	if !check.RedirectURIs.Contains("https://foo.com/redirect") {
-		t.Error("Redirect URIs should contain 'https://foo.com/redirect'")
 	}
 }
 
@@ -259,21 +236,452 @@ func TestClientScopeProvided(t *testing.T) {
 	}
 }
 
-func TestClientDelete(t *testing.T) {
+// Tests that InitClients panics correctly, if the clients
+// file does not exist.
+func TestInitClientsMissingFile(t *testing.T) {
+	const nonExisting string = "iDoNotExist"
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Error("Missing panic on non existing config file.")
+		}
+	}()
+
+	InitClients(nonExisting)
+}
+
+// Tests that InitClients panics correctly, if the provided
+// clients file is not a yaml file.
+func TestInitClientsInvalidYaml(t *testing.T) {
+	const invalidYaml string = "resources/fixtures/invalidYaml.txt"
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Error("Missing panic on invalid yaml file.")
+		}
+	}()
+
+	InitClients(invalidYaml)
+}
+
+// Tests the insertion of a client into the database.
+func TestClient_create(t *testing.T) {
 	InitTestDb(t)
 
-	client, ok := GetClient(uuidClientGin)
+	const (
+		testScope = "testEntry"
+		testUri   = "https://testRedirecturi.com/somewhere"
+	)
+
+	var client = new(Client)
+	client.UUID = uuid.NewRandom().String()
+	client.Name = "TestClient" + client.UUID
+	client.Secret = "TestSecret"
+	client.ScopeProvidedMap = map[string]string{testScope: testScope}
+	client.RedirectURIs = util.NewStringSet(testUri)
+
+	tx := database.MustBegin()
+
+	err := client.create(tx)
+	if err != nil {
+		t.Errorf("Error creating client '%s': '%v'", client.UUID, err)
+	}
+	tx.Commit()
+
+	check, ok := GetClient(client.UUID)
 	if !ok {
-		t.Error("Client does not exist")
+		t.Errorf("Client not created.")
 	}
 
-	err := client.Delete()
+	if check.Name != client.Name {
+		t.Errorf("DB client name '%s' does not match expected name '%s'",
+			check.Name, client.Name)
+	}
+	if check.Secret != client.Secret {
+		t.Errorf("DB client secret '%s' does not match expected secret '%s'",
+			check.Secret, client.Secret)
+	}
+	if len(check.ScopeProvidedMap) != len(client.ScopeProvidedMap) {
+		t.Errorf("Number of DB scope entries (%d) differ from expected entries (%d)",
+			len(check.ScopeProvidedMap), len(client.ScopeProvidedMap))
+	}
+	if !check.ScopeProvided().Contains(testScope) {
+		t.Errorf("DB scope entry does not contain expected scope entry '%s'", testScope)
+	}
+	if check.RedirectURIs.Len() != client.RedirectURIs.Len() {
+		t.Errorf("Number of DB redirectURI entries (%d) differ from expected entries (%d)",
+			check.RedirectURIs.Len(), client.RedirectURIs.Len())
+	}
+	if !check.RedirectURIs.Contains(testUri) {
+		t.Errorf("DB redirectURI '%v' entry does not contain expected entry '%s'",
+			check.RedirectURIs, testUri)
+	}
+}
+
+// Tests various correct fails when trying to insert a client into the database.
+func TestClient_createFail(t *testing.T) {
+	InitTestDb(t)
+
+	const (
+		testScope = "testEntry"
+		testUri   = "https://testRedirecturi.com/somewhere"
+	)
+
+	var client = new(Client)
+	client.UUID = uuid.NewRandom().String()
+	client.Name = "TestClient" + client.UUID
+	client.Secret = "TestSecret"
+	client.RedirectURIs = util.NewStringSet(testUri)
+	client.ScopeProvidedMap = map[string]string{testScope: testScope}
+
+	tx := database.MustBegin()
+	err := client.create(tx)
+	if err != nil {
+		t.Errorf("Error creating client '%s': '%v'", client.UUID, err)
+	}
+	tx.Commit()
+
+	// Test fail on incorrect uuid length
+	tx = database.MustBegin()
+	client.UUID = "1"
+	err = client.create(tx)
+	if err == nil {
+		t.Errorf("Missing error on invalid UUID length: %v", client)
+	}
+	tx.Rollback()
+
+	// Test fail on incorrect name length
+	tx = database.MustBegin()
+	client.UUID = uuid.NewRandom().String()
+	client.Name = ""
+	err = client.create(tx)
+	if err == nil {
+		t.Errorf("Missing error on invalid name length: %v", client)
+	}
+
+	// Test fail on duplicate name entry
+	tx = database.MustBegin()
+	client.UUID = uuid.NewRandom().String()
+	err = client.create(tx)
+	if err == nil {
+		t.Error("Missing error on duplicate name.")
+	}
+	tx.Rollback()
+
+	// Test fail duplicate client scope
+	tx = database.MustBegin()
+	client.Name = "TestClient" + client.UUID
+	err = client.create(tx)
+	if err == nil {
+		t.Error("Missing error on duplicate client scope.")
+	}
+	tx.Rollback()
+}
+
+// Tests removal of a client and all of its scopes
+// from the corresponding database tables.
+func TestClient_delete(t *testing.T) {
+	InitTestDb(t)
+
+	const (
+		testScope = "testEntry"
+		testUri   = "https://testRedirecturi.com/somewhere"
+	)
+
+	var client = new(Client)
+	client.UUID = uuid.NewRandom().String()
+	client.Name = "TestClient" + client.UUID
+	client.Secret = "TestSecret"
+	client.RedirectURIs = util.NewStringSet(testUri)
+	client.ScopeProvidedMap = map[string]string{testScope: testScope}
+
+	originalScope, _ := DescribeScope(util.NewStringSet(""))
+
+	tx := database.MustBegin()
+	err := client.create(tx)
+	if err != nil {
+		t.Errorf("Error creating client '%s': '%v'", client.UUID, err)
+	}
+	tx.Commit()
+
+	_, ok := GetClient(client.UUID)
+	if !ok {
+		t.Errorf("Client not created.")
+	}
+
+	currScope, _ := DescribeScope(util.NewStringSet(""))
+	if len(currScope) != len(originalScope)+len(client.ScopeProvidedMap) {
+		t.Error("Number of scopes does not match expected number.")
+	}
+
+	tx = database.MustBegin()
+	err = client.delete(tx)
+	if err != nil {
+		t.Errorf("Error deleting client: %v", err)
+	}
+	tx.Commit()
+
+	_, ok = GetClient(client.UUID)
+	if ok {
+		t.Errorf("Client not deleted.")
+	}
+
+	currScope, _ = DescribeScope(util.NewStringSet(""))
+	if len(currScope) != len(originalScope) {
+		t.Error("ClientScopes were not deleted.")
+	}
+}
+
+// Tests update of a client and proper update of its scopes in the
+// corresponding database tables.
+func TestClient_update(t *testing.T) {
+	InitTestDb(t)
+
+	const (
+		scopeOne   = "testScope1"
+		scopeTwo   = "testScope2"
+		scopeThree = "testScope3"
+		testUri    = "https://testRedirecturi.com/somewhere"
+		testUriNew = "https://testRedirecturi.com/somewhere/else"
+	)
+
+	var client = new(Client)
+	client.UUID = uuid.NewRandom().String()
+	client.Name = "TestClient" + client.UUID
+	client.Secret = "TestSecret"
+	client.RedirectURIs = util.NewStringSet(testUri)
+	client.ScopeProvidedMap = map[string]string{scopeOne: scopeOne}
+
+	tx := database.MustBegin()
+	err := client.create(tx)
+	if err != nil {
+		t.Errorf("Error creating client '%s': '%v'", client.UUID, err)
+	}
+	tx.Commit()
+
+	var clUpdate = new(Client)
+	clUpdate.UUID = client.UUID
+	clUpdate.Name = "TestClient_up" + client.UUID
+	clUpdate.Secret = "TestSecret_up"
+	clUpdate.RedirectURIs = util.NewStringSet(testUriNew)
+	clUpdate.ScopeProvidedMap = map[string]string{scopeTwo: scopeTwo, scopeThree: scopeThree}
+
+	tx = database.MustBegin()
+	err = clUpdate.update(tx)
 	if err != nil {
 		t.Error(err)
 	}
+	tx.Commit()
 
-	_, ok = GetClient(uuidClientGin)
+	check, ok := GetClient(clUpdate.UUID)
+	if !ok {
+		t.Errorf("Error retrieving client '%s'", clUpdate.UUID)
+	}
+
+	if check.Name != clUpdate.Name {
+		t.Errorf("DB client name '%s' does not match expected '%s'",
+			check.Name, clUpdate.Name)
+	}
+	if check.Secret != clUpdate.Secret {
+		t.Errorf("DB client secret '%s' does not match expected '%s'",
+			check.Secret, clUpdate.Secret)
+	}
+	if check.RedirectURIs.Len() != clUpdate.RedirectURIs.Len() {
+		t.Errorf("Number of DB redirectURI entries (%d) differ from expected entries (%d)",
+			check.RedirectURIs.Len(), client.RedirectURIs.Len())
+	}
+	if !check.RedirectURIs.Contains(testUriNew) {
+		t.Errorf("DB redirectURI '%v' entry does not contain expected entry '%s'",
+			check.RedirectURIs, testUriNew)
+	}
+	if len(check.ScopeProvidedMap) != len(clUpdate.ScopeProvidedMap) {
+		t.Errorf("Number of DB scope entries (%d) differ from expected entries (%d)",
+			len(check.ScopeProvidedMap), len(clUpdate.ScopeProvidedMap))
+	}
+	if !check.UpdatedAt.After(check.CreatedAt) {
+		t.Error("TestClient_update: Field updatedAt was not properly updated.")
+	}
+
+	scopesUpdated, _ := DescribeScope(util.NewStringSet(""))
+	if scopesUpdated[scopeOne] != "" {
+		t.Errorf("Scope '%s' was not removed from DB.", scopeOne)
+	}
+	if scopesUpdated[scopeTwo] != scopeTwo || scopesUpdated[scopeThree] != scopeThree {
+		t.Errorf("Scopes were not properly updated.")
+	}
+}
+
+// Tests correct insertion, update and removal of clients of the updateClients function.
+func TestClient_updateClients(t *testing.T) {
+	InitTestDb(t)
+
+	const (
+		scopeOne      = "testScope1"
+		scopeTwo      = "testScope2"
+		testUri       = "https://testRedirecturi.com/somewhere"
+		testUriUpdate = "https://testRedirecturi.com/somewhere/else"
+	)
+
+	dbClient, ok := GetClient(uuidClientGin)
+	if !ok {
+		t.Errorf("Client '%s' not found.", uuidClientGin)
+	}
+
+	addClient := new(Client)
+	addClient.UUID = uuid.NewRandom().String()
+	addClient.Name = "TestClient" + addClient.UUID
+	addClient.Secret = "TestSecret"
+	addClient.RedirectURIs = util.NewStringSet(testUri)
+	addClient.ScopeProvidedMap = map[string]string{scopeOne: scopeOne}
+
+	clients := make([]Client, 0)
+	clients = append(clients, *dbClient, *addClient)
+
+	initClientNum := len(listClientUUIDs())
+
+	updateClients(clients)
+
+	insertClientNum := len(listClientUUIDs())
+
+	_, ok = GetClient(addClient.UUID)
+	if !ok {
+		t.Error("Client was not created.")
+	}
+	if initClientNum == insertClientNum {
+		t.Error("Number of clients after client insert is smaller than expected.")
+	}
+
+	updClient := new(Client)
+	updClient.UUID = uuid.NewRandom().String()
+	updClient.Name = "TestClient_upd" + addClient.UUID
+	updClient.Secret = "TestSecret_upd"
+	updClient.RedirectURIs = util.NewStringSet(testUriUpdate)
+	updClient.ScopeProvidedMap = map[string]string{scopeTwo: scopeTwo}
+
+	updClients := make([]Client, 0)
+	updClients = append(updClients, *dbClient, *updClient)
+
+	updateClients(updClients)
+
+	updateClientNum := len(listClientUUIDs())
+	if insertClientNum != updateClientNum {
+		t.Error("Number of clients after client update does not match expected number.")
+	}
+
+	remClients := make([]Client, 0)
+	remClients = append(remClients, *dbClient)
+
+	updateClients(remClients)
+
+	remClientNum := len(listClientUUIDs())
+
+	_, ok = GetClient(addClient.UUID)
 	if ok {
-		t.Error("Client should not exist")
+		t.Errorf("Client '%s' was not properly deleted.", addClient.UUID)
+	}
+	if initClientNum != remClientNum {
+		t.Error("Number of clients after client removal does not match expected number.")
+	}
+}
+
+// Tests that a failing client insert does a proper rollback before raising panic.
+func TestClient_updateClientsFailInsert(t *testing.T) {
+	InitTestDb(t)
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Error("Missing panic on false insert.")
+		}
+	}()
+
+	dbClient, ok := GetClient(uuidClientGin)
+	if !ok {
+		t.Errorf("Client '%s' not found.", uuidClientGin)
+	}
+
+	addClient := new(Client)
+	addClient.UUID = uuid.NewRandom().String()
+	addClient.Name = "TestClient" + addClient.UUID
+	addClient.Secret = "TestSecret"
+	addClient.RedirectURIs = util.NewStringSet("https://uri.com/toNowhere")
+	addClient.ScopeProvidedMap = map[string]string{"entry1": "entry1"}
+
+	failClient := new(Client)
+	failClient.UUID = uuid.NewRandom().String()
+	failClient.Name = "gin"
+
+	clients := make([]Client, 0)
+	clients = append(clients, *dbClient, *addClient, *failClient)
+
+	initClientNum := len(listClientUUIDs())
+
+	updateClients(clients)
+
+	insertClientNum := len(listClientUUIDs())
+
+	_, ok = GetClient(failClient.UUID)
+	if ok {
+		t.Error("Client should not have been created.")
+	}
+	if initClientNum != insertClientNum {
+		t.Error("Number of clients does not match expected number.")
+	}
+}
+
+// Tests that a failing client update does a proper rollback before raising panic.
+func TestClient_updateClientsFailUpdate(t *testing.T) {
+	InitTestDb(t)
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Error("Missing panic on false update.")
+		}
+	}()
+
+	dbClient, ok := GetClient(uuidClientGin)
+	if !ok {
+		t.Errorf("Client '%s' not found.", uuidClientGin)
+	}
+
+	addClient := new(Client)
+	addClient.UUID = uuid.NewRandom().String()
+	addClient.Name = "TestAddClient" + addClient.UUID
+	addClient.RedirectURIs = util.NewStringSet("https://uri.com/toNowhere")
+	addClient.ScopeProvidedMap = map[string]string{"entry1": "entry1"}
+
+	failClient := new(Client)
+	failClient.UUID = uuid.NewRandom().String()
+	failClient.Name = "TestFailClient" + failClient.UUID
+	failClient.RedirectURIs = util.NewStringSet("https://uri.com/toNowhere")
+	failClient.ScopeProvidedMap = map[string]string{"entry2": "entry2"}
+
+	clients := make([]Client, 0)
+	clients = append(clients, *dbClient, *addClient, *failClient)
+
+	updateClients(clients)
+
+	insertClientNum := len(listClientUUIDs())
+
+	failClient.Name = "gin"
+	failClients := make([]Client, 0)
+	failClients = append(failClients, *dbClient, *failClient)
+
+	updateClients(failClients)
+
+	failClientNum := len(listClientUUIDs())
+
+	check, ok := GetClient(failClient.UUID)
+	if !ok {
+		t.Error("Update fail client is missing.")
+	}
+	if check.Name == failClient.Name {
+		t.Error("Client name should not have been updated.")
+	}
+	_, ok = GetClient(addClient.UUID)
+	if !ok {
+		t.Error("Client should not have been deleted.")
+	}
+	if failClientNum != insertClientNum {
+		t.Error("Number of clients does not match expected number.")
 	}
 }

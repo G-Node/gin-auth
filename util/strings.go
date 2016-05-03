@@ -163,3 +163,15 @@ func (set StringSet) Value() (driver.Value, error) {
 
 	return fmt.Sprintf("{%s}", strings.Join(quoted, ",")), nil
 }
+
+// Difference returns a new util.StringSet containing all elements
+// which are not found in the other util.StringSet.
+func (set StringSet) Difference(other StringSet) StringSet {
+	ret := make([]string, 0, set.Len())
+	for k := range set {
+		if !other.Contains(k) {
+			ret = append(ret, k)
+		}
+	}
+	return NewStringSet(ret...)
+}

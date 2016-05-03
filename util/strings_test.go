@@ -177,3 +177,25 @@ func TestStringSetValue(t *testing.T) {
 		t.Error(`str was supposed to be '{"bar\\","blub\"","foo"}'`)
 	}
 }
+
+func TestDifference(t *testing.T) {
+	setMain := NewStringSet("Hannah", "Elie")
+	setNoDiff := NewStringSet("Hannah", "Elie", "Erich")
+
+	currDiffSet := setMain.Difference(setNoDiff)
+	if currDiffSet.Len() != 0 {
+		t.Error("StringSet Difference: Invalid NoDiff.")
+	}
+
+	setOneDiff := NewStringSet("Hannah", "Primo")
+	currDiffSet = setMain.Difference(setOneDiff)
+	if currDiffSet.Len() != 1 || !currDiffSet.Contains("Elie") {
+		t.Error("StringSet Difference: Invalid OneDiff.")
+	}
+
+	setAllDiff := NewStringSet("Primo", "Art", "Simon")
+	currDiffSet = setMain.Difference(setAllDiff)
+	if currDiffSet.Len() != 2 || !(currDiffSet.Contains("Hannah") && currDiffSet.Contains("Elie")) {
+		t.Error("StringSet Difference: Invalid AllDiff.")
+	}
+}

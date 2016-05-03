@@ -12,10 +12,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/pborman/uuid"
+	"io/ioutil"
 	"time"
 
 	"github.com/G-Node/gin-auth/util"
+	"github.com/jmoiron/sqlx"
+	"github.com/pborman/uuid"
+	"gopkg.in/yaml.v2"
 )
 
 // Client object stored in the database
@@ -40,6 +43,20 @@ func ListClients() []Client {
 	}
 
 	return clients
+}
+
+// listClientUUIDs returns a StringSet of the UUIDs of clients currently
+// in the database.
+func listClientUUIDs() util.StringSet {
+	const q = "SELECT uuid FROM Clients"
+
+	clients := make([]string, 0)
+	err := database.Select(&clients, q)
+	if err != nil {
+		panic(err)
+	}
+
+	return util.NewStringSet(clients...)
 }
 
 // GetClient returns an OAuth client with a given uuid.
@@ -142,34 +159,6 @@ func (client *Client) ScopeProvided() util.StringSet {
 	return util.NewStringSet(scope...)
 }
 
-// Create stores a new client in the database.
-func (client *Client) Create() error {
-	const q = `INSERT INTO Clients (uuid, name, secret, redirectURIs, createdAt, updatedAt)
-	           VALUES ($1, $2, $3, $4, now(), now())
-	           RETURNING *`
-	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
-					VALUES ($1, $2, $3)`
-
-	if client.UUID == "" {
-		client.UUID = uuid.NewRandom().String()
-	}
-
-	tx := database.MustBegin()
-	err := tx.Get(client, q, client.UUID, client.Name, client.Secret, client.RedirectURIs)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-	for k, v := range client.ScopeProvidedMap {
-		_, err = tx.Exec(qScope, client.UUID, k, v)
-		if err != nil {
-			tx.Rollback()
-			return err
-		}
-	}
-	return tx.Commit()
-}
-
 // ApprovalForAccount gets a client approval for this client which was
 // approved for a specific account.
 func (client *Client) ApprovalForAccount(accountUUID string) (*ClientApproval, bool) {
@@ -233,10 +222,166 @@ func (client *Client) CreateGrantRequest(responseType, redirectURI, state string
 	return request, err
 }
 
-// Delete removes an existing client from the database
-func (client *Client) Delete() error {
+// delete removes a client from a database via a transaction.
+func (client *Client) delete(tx *sqlx.Tx) error {
 	const q = `DELETE FROM Clients c WHERE c.uuid=$1`
 
-	_, err := database.Exec(q, client.UUID)
+	_, err := tx.Exec(q, client.UUID)
+
 	return err
+}
+
+// create stores a new client in the database.
+func (client *Client) create(tx *sqlx.Tx) error {
+	const q = `INSERT INTO Clients (uuid, name, secret, redirectURIs, createdAt, updatedAt)
+	           VALUES ($1, $2, $3, $4, now(), now())
+	           RETURNING *`
+	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
+	                VALUES ($1, $2, $3)`
+
+	if client.UUID == "" {
+		client.UUID = uuid.NewRandom().String()
+	}
+
+	err := tx.Get(client, q, client.UUID, client.Name, client.Secret, client.RedirectURIs)
+	if err == nil {
+		for k, v := range client.ScopeProvidedMap {
+			_, err = tx.Exec(qScope, client.UUID, k, v)
+			if err != nil {
+				break
+			}
+		}
+	}
+
+	return err
+}
+
+// deleteScope removes all scopes corresponding to a client uuid from the database.
+func (client *Client) deleteScope(tx *sqlx.Tx) error {
+	const q = `DELETE FROM ClientScopeProvided WHERE clientuuid=$1`
+
+	_, err := tx.Exec(q, client.UUID)
+
+	return err
+}
+
+// createScope adds all client scopes from a Client to the database.
+func (client *Client) createScope(tx *sqlx.Tx) error {
+	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
+	                VALUES ($1, $2, $3)`
+
+	var err error
+	for k, v := range client.ScopeProvidedMap {
+		_, err = tx.Exec(qScope, client.UUID, k, v)
+		if err != nil {
+			break
+		}
+	}
+	return err
+}
+
+// update removes all scopes associated with a specific Client from the database,
+// updates all client database fields and adds new scopes with data from this Client.
+func (client *Client) update(tx *sqlx.Tx) error {
+	const q = `UPDATE Clients SET name=$2, secret=$3, redirecturis=$4, updatedat=$5
+	           WHERE uuid=$1`
+
+	err := client.deleteScope(tx)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(q, client.UUID, client.Name, client.Secret, client.RedirectURIs, time.Now())
+	if err != nil {
+		return err
+	}
+
+	if len(client.ScopeProvidedMap) > 0 {
+		err = client.createScope(tx)
+	}
+
+	return err
+}
+
+// InitClients loads client information from a yaml configuration file
+// and updates the corresponding entries in the database.
+func InitClients(path string) {
+
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+
+	confClients := make([]struct {
+		UUID          string            `yaml:"UUID"`
+		Name          string            `yaml:"Name"`
+		Secret        string            `yaml:"Secret"`
+		ScopeProvided map[string]string `yaml:"ScopeProvided"`
+		RedirectURIs  []string          `yaml:"RedirectURIs"`
+	}, 0)
+
+	err = yaml.Unmarshal(content, &confClients)
+	if err != nil {
+		panic(err)
+	}
+
+	clients := make([]Client, len(confClients), len(confClients))
+	for ind, cl := range confClients {
+		clients[ind].UUID = cl.UUID
+		clients[ind].Name = cl.Name
+		clients[ind].Secret = cl.Secret
+		clients[ind].ScopeProvidedMap = cl.ScopeProvided
+		clients[ind].RedirectURIs = util.NewStringSet(cl.RedirectURIs...)
+	}
+
+	updateClients(clients)
+}
+
+// updateDatabase updates the clients and clientScopeProvided tables
+// with the contents of []Client.
+func updateClients(confClients []Client) {
+	clientIDs := make([]string, len(confClients), len(confClients))
+	for i, v := range confClients {
+		clientIDs[i] = v.UUID
+	}
+
+	confClientIDs := util.NewStringSet(clientIDs...)
+	dbClientIDs := listClientUUIDs()
+	removeDbClients := dbClientIDs.Difference(confClientIDs)
+
+	tx := database.MustBegin()
+
+	var err error
+	if len(removeDbClients) > 0 {
+		for remID := range removeDbClients {
+			remClient, clientExists := GetClient(remID)
+			if clientExists {
+				err = remClient.delete(tx)
+				if err != nil {
+					break
+				}
+			}
+		}
+	}
+
+	for _, cl := range confClients {
+		if dbClientIDs.Contains(cl.UUID) {
+			err = cl.update(tx)
+		} else {
+			err = cl.create(tx)
+		}
+		if err != nil {
+			break
+		}
+	}
+
+	if err != nil {
+		tx.Rollback()
+		panic(err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		panic(err)
+	}
 }

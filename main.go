@@ -14,10 +14,14 @@ import (
 )
 
 func main() {
+	const clientsConfigFile = "resources/conf/clients.yml"
+
 	srvConf := conf.GetServerConfig()
 	dbConf := conf.GetDbConfig()
 
 	data.InitDb(dbConf)
+
+	data.InitClients(clientsConfigFile)
 
 	router := mux.NewRouter()
 	router.NotFoundHandler = &web.NotFoundHandler{}

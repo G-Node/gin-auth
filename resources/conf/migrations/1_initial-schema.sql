@@ -11,7 +11,7 @@
 -- SQL in section 'Up' is executed when this migration is applied
 
 CREATE TABLE Accounts (
-  uuid              VARCHAR(36) PRIMARY KEY ,
+  uuid              VARCHAR(36) PRIMARY KEY CHECK (char_length(uuid) = 36) ,
   login             VARCHAR(512) NOT NULL UNIQUE ,
   email             VARCHAR(512) NOT NULL UNIQUE ,
   pwHash            VARCHAR(512) NOT NULL ,
@@ -34,8 +34,8 @@ CREATE TABLE SSHKeys (
 );
 
 CREATE TABLE Clients (
-  uuid              VARCHAR(36) PRIMARY KEY ,
-  name              VARCHAR(512) NOT NULL UNIQUE ,      -- in oauth lingo this is the client_id
+  uuid              VARCHAR(36) PRIMARY KEY CHECK (char_length(uuid) = 36),
+  name              VARCHAR(512) NOT NULL UNIQUE CHECK (char_length(name) > 1),      -- in oauth lingo this is the client_id
   secret            VARCHAR(512) ,
   redirectURIs      VARCHAR[] NOT NULL ,
   createdAt         TIMESTAMP NOT NULL ,
@@ -49,7 +49,7 @@ CREATE TABLE ClientScopeProvided (
 );
 
 CREATE TABLE ClientApprovals (
-  uuid              VARCHAR(36) PRIMARY KEY ,
+  uuid              VARCHAR(36) PRIMARY KEY CHECK (char_length(uuid) = 36) ,
   scope             VARCHAR[] NOT NULL ,
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
