@@ -9,14 +9,8 @@
 package conf
 
 import (
-	"os"
 	"testing"
 )
-
-func TestMain(m *testing.M) {
-	os.Chdir("..")
-	os.Exit(m.Run())
-}
 
 func TestGetServerConfig(t *testing.T) {
 	config := GetServerConfig()
