@@ -14,18 +14,16 @@ import (
 )
 
 func main() {
-	const clientsConfigFile = "resources/conf/clients.yml"
-
 	srvConf := conf.GetServerConfig()
 	dbConf := conf.GetDbConfig()
 
 	data.InitDb(dbConf)
 
-	data.InitClients(clientsConfigFile)
+	data.InitClients(conf.GetClientsConfigFile())
 
 	router := mux.NewRouter()
 	router.NotFoundHandler = &web.NotFoundHandler{}
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("resources/static/"))))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(conf.GetStaticFilesDir()))))
 
 	web.RegisterRoutes(router)
 
