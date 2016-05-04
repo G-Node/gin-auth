@@ -34,10 +34,9 @@ var (
 
 func init() {
 	basePath := os.Getenv("GOPATH")
-	if basePath == "" {
-		basePath = "./"
+	if basePath != "" {
+		resourcesPath = path.Join(basePath, "src", "github.com", "G-Node", "gin-auth", "resources")
 	}
-	resourcesPath = path.Join(basePath, "src", "github.com", "G-Node", "gin-auth", "resources")
 }
 
 // SetResourcesPath sets the resource path to the specified location.
