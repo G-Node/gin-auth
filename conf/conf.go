@@ -40,6 +40,13 @@ func init() {
 	resourcesPath = path.Join(basePath, "src", "github.com", "G-Node", "gin-auth", "resources")
 }
 
+// SetResourcesPath sets the resource path to the specified location.
+// This function should only be used before other helpers from the conf
+// package are used.
+func SetResourcesPath(res string) {
+	resourcesPath = res
+}
+
 // ServerConfig provides several general configuration parameters for gin-auth
 type ServerConfig struct {
 	Host             string
