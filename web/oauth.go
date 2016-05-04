@@ -12,7 +12,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
@@ -153,14 +152,10 @@ func LoginPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tmpl, err := template.ParseFiles("resources/templates/layout.html", "resources/templates/login.html")
-	if err != nil {
-		panic(err)
-	}
-
+	tmpl := conf.MakeTemplate("login.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
-	err = tmpl.ExecuteTemplate(w, "layout", &loginData{RequestID: token})
+	err := tmpl.ExecuteTemplate(w, "layout", &loginData{RequestID: token})
 	if err != nil {
 		panic(err)
 	}
@@ -291,14 +286,10 @@ func ApprovePage(w http.ResponseWriter, r *http.Request) {
 		RequestID string
 	}{client.Name, description, request.Token}
 
-	tmpl, err := template.ParseFiles("resources/templates/layout.html", "resources/templates/approve.html")
-	if err != nil {
-		panic(err)
-	}
-
+	tmpl := conf.MakeTemplate("approve.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
-	err = tmpl.ExecuteTemplate(w, "layout", pageData)
+	err := tmpl.ExecuteTemplate(w, "layout", pageData)
 	if err != nil {
 		panic(err)
 	}

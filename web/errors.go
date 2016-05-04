@@ -11,9 +11,10 @@ package web
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/G-Node/gin-auth/util"
-	"html/template"
 	"net/http"
+
+	"github.com/G-Node/gin-auth/conf"
+	"github.com/G-Node/gin-auth/util"
 )
 
 // NotFoundHandler deals with not found errors
@@ -57,8 +58,7 @@ func PrintErrorHTML(w http.ResponseWriter, r *http.Request, err interface{}, cod
 	errData := &htmlErrorData{Referrer: r.Referer()}
 	errData.FillFrom(err, code)
 
-	tmpl, err := template.ParseFiles("resources/templates/layout.html", "resources/templates/error.html")
-
+	tmpl := conf.MakeTemplate("error.html")
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "text/html")
 	w.WriteHeader(code)
