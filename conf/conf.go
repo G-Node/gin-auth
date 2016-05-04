@@ -12,17 +12,33 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"os"
+	"path"
 	"sync"
 	"time"
 )
 
 const (
-	serverConfigFile        = "resources/conf/server.yml"
-	dbConfigFile            = "resources/conf/dbconf.yml"
 	defaultSessionLifeTime  = 2880
 	defaultTokenLifeTime    = 1440
 	defaultGrantReqLifeTime = 15
 )
+
+var (
+	resourcesPath     string
+	serverConfigFile  = path.Join("conf", "server.yml")
+	dbConfigFile      = path.Join("conf", "dbconf.yml")
+	clientsConfigFile = path.Join("conf", "clients.yml")
+	staticFilesDir    = path.Join("static")
+)
+
+func init() {
+	basePath := os.Getenv("GOPATH")
+	if basePath == "" {
+		basePath = "./"
+	}
+	resourcesPath = path.Join(basePath, "src", "github.com", "G-Node", "gin-auth", "resources")
+}
 
 // ServerConfig provides several general configuration parameters for gin-auth
 type ServerConfig struct {
@@ -55,7 +71,7 @@ func GetServerConfig() *ServerConfig {
 	defer serverConfigLock.Unlock()
 
 	if serverConfig == nil {
-		content, err := ioutil.ReadFile(serverConfigFile)
+		content, err := ioutil.ReadFile(path.Join(resourcesPath, serverConfigFile))
 		if err != nil {
 			panic(err)
 		}
@@ -111,7 +127,7 @@ func GetDbConfig() *DbConfig {
 	defer dbConfigLock.Unlock()
 
 	if dbConfig == nil {
-		content, err := ioutil.ReadFile(dbConfigFile)
+		content, err := ioutil.ReadFile(path.Join(resourcesPath, dbConfigFile))
 		if err != nil {
 			panic(err)
 		}
@@ -126,4 +142,19 @@ func GetDbConfig() *DbConfig {
 	}
 
 	return dbConfig
+}
+
+func GetResourceFile(p ...string) string {
+	tmp := make([]string, 1, len(p)+1)
+	tmp[0] = resourcesPath
+	tmp = append(tmp, p...)
+	return path.Join(tmp...)
+}
+
+func GetClientsConfigFile() string {
+	return path.Join(resourcesPath, clientsConfigFile)
+}
+
+func GetStaticFilesDir() string {
+	return path.Join(resourcesPath, staticFilesDir)
 }
