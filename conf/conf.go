@@ -151,6 +151,8 @@ func GetDbConfig() *DbConfig {
 	return dbConfig
 }
 
+// GetResourceFile returns the path to a resource file using the global resource path.
+// The path will be constructed from the resource path and all given path elements in p.
 func GetResourceFile(p ...string) string {
 	tmp := make([]string, 1, len(p)+1)
 	tmp[0] = resourcesPath
@@ -158,10 +160,12 @@ func GetResourceFile(p ...string) string {
 	return path.Join(tmp...)
 }
 
+// GetClientsConfigFile returns the path to the clients configuration file.
 func GetClientsConfigFile() string {
 	return path.Join(resourcesPath, clientsConfigFile)
 }
 
+// GetStaticFilesDir returns the path to the static files directory.
 func GetStaticFilesDir() string {
 	return path.Join(resourcesPath, staticFilesDir)
 }
