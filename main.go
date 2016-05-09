@@ -13,6 +13,16 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	major  = 0
+	minor  = 1
+	status = "Alpha"
+)
+
+func versionString() string {
+	return fmt.Sprintf("gin-auth %d.%d %s", major, minor, status)
+}
+
 const doc = `G-Node Infrastructure Authentication Provider
 
 Usage:
@@ -21,14 +31,14 @@ Usage:
   gin-auth --version
 
 Options:
-  --res <dir>     Path to the resources directory wher configuration files,
-                  templates and static files are located. By defaule gin-auth
+  --res <dir>     Path to the resources directory where configuration files,
+                  templates and static files are located. By default gin-auth
                   will use GOPATH to find the directory.
   -h --help       Show this screen.
   --version       Print gin-auth version`
 
 func main() {
-	args, _ := docopt.Parse(doc, nil, true, "gin-auth 0.1a", false)
+	args, _ := docopt.Parse(doc, nil, true, versionString(), false)
 	if res, ok := args["--res"]; ok && res != nil {
 		conf.SetResourcesPath(res.(string))
 	}
