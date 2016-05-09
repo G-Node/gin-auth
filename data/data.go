@@ -38,7 +38,7 @@ func InitTestDb(t *testing.T) {
 	config := conf.GetDbConfig()
 	InitDb(config)
 
-	fixtures, err := ioutil.ReadFile("resources/fixtures/testdb.sql")
+	fixtures, err := ioutil.ReadFile(conf.GetResourceFile("fixtures", "testdb.sql"))
 	if err != nil {
 		t.Fatal(err)
 	}

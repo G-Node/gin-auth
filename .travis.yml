@@ -22,6 +22,7 @@ install:
  - go get golang.org/x/crypto/bcrypt
  - go get github.com/gorilla/mux
  - go get github.com/gorilla/handlers
+ - go get github.com/docopt/docopt-go
 
 before_script:
  - psql -c "CREATE ROLE test WITH LOGIN PASSWORD 'test';" -U postgres

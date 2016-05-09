@@ -11,6 +11,7 @@ package data
 import (
 	"testing"
 
+	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
 )
@@ -253,15 +254,13 @@ func TestInitClientsMissingFile(t *testing.T) {
 // Tests that InitClients panics correctly, if the provided
 // clients file is not a yaml file.
 func TestInitClientsInvalidYaml(t *testing.T) {
-	const invalidYaml string = "resources/fixtures/invalidYaml.txt"
 	defer func() {
 		r := recover()
 		if r == nil {
 			t.Error("Missing panic on invalid yaml file.")
 		}
 	}()
-
-	InitClients(invalidYaml)
+	InitClients(conf.GetResourceFile("fixtures", "invalidYaml.txt"))
 }
 
 // Tests the insertion of a client into the database.
