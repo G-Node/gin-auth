@@ -142,7 +142,9 @@ func DescribeScope(scope util.StringSet) (map[string]string, bool) {
 	names := make([]string, len(data))
 	for i, d := range data {
 		names[i] = d.Name
-		desc[d.Name] = d.Description
+		if scope.Contains(d.Name) {
+			desc[d.Name] = d.Description
+		}
 	}
 	global := util.NewStringSet(names...)
 
