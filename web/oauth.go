@@ -271,17 +271,28 @@ func ApprovePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := request.Client()
-
-	description, ok := data.DescribeScope(request.ScopeRequested)
+	_, ok = data.DescribeScope(request.ScopeRequested)
 	if !ok {
 		panic("Invalid scope")
 	}
+
+	if !request.AccountUUID.Valid {
+		PrintErrorHTML(w, r, "Grant request is not authenticated", http.StatusUnauthorized)
+		return
+	}
+
+	client := request.Client()
+
+	approval, _ := client.ApprovalForAccount(request.AccountUUID.String)
+	existScope, _ := data.DescribeScope(approval.Scope)
+	addScope, _ := data.DescribeScope(request.ScopeRequested.Difference(approval.Scope))
+
 	pageData := struct {
-		Client    string
-		Scope     map[string]string
-		RequestID string
-	}{client.Name, description, request.Token}
+		Client        string
+		AddScope      map[string]string
+		ExistingScope map[string]string
+		RequestID     string
+	}{client.Name, addScope, existScope, request.Token}
 
 	tmpl := conf.MakeTemplate("approve.html")
 	w.Header().Add("Cache-Control", "no-store")
