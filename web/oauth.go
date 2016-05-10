@@ -272,9 +272,6 @@ func ApprovePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := request.Client()
-	if !ok {
-		panic("Client does not exist")
-	}
 
 	description, ok := data.DescribeScope(request.ScopeRequested)
 	if !ok {
