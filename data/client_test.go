@@ -109,6 +109,9 @@ func TestDescribeScope(t *testing.T) {
 	if !ok {
 		t.Error("Scope description is not complete")
 	}
+	if len(desc) != 2 {
+		t.Error("DescribeScope returned false number of scopes.")
+	}
 	if s, ok := desc["repo-read"]; !ok || s == "" {
 		t.Error("Description for 'repo-read' is missing")
 	}
@@ -394,8 +397,6 @@ func TestClient_delete(t *testing.T) {
 	client.RedirectURIs = util.NewStringSet(testUri)
 	client.ScopeProvidedMap = map[string]string{testScope: testScope}
 
-	originalScope, _ := DescribeScope(util.NewStringSet(""))
-
 	tx := database.MustBegin()
 	err := client.create(tx)
 	if err != nil {
@@ -408,9 +409,8 @@ func TestClient_delete(t *testing.T) {
 		t.Errorf("Client not created.")
 	}
 
-	currScope, _ := DescribeScope(util.NewStringSet(""))
-	if len(currScope) != len(originalScope)+len(client.ScopeProvidedMap) {
-		t.Error("Number of scopes does not match expected number.")
+	if !CheckScope(util.NewStringSet(testScope)) {
+		t.Error("Client scope not created.")
 	}
 
 	tx = database.MustBegin()
@@ -425,9 +425,8 @@ func TestClient_delete(t *testing.T) {
 		t.Errorf("Client not deleted.")
 	}
 
-	currScope, _ = DescribeScope(util.NewStringSet(""))
-	if len(currScope) != len(originalScope) {
-		t.Error("ClientScopes were not deleted.")
+	if CheckScope(util.NewStringSet(testScope)) {
+		t.Error("Client scope was not deleted.")
 	}
 }
 
@@ -501,11 +500,10 @@ func TestClient_update(t *testing.T) {
 		t.Error("TestClient_update: Field updatedAt was not properly updated.")
 	}
 
-	scopesUpdated, _ := DescribeScope(util.NewStringSet(""))
-	if scopesUpdated[scopeOne] != "" {
+	if CheckScope(util.NewStringSet(scopeOne)) {
 		t.Errorf("Scope '%s' was not removed from DB.", scopeOne)
 	}
-	if scopesUpdated[scopeTwo] != scopeTwo || scopesUpdated[scopeThree] != scopeThree {
+	if !CheckScope(util.NewStringSet(scopeTwo)) || !CheckScope(util.NewStringSet(scopeThree)) {
 		t.Errorf("Scopes were not properly updated.")
 	}
 }
