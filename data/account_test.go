@@ -65,7 +65,7 @@ func TestGetAccountByLogin(t *testing.T) {
 	}
 }
 
-func TestAccountPassword(t *testing.T) {
+func TestAccount_SetPassword(t *testing.T) {
 	acc := &Account{}
 	acc.SetPassword("foobar")
 	if acc.PWHash == "foobar" {
@@ -79,7 +79,7 @@ func TestAccountPassword(t *testing.T) {
 	}
 }
 
-func TestCreateAccount(t *testing.T) {
+func TestAccount_Create(t *testing.T) {
 	InitTestDb(t)
 
 	fresh := &Account{Login: "theo", Email: "theo@foo.com", FirstName: "Theo", LastName: "Test"}
@@ -98,7 +98,24 @@ func TestCreateAccount(t *testing.T) {
 	}
 }
 
-func TestUpdateAccount(t *testing.T) {
+func TestAccount_SSHKeys(t *testing.T) {
+	InitTestDb(t)
+	acc, ok := GetAccount(uuidAlice)
+	if !ok {
+		t.Error("Account does not exist")
+	}
+
+	keys := acc.SSHKeys()
+	if len(keys) != 1 {
+		t.Error("List should contain one single key")
+	}
+	key := keys[0]
+	if key.AccountUUID != acc.UUID {
+		t.Errorf("Account uuid expected to be '%s' but was '%s'", acc.UUID, key.AccountUUID)
+	}
+}
+
+func TestAccount_Update(t *testing.T) {
 	InitTestDb(t)
 
 	newLogin := "alice_in_wonderland"

@@ -109,6 +109,19 @@ func (acc *Account) Create() error {
 	return err
 }
 
+// SSHKeys returns a slice with all ssh key belonging to this account.
+func (acc *Account) SSHKeys() []SSHKey {
+	const q = `SELECT * FROM SSHKeys WHERE accountUUID = $1 ORDER BY fingerprint`
+
+	keys := make([]SSHKey, 0)
+	err := database.Select(&keys, q, acc.UUID)
+	if err != nil {
+		panic(err)
+	}
+
+	return keys
+}
+
 // Update stores the new values of an Account in the database.
 // New values for Login and CreatedAt are ignored. UpdatedAt will be set
 // automatically to the current date and time.
