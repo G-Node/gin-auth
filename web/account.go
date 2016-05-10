@@ -160,3 +160,135 @@ func UpdateAccountPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// ListAccountKeys is a handler which returns all ssh keys belonging to a given
+// account as JSON.
+func ListAccountKeys(w http.ResponseWriter, r *http.Request) {
+	login := mux.Vars(r)["login"]
+	oauth, ok := OAuthToken(r)
+	if !ok {
+		panic("Request was authorized but no OAuth token is available!") // this should never happen
+	}
+
+	account, ok := data.GetAccountByLogin(login)
+	if !ok {
+		PrintErrorJSON(w, r, "The requested account does not exist", http.StatusNotFound)
+		return
+	}
+
+	if oauth.Token.AccountUUID != account.UUID || !oauth.Match.Contains("account-read") && !oauth.Match.Contains("account-admin") {
+		PrintErrorJSON(w, r, "Access to requested key forbidden", http.StatusUnauthorized)
+		return
+	}
+
+	keys := account.SSHKeys()
+	marshal := make([]data.SSHKeyMarshaler, 0, len(keys))
+	for i := 0; i < len(keys); i++ {
+		marshal = append(marshal, data.SSHKeyMarshaler{SSHKey: &keys[i], Account: account})
+	}
+
+	w.Header().Add("Cache-Control", "no-cache")
+	w.Header().Add("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	enc.Encode(marshal)
+}
+
+// GetKey returns a single ssh key identified by its fingerprint as JSON.
+func GetKey(w http.ResponseWriter, r *http.Request) {
+	fingerprint := mux.Vars(r)["fingerprint"]
+	oauth, ok := OAuthToken(r)
+	if !ok {
+		panic("Request was authorized but no OAuth token is available!") // this should never happen
+	}
+
+	key, ok := data.GetSSHKey(fingerprint)
+	if !ok {
+		PrintErrorJSON(w, r, "The requested key does not exist", http.StatusNotFound)
+		return
+	}
+
+	if oauth.Token.AccountUUID != key.AccountUUID || !oauth.Match.Contains("account-read") && !oauth.Match.Contains("account-admin") {
+		PrintErrorJSON(w, r, "Access to requested key forbidden", http.StatusUnauthorized)
+		return
+	}
+
+	// account is only needed for the output (maybe this can be avoided)
+	account, _ := data.GetAccount(key.AccountUUID)
+
+	w.Header().Add("Cache-Control", "no-cache")
+	w.Header().Add("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	enc.Encode(&data.SSHKeyMarshaler{SSHKey: key, Account: account})
+}
+
+// CreateKey stores a new key for a given account.
+func CreateKey(w http.ResponseWriter, r *http.Request) {
+	login := mux.Vars(r)["login"]
+	oauth, ok := OAuthToken(r)
+	if !ok {
+		panic("Request was authorized but no OAuth token is available!") // this should never happen
+	}
+
+	account, ok := data.GetAccountByLogin(login)
+	if !ok {
+		PrintErrorJSON(w, r, "The requested account does not exist", http.StatusNotFound)
+		return
+	}
+
+	if oauth.Token.AccountUUID != account.UUID || !oauth.Match.Contains("account-write") {
+		PrintErrorJSON(w, r, "Access to requested account forbidden", http.StatusUnauthorized)
+		return
+	}
+
+	key := &data.SSHKey{AccountUUID: account.UUID}
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(key)
+	if err != nil {
+		PrintErrorJSON(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	err = key.Create()
+	if err != nil {
+		panic(err)
+	}
+
+	w.Header().Add("Cache-Control", "no-cache")
+	w.Header().Add("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	enc.Encode(&data.SSHKeyMarshaler{SSHKey: key, Account: account})
+}
+
+// DeleteKey removes a single ssh key identified by its fingerprint and returns
+// the deleted key as JSON.
+func DeleteKey(w http.ResponseWriter, r *http.Request) {
+	fingerprint := mux.Vars(r)["fingerprint"]
+	oauth, ok := OAuthToken(r)
+	if !ok {
+		panic("Request was authorized but no OAuth token is available!") // this should never happen
+	}
+
+	key, ok := data.GetSSHKey(fingerprint)
+	if !ok {
+		PrintErrorJSON(w, r, "The requested key does not exist", http.StatusNotFound)
+		return
+	}
+
+	if oauth.Token.AccountUUID != key.AccountUUID || !oauth.Match.Contains("account-write") {
+		PrintErrorJSON(w, r, "Access to requested account forbidden", http.StatusUnauthorized)
+		return
+	}
+
+	err := key.Delete()
+	if err != nil {
+		panic(err)
+	}
+
+	// account is only needed for the output (maybe this can be avoided)
+	account, _ := data.GetAccount(key.AccountUUID)
+
+	w.Header().Add("Cache-Control", "no-cache")
+	w.Header().Add("Content-Type", "application/json")
+	enc := json.NewEncoder(w)
+	enc.Encode(&data.SSHKeyMarshaler{SSHKey: key, Account: account})
+}
