@@ -5,13 +5,28 @@
     The client <strong>{{ .Client }}</strong> requests your approval for accessing the following scopes on your behalf:
 </p>
 <form action="/oauth/approve" method="post">
-    {{ range $scope, $description := .Scope }}
+
+    {{ range $addScope, $addDesc := .AddScope }}
     <div class="form-group">
-        <label for="scope-{{ $scope }}">
-            <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> {{ $description }}
-            <input type="hidden" id="scope-{{ $scope }}" name="scope" value="{{ $scope }}">
+        <label for="scope-{{ $addScope }}">
+            <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> {{ $addDesc }}
+            <input type="hidden" id="scope-{{ $addScope }}" name="scope" value="{{ $addScope }}">
         </label>
     </div>
+    {{ end }}
+
+    {{ if .ExistingScope }}
+        <hr /><br>
+        <h4>Previously approved scopes</h4>
+
+        {{ range $existScope, $existDesc := .ExistingScope }}
+        <div class="form-group">
+            <label for="scope-{{ $existScope }}">
+                <span class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span> {{ $existDesc }}
+                <input type="hidden" id="scope-{{ $existScope }}" name="scope" value="{{ $existScope }}">
+            </label>
+        </div>
+        {{ end }}
     {{ end }}
 
     <input type="hidden" id="request_id" name="request_id" value="{{ .RequestID }}">
