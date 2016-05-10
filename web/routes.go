@@ -44,4 +44,12 @@ func RegisterRoutes(r *mux.Router) {
 		Methods("PUT")
 	api.Handle("/accounts/{login}/password", OAuthHandler("account-write")(http.HandlerFunc(UpdateAccountPassword))).
 		Methods("PUT")
+	api.Handle("/accounts/{login}/keys", OAuthHandler("account-read", "account-admin")(http.HandlerFunc(ListAccountKeys))).
+		Methods("GET")
+	api.Handle("/accounts/{login}/keys", OAuthHandler("account-write")(http.HandlerFunc(CreateKey))).
+		Methods("POST")
+	api.Handle("/keys/{fingerprint}", OAuthHandler("account-read", "account-admin")(http.HandlerFunc(GetKey))).
+		Methods("GET")
+	api.Handle("/keys/{fingerprint}", OAuthHandler("account-write")(http.HandlerFunc(DeleteKey))).
+		Methods("DELETE")
 }
