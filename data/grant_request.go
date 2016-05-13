@@ -172,11 +172,19 @@ func (req *GrantRequest) IsApproved() bool {
 		return false
 	}
 
+	client := req.Client()
+	if req.ScopeRequested.Intersect(client.ScopeBlacklist).Len() > 0 {
+		return false
+	}
+	if client.ScopeWhitelist.IsSuperset(req.ScopeRequested) {
+		return true
+	}
+
 	scope := util.NewStringSet()
 	err := database.Get(&scope, q, req.ClientUUID, req.AccountUUID.String)
 	if err != nil {
 		return false
 	}
 
-	return scope.IsSuperset(req.ScopeRequested)
+	return scope.Union(client.ScopeWhitelist).IsSuperset(req.ScopeRequested)
 }
