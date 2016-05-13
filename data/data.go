@@ -11,6 +11,7 @@ package data
 import (
 	"io/ioutil"
 	"testing"
+	"time"
 
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/jmoiron/sqlx"
@@ -43,4 +44,16 @@ func InitTestDb(t *testing.T) {
 		t.Fatal(err)
 	}
 	database.MustExec(string(fixtures))
+}
+
+// RemoveExpired removes rows of expired entries from
+// AccessTokens, Sessions and GrantRequests database tables.
+func RemoveExpired() {
+	var removeInterval time.Duration = 15
+	const delGrant = `DELETE from GrantRequests WHERE createdAt < $1`
+	database.MustExec(delGrant, time.Now().Add(-time.Minute*removeInterval))
+
+	const q = `DELETE from AccessTokens WHERE expires < now();
+		   DELETE from Sessions WHERE expires < now();`
+	database.MustExec(q)
 }
