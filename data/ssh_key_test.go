@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	keyPrintAlice = "SHA256:68a7N8YngrRrQF51SqLOONxILfaPa2A6ooW02Uiz+wM"
+	keyPrintAlice = "A3tkBXFQWkjU6rzhkofY55G7tPR_Lmna4B-WEGVFXOQ"
 )
 
 func TestListSSHKeys(t *testing.T) {

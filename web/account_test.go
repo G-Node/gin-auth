@@ -11,8 +11,10 @@ package web
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -21,10 +23,11 @@ import (
 )
 
 const (
-	uuidAlice             = "bf431618-f696-4dca-a95d-882618ce4ef9"
 	accessTokenAlice      = "3N7MP7M7"
 	accessTokenBob        = "LJ3W7ZFK" // is expired
 	accessTokenAliceAdmin = "KDEW57D4" // has scope 'account-admin'
+	keyPrintAlice         = "A3tkBXFQWkjU6rzhkofY55G7tPR_Lmna4B-WEGVFXOQ"
+	keyPrintAliceNew      = "WHHqtkitF7o-EyTWFgdFKCYhU1PElLnK3U0luzyc0ko"
 )
 
 type jsonAccount struct {
@@ -334,5 +337,244 @@ func TestUpdateAccountPassword(t *testing.T) {
 	acc, _ := data.GetAccountByLogin("alice")
 	if !acc.VerifyPassword("TestTest") {
 		t.Error("Unable to verify password")
+	}
+}
+
+type jsonKey struct {
+	URL         string    `json:"url"`
+	Fingerprint string    `json:"fingerprint"`
+	Key         string    `json:"key"`
+	Description string    `json:"description"`
+	Login       string    `json:"login"`
+	AccountURL  string    `json:"account_url"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+func TestListAccountKeys(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	// no authorization header
+	request, _ := http.NewRequest("GET", "/api/accounts/alice/keys", strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// wrong token
+	request, _ = http.NewRequest("GET", "/api/accounts/alice/keys", strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer doesnotexist")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// not existing account
+	request, _ = http.NewRequest("GET", "/api/accounts/doesnotexist/keys", strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// all ok
+	request, _ = http.NewRequest("GET", "/api/accounts/alice/keys", strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	keys := []jsonKey{}
+	dec := json.NewDecoder(response.Body)
+	err := dec.Decode(&keys)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(keys) != 1 {
+		t.Error("Expected list with one key")
+	}
+	key := keys[0]
+	if key.Login != "alice" {
+		t.Errorf("Login expected to be 'alice' but was %s", key.Login)
+	}
+	if key.Fingerprint != keyPrintAlice {
+		t.Errorf("Fingerprint expected to be '%s' but was '%s'", keyPrintAlice, key.Fingerprint)
+	}
+}
+
+func TestGetKey(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	// no authorization header
+	request, _ := http.NewRequest("GET", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// wrong token
+	request, _ = http.NewRequest("GET", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer doesnotexist")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// not existing key
+	request, _ = http.NewRequest("GET", "/api/keys/doesnotexist", strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// all ok
+	request, _ = http.NewRequest("GET", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	key := jsonKey{}
+	dec := json.NewDecoder(response.Body)
+	err := dec.Decode(&key)
+	if err != nil {
+		t.Error(err)
+	}
+	if key.Login != "alice" {
+		t.Errorf("Login expected to be 'alice' but was %s", key.Login)
+	}
+	if key.Fingerprint != keyPrintAlice {
+		t.Errorf("Fingerprint expected to be '%s' but was '%s'", keyPrintAlice, key.Fingerprint)
+	}
+}
+
+func TestCreateKey(t *testing.T) {
+	mkBody := func(key, description string) io.Reader {
+		pw := &struct {
+			Key         string `json:"key"`
+			Description string `json:"description"`
+		}{key, description}
+		b, _ := json.Marshal(pw)
+		return bytes.NewReader(b)
+	}
+	keyBytes, _ := ioutil.ReadFile(conf.GetResourceFile("fixtures", "id_rsa.pub"))
+	keyStr := string(keyBytes)
+
+	handler := InitTestHttpHandler(t)
+
+	// no authorization header
+	request, _ := http.NewRequest("POST", "/api/accounts/alice/keys", mkBody(keyStr, "desc"))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// wrong token
+	request, _ = http.NewRequest("POST", "/api/accounts/alice/keys", mkBody(keyStr, "desc"))
+	request.Header.Set("Authorization", "Bearer doesnotexist")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// wrong account
+	request, _ = http.NewRequest("POST", "/api/accounts/doesnotexist/keys", mkBody(keyStr, "desc"))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// no authorization header
+	request, _ = http.NewRequest("POST", "/api/accounts/alice/keys", mkBody(keyStr, "desc"))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+	key := jsonKey{}
+	dec := json.NewDecoder(response.Body)
+	err := dec.Decode(&key)
+	if err != nil {
+		t.Error(err)
+	}
+	if key.Login != "alice" {
+		t.Errorf("Login expected to be 'alice' but was %s", key.Login)
+	}
+	if key.Key != keyStr {
+		t.Error("Key does not match")
+	}
+	if key.Fingerprint != keyPrintAliceNew {
+		t.Errorf("Fingerprint expected to be '%s' but was '%s'", keyPrintAliceNew, key.Fingerprint)
+	}
+}
+
+func TestDeleteKey(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	// no authorization header
+	request, _ := http.NewRequest("DELETE", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// wrong token
+	request, _ = http.NewRequest("DELETE", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer doesnotexist")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// not existing key
+	request, _ = http.NewRequest("DELETE", "/api/keys/doesnotexist", strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// all ok
+	request, _ = http.NewRequest("DELETE", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 }
