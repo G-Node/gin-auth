@@ -263,22 +263,29 @@ func ApprovePage(w http.ResponseWriter, r *http.Request) {
 		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusNotFound)
 		return
 	}
-
-	_, ok = data.DescribeScope(request.ScopeRequested)
-	if !ok {
-		panic("Invalid scope")
-	}
-
 	if !request.AccountUUID.Valid {
 		PrintErrorHTML(w, r, "Grant request is not authenticated", http.StatusUnauthorized)
 		return
 	}
 
 	client := request.Client()
-
-	approval, _ := client.ApprovalForAccount(request.AccountUUID.String)
-	existScope, _ := data.DescribeScope(approval.Scope)
-	addScope, _ := data.DescribeScope(request.ScopeRequested.Difference(approval.Scope))
+	scope := request.ScopeRequested.Difference(client.ScopeWhitelist)
+	var existScope, addScope map[string]string
+	if approval, ok := client.ApprovalForAccount(request.AccountUUID.String); ok && approval.Scope.Len() > 0 {
+		existScope, ok = data.DescribeScope(approval.Scope)
+		if !ok {
+			panic("Invalid scope")
+		}
+		addScope, ok = data.DescribeScope(scope.Difference(approval.Scope))
+		if !ok {
+			panic("Invalid scope")
+		}
+	} else {
+		addScope, ok = data.DescribeScope(scope)
+		if !ok {
+			panic("Invalid scope")
+		}
+	}
 
 	pageData := struct {
 		Client        string
@@ -316,14 +323,16 @@ func Approve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scope := util.NewStringSet(param.Scope...)
-	if !scope.IsSuperset(request.ScopeRequested) {
+	client := request.Client()
+
+	scopeApproved := util.NewStringSet(param.Scope...)
+	scopeRequired := request.ScopeRequested.Difference(client.ScopeWhitelist)
+	if !scopeApproved.IsSuperset(scopeRequired) {
 		PrintErrorHTML(w, r, "Requested scope was not approved", http.StatusUnauthorized)
 		return
 	}
 
 	// create approval
-	client := request.Client()
 	err := client.Approve(request.AccountUUID.String, request.ScopeRequested)
 	if err != nil {
 		panic(err)
