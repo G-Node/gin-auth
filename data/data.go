@@ -48,12 +48,23 @@ func InitTestDb(t *testing.T) {
 
 // RemoveExpired removes rows of expired entries from
 // AccessTokens, Sessions and GrantRequests database tables.
-func RemoveExpired() {
-	var removeInterval time.Duration = 15
+func RemoveExpired(grantLifeTime time.Duration) {
 	const delGrant = `DELETE from GrantRequests WHERE createdAt < $1`
-	database.MustExec(delGrant, time.Now().Add(-time.Minute*removeInterval))
+	database.MustExec(delGrant, time.Now().Add(-time.Minute*grantLifeTime))
 
 	const q = `DELETE from AccessTokens WHERE expires < now();
 		   DELETE from Sessions WHERE expires < now();`
 	database.MustExec(q)
+}
+
+// RunCleaner starts an infinite loop which
+// periodically executes the RemoveExpired function.
+func RunCleaner(srvConf *conf.ServerConfig) {
+	t := time.NewTicker(time.Minute * srvConf.CleanerInterval)
+	for {
+		select {
+		case <-t.C:
+			RemoveExpired(srvConf.GrantReqLifeTime)
+		}
+	}
 }
