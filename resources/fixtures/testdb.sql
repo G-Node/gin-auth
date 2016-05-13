@@ -12,19 +12,22 @@ INSERT INTO SSHKeys (fingerprint, accountUUID, description, key, createdAt, upda
   ('x9nS_Siw6cUy0qemb10V0dSK8YQYS2BKvV5KFowitUw', '51f5ac36-d332-4889-8023-6e033fcd8e17', 'Key from bob', 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC857PNeLe38+Q/m9gbhq8fmjD0NuyMC9g2cTSz32+S9LoUUBqQhY0IvsbLLH+0uvlBEBVrLFN+D/bUgBlJc1I+8PZUtagGcjmdBwZgaePJY4ew1xGwN9yxiFI1ICyk6NN+7HEYrB81Bl1zuNs7vQU/cZGyAybSd5onPU772cy1+Ot3iYCfZm9dY613LgOP/I6yCVPlE+385qx6IoEPXuJxi8GneIn8vMOM0zk+kVOUmRHPcJfxsuhh3nt5n3bNiapp4kHX2MH1jEHGgnPco86Js8SSZVeh81oRAPLVL3TrlNPoRC41BnZfo3eXXsIORIzW8nKe3ij8OOuXjpIqYFOL bar@foo', now(), now());
 
 DELETE FROM Clients;
-INSERT INTO Clients (uuid, name, secret, redirectURIs, createdAt, updatedAt) VALUES
-  ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'gin', 'secret', '{"https://localhost:8081/login"}', now(), now());
+INSERT INTO Clients (uuid, name, secret, scopeWhitelist, scopeBlacklist, redirectURIs, createdAt, updatedAt) VALUES
+  ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'gin', 'secret', '{}','{"account-admin"}','{"https://localhost:8081/login"}', now(), now()),
+  ('177c56a4-57b4-4baf-a1a7-04f3d8e5b276', 'wb', 'secret', '{"account-read","repo-read"}','{"account-admin"}','{"https://localhost:8081/login"}', now(), now());
 
 DELETE FROM ClientScopeProvided;
 INSERT INTO ClientScopeProvided (clientuuid, name, description) VALUES
   ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'account-read', 'Read access to your account data'),
   ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'account-write', 'Write access to your account data'),
+  ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'account-admin', 'Admin access to all account data'),
   ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'repo-read', 'Read access to your repositories and repositories shared with you'),
   ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'repo-write', 'Write acces to your repositories and repositories you have write access to');
 
 DELETE FROM ClientApprovals;
 INSERT INTO ClientApprovals (uuid, scope, clientUUID, accountUUID, createdAt, updatedAt) VALUES
-  ('31da7869-4593-4682-b9f2-5f47987aa5fc', '{"repo-read","repo-write"}', '8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'bf431618-f696-4dca-a95d-882618ce4ef9', now(), now());
+  ('31da7869-4593-4682-b9f2-5f47987aa5fc', '{"repo-read","repo-write"}', '8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'bf431618-f696-4dca-a95d-882618ce4ef9', now(), now()),
+  ('ffde3769-cb45-43c1-8afd-4fb154ddf0b0', '{"repo-write","account-write"}', '177c56a4-57b4-4baf-a1a7-04f3d8e5b276', 'bf431618-f696-4dca-a95d-882618ce4ef9', now(), now());
 
 DELETE FROM GrantRequests;
 INSERT INTO GrantRequests (token, grantType, state, code, scopeRequested, redirectUri, clientUUID, accountUUID, createdAt, updatedAt) VALUES

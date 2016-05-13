@@ -37,6 +37,8 @@ CREATE TABLE Clients (
   uuid              VARCHAR(36) PRIMARY KEY CHECK (char_length(uuid) = 36),
   name              VARCHAR(512) NOT NULL UNIQUE CHECK (char_length(name) > 1),      -- in oauth lingo this is the client_id
   secret            VARCHAR(512) ,
+  scopeWhitelist    VARCHAR[] NOT NULL ,
+  scopeBlacklist    VARCHAR[] NOT NULL ,
   redirectURIs      VARCHAR[] NOT NULL ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
