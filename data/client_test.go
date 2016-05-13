@@ -154,7 +154,10 @@ func TestClientApprovalForAccountAndApprove(t *testing.T) {
 		t.Error("Approval should not exist")
 	}
 
-	client.Approve(uuidBob, util.NewStringSet("repo-read"))
+	err := client.Approve(uuidBob, util.NewStringSet("repo-read"))
+	if err != nil {
+		t.Error(err)
+	}
 	approval, ok = client.ApprovalForAccount(uuidBob)
 	if !ok {
 		t.Error("Approval does not exist")

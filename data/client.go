@@ -27,6 +27,8 @@ type Client struct {
 	Name             string
 	Secret           string
 	ScopeProvidedMap map[string]string
+	ScopeWhitelist   util.StringSet
+	ScopeBlacklist   util.StringSet
 	RedirectURIs     util.StringSet
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
@@ -181,6 +183,15 @@ func (client *Client) Approve(accountUUID string, scope util.StringSet) (err err
 		return errors.New("Invalid scope")
 	}
 
+	if scope.Intersect(client.ScopeBlacklist).Len() > 0 {
+		return errors.New("Blacklisted scope")
+	}
+
+	scope = scope.Difference(client.ScopeWhitelist)
+	if scope.Len() == 0 {
+		return nil
+	}
+
 	approval, ok := client.ApprovalForAccount(accountUUID)
 	if ok {
 		// approval exists
@@ -212,6 +223,9 @@ func (client *Client) CreateGrantRequest(responseType, redirectURI, state string
 	if !CheckScope(scope) {
 		return nil, errors.New("Invalid scope")
 	}
+	if scope.Intersect(client.ScopeBlacklist).Len() > 0 {
+		return nil, errors.New("Blacklisted scope")
+	}
 
 	request := &GrantRequest{
 		GrantType:      responseType,
@@ -235,8 +249,8 @@ func (client *Client) delete(tx *sqlx.Tx) error {
 
 // create stores a new client in the database.
 func (client *Client) create(tx *sqlx.Tx) error {
-	const q = `INSERT INTO Clients (uuid, name, secret, redirectURIs, createdAt, updatedAt)
-	           VALUES ($1, $2, $3, $4, now(), now())
+	const q = `INSERT INTO Clients (uuid, name, secret, scopeWhitelist, scopeBlacklist, redirectURIs, createdAt, updatedAt)
+	           VALUES ($1, $2, $3, $4, $5, $6, now(), now())
 	           RETURNING *`
 	const qScope = `INSERT INTO ClientScopeProvided (clientUUID, name, description)
 	                VALUES ($1, $2, $3)`
@@ -245,7 +259,8 @@ func (client *Client) create(tx *sqlx.Tx) error {
 		client.UUID = uuid.NewRandom().String()
 	}
 
-	err := tx.Get(client, q, client.UUID, client.Name, client.Secret, client.RedirectURIs)
+	err := tx.Get(client, q, client.UUID, client.Name, client.Secret, client.ScopeWhitelist,
+		client.ScopeBlacklist, client.RedirectURIs)
 	if err == nil {
 		for k, v := range client.ScopeProvidedMap {
 			_, err = tx.Exec(qScope, client.UUID, k, v)
@@ -285,7 +300,8 @@ func (client *Client) createScope(tx *sqlx.Tx) error {
 // update removes all scopes associated with a specific Client from the database,
 // updates all client database fields and adds new scopes with data from this Client.
 func (client *Client) update(tx *sqlx.Tx) error {
-	const q = `UPDATE Clients SET name=$2, secret=$3, redirecturis=$4, updatedat=$5
+	const q = `UPDATE Clients
+	           SET name=$2, secret=$3, scopeWhitelist=$4, scopeBlacklist=$5, redirectURIs=$6, updatedAt=now()
 	           WHERE uuid=$1`
 
 	err := client.deleteScope(tx)
@@ -293,7 +309,8 @@ func (client *Client) update(tx *sqlx.Tx) error {
 		return err
 	}
 
-	_, err = tx.Exec(q, client.UUID, client.Name, client.Secret, client.RedirectURIs, time.Now())
+	_, err = tx.Exec(q, client.UUID, client.Name, client.Secret, client.ScopeWhitelist,
+		client.ScopeBlacklist, client.RedirectURIs)
 	if err != nil {
 		return err
 	}
@@ -315,11 +332,13 @@ func InitClients(path string) {
 	}
 
 	confClients := make([]struct {
-		UUID          string            `yaml:"UUID"`
-		Name          string            `yaml:"Name"`
-		Secret        string            `yaml:"Secret"`
-		ScopeProvided map[string]string `yaml:"ScopeProvided"`
-		RedirectURIs  []string          `yaml:"RedirectURIs"`
+		UUID           string            `yaml:"UUID"`
+		Name           string            `yaml:"Name"`
+		Secret         string            `yaml:"Secret"`
+		ScopeProvided  map[string]string `yaml:"ScopeProvided"`
+		ScopeWhitelist []string          `yaml:"ScopeWhitelist"`
+		ScopeBlacklist []string          `yaml:"ScopeBlacklist"`
+		RedirectURIs   []string          `yaml:"RedirectURIs"`
 	}, 0)
 
 	err = yaml.Unmarshal(content, &confClients)
@@ -327,13 +346,15 @@ func InitClients(path string) {
 		panic(err)
 	}
 
-	clients := make([]Client, len(confClients), len(confClients))
-	for ind, cl := range confClients {
-		clients[ind].UUID = cl.UUID
-		clients[ind].Name = cl.Name
-		clients[ind].Secret = cl.Secret
-		clients[ind].ScopeProvidedMap = cl.ScopeProvided
-		clients[ind].RedirectURIs = util.NewStringSet(cl.RedirectURIs...)
+	clients := make([]Client, len(confClients))
+	for i, cl := range confClients {
+		clients[i].UUID = cl.UUID
+		clients[i].Name = cl.Name
+		clients[i].Secret = cl.Secret
+		clients[i].ScopeProvidedMap = cl.ScopeProvided
+		clients[i].ScopeWhitelist = util.NewStringSet(cl.ScopeWhitelist...)
+		clients[i].ScopeBlacklist = util.NewStringSet(cl.ScopeBlacklist...)
+		clients[i].RedirectURIs = util.NewStringSet(cl.RedirectURIs...)
 	}
 
 	updateClients(clients)
