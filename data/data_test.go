@@ -8,28 +8,14 @@
 
 package data
 
-import (
-	"testing"
-	"time"
-)
+import "testing"
 
 func TestData_RemoveExpired(t *testing.T) {
 	InitTestDb(t)
 
-	var grantLifeTime time.Duration = 1
-	numTokens := len(ListAccessTokens())
-	numGrantReqs := len(ListGrantRequests())
-	numSessions := len(ListSessions())
+	RemoveExpired()
 
-	RemoveExpired(grantLifeTime)
-
-	if len(ListAccessTokens()) != numTokens-1 {
-		t.Errorf("Number of access tokens (%d) does not match expected number", numTokens)
-	}
-	if len(ListGrantRequests()) != numGrantReqs-1 {
-		t.Errorf("Number of grant requests (%d) does not match expected number", numGrantReqs)
-	}
-	if len(ListSessions()) != numSessions-1 {
-		t.Errorf("Number of sessions (%d) does not match expected number", numSessions)
+	if len(ListGrantRequests()) != 2 {
+		t.Errorf("Number of grant requests (%d) does not match expected number", len(ListGrantRequests()))
 	}
 }

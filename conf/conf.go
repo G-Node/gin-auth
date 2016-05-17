@@ -18,6 +18,7 @@ import (
 	"time"
 )
 
+// The unit of all life times and intervals is minute
 const (
 	defaultSessionLifeTime  = 2880
 	defaultTokenLifeTime    = 1440
@@ -125,7 +126,7 @@ func GetServerConfig() *ServerConfig {
 			BaseURL:          config.BaseURL,
 			SessionLifeTime:  time.Duration(config.SessionLifeTime) * time.Minute,
 			TokenLifeTime:    time.Duration(config.TokenLifeTime) * time.Minute,
-			GrantReqLifeTime: time.Duration(config.TokenLifeTime) * time.Minute,
+			GrantReqLifeTime: time.Duration(config.GrantReqLifeTime) * time.Minute,
 			CleanerInterval:  time.Duration(config.CleanerInterval) * time.Minute,
 		}
 	}
