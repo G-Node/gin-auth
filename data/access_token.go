@@ -29,7 +29,7 @@ type AccessToken struct {
 
 // ListAccessTokens returns all access tokens sorted by creation time.
 func ListAccessTokens() []AccessToken {
-	const q = `SELECT * FROM AccessTokens ORDER BY createdAt`
+	const q = `SELECT * FROM AccessTokens WHERE expires >= now() ORDER BY createdAt`
 
 	accessTokens := make([]AccessToken, 0)
 	err := database.Select(&accessTokens, q)
@@ -43,7 +43,7 @@ func ListAccessTokens() []AccessToken {
 // GetAccessToken returns a access token with a given token.
 // Returns false if no such access token exists.
 func GetAccessToken(token string) (*AccessToken, bool) {
-	const q = `SELECT * FROM AccessTokens WHERE token=$1`
+	const q = `SELECT * FROM AccessTokens WHERE token=$1 AND expires >= now()`
 
 	accessToken := &AccessToken{}
 	err := database.Get(accessToken, q, token)
