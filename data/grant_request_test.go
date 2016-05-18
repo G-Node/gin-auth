@@ -21,6 +21,7 @@ const (
 	grantReqCodeAlice         = "HGZQP6WE"
 	grantReqCodeAliceExpired  = "KWANG2G4"
 	grantReqTokenBob          = "B4LIMIMB"
+	grantReqWBAlice           = "QH92T99D"
 )
 
 func TestListGrantRequests(t *testing.T) {
@@ -28,8 +29,8 @@ func TestListGrantRequests(t *testing.T) {
 	InitTestDb(t)
 
 	requests := ListGrantRequests()
-	if len(requests) != 2 {
-		t.Error("Exactly two grant requests expected in list")
+	if len(requests) != 3 {
+		t.Errorf("Exactly 3 grant requests expected in list but was %d")
 	}
 }
 
@@ -79,7 +80,7 @@ func TestGetGrantRequestByCode(t *testing.T) {
 	}
 }
 
-func TestGrantRequestExchangeCodeForTokens(t *testing.T) {
+func TestGrantRequest_ExchangeCodeForTokens(t *testing.T) {
 	defer util.FailOnPanic(t)
 	InitTestDb(t)
 
@@ -115,7 +116,7 @@ func TestGrantRequestExchangeCodeForTokens(t *testing.T) {
 	}
 }
 
-func TestGrantRequestCreate(t *testing.T) {
+func TestGrantRequest_Create(t *testing.T) {
 	InitTestDb(t)
 
 	token := util.RandomToken()
@@ -150,7 +151,7 @@ func TestGrantRequestCreate(t *testing.T) {
 	}
 }
 
-func TestGrantRequestClient(t *testing.T) {
+func TestGrantRequest_Client(t *testing.T) {
 	InitTestDb(t)
 	defer util.FailOnPanic(t)
 
@@ -165,7 +166,7 @@ func TestGrantRequestClient(t *testing.T) {
 	}
 }
 
-func TestGrantRequestUpdate(t *testing.T) {
+func TestGrantRequest_Update(t *testing.T) {
 	InitTestDb(t)
 
 	newCode := util.RandomToken()
@@ -196,9 +197,10 @@ func TestGrantRequestUpdate(t *testing.T) {
 	}
 }
 
-func TestGrantRequestIsApproved(t *testing.T) {
+func TestGrantRequest_IsApproved(t *testing.T) {
 	InitTestDb(t)
 
+	// request with approved client
 	request, ok := GetGrantRequest(grantReqTokenAlice)
 	if !ok {
 		t.Error("Grant request does not exist")
@@ -207,6 +209,7 @@ func TestGrantRequestIsApproved(t *testing.T) {
 		t.Error("Grant request should be approved")
 	}
 
+	// request without approval
 	request, ok = GetGrantRequest(grantReqTokenBob)
 	if !ok {
 		t.Error("Grant request does not exist")
@@ -214,9 +217,18 @@ func TestGrantRequestIsApproved(t *testing.T) {
 	if request.IsApproved() {
 		t.Error("Grant request should not be approved")
 	}
+
+	// request without approval but whitelisted scope
+	request, ok = GetGrantRequest(grantReqWBAlice)
+	if !ok {
+		t.Error("Grant request does not exist")
+	}
+	if !request.IsApproved() {
+		t.Error("Grant request should be approved")
+	}
 }
 
-func TestGrantRequestDelete(t *testing.T) {
+func TestGrantRequest_Delete(t *testing.T) {
 	InitTestDb(t)
 
 	req, ok := GetGrantRequest(grantReqTokenAlice)

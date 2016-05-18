@@ -32,6 +32,7 @@ INSERT INTO ClientApprovals (uuid, scope, clientUUID, accountUUID, createdAt, up
 DELETE FROM GrantRequests;
 INSERT INTO GrantRequests (token, grantType, state, code, scopeRequested, redirectUri, clientUUID, accountUUID, createdAt, updatedAt) VALUES
   ('U7JIKKYI', 'code', 'OCQYDRYW', 'HGZQP6WE','{"repo-read","repo-write"}', 'https://localhost:8081/login', '8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'bf431618-f696-4dca-a95d-882618ce4ef9', now(), now()),
+  ('QH92T99D', 'code', 'HD58GHV9', NULL ,'{"account-read","repo-read"}', 'https://localhost:8081/login', '177c56a4-57b4-4baf-a1a7-04f3d8e5b276', 'bf431618-f696-4dca-a95d-882618ce4ef9', now(), now()),
   ('B4LIMIMB', 'code', '6Y4UTL24', 'C52KLSIZ','{"repo-read","repo-write"}', 'https://localhost:8081/login', '8b14d6bb-cae7-4163-bbd1-f3be46e43e31', '51f5ac36-d332-4889-8023-6e033fcd8e17', now(), now()),
   ('AGTBAI3D', 'code', 'GBNAM23L', 'KWANG2G4','{"account-read"}', 'https://localhost:8081/login', '8b14d6bb-cae7-4163-bbd1-f3be46e43e31', '51f5ac36-d332-4889-8023-6e033fcd8e17', 'yesterday', 'yesterday');
 
