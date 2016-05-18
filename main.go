@@ -57,6 +57,8 @@ func main() {
 	handler := handlers.RecoveryHandler(handlers.PrintRecoveryStack(true))(router)
 	handler = handlers.LoggingHandler(os.Stdout, handler)
 
+	data.RunCleaner()
+
 	server := http.Server{
 		Addr:    fmt.Sprintf("%s:%d", srvConf.Host, srvConf.Port),
 		Handler: handler,

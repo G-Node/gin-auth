@@ -28,7 +28,7 @@ type Session struct {
 
 // ListSessions returns all sessions sorted by creation time.
 func ListSessions() []Session {
-	const q = `SELECT * FROM Sessions ORDER BY createdAt`
+	const q = `SELECT * FROM Sessions WHERE expires > now() ORDER BY createdAt`
 
 	sessions := make([]Session, 0)
 	err := database.Select(&sessions, q)
@@ -42,7 +42,7 @@ func ListSessions() []Session {
 // GetSession returns a session with a given token.
 // Returns false if no such session exists.
 func GetSession(token string) (*Session, bool) {
-	const q = `SELECT * FROM Sessions WHERE token=$1`
+	const q = `SELECT * FROM Sessions WHERE token=$1 AND expires > now()`
 
 	session := &Session{}
 	err := database.Get(session, q, token)
@@ -51,23 +51,6 @@ func GetSession(token string) (*Session, bool) {
 	}
 
 	return session, err == nil
-}
-
-// ClearOldSessions removes all expired sessions from the database
-// and returns the number of removed sessions.
-func ClearOldSessions() int64 {
-	const q = `DELETE FROM Sessions WHERE expires < now()`
-
-	res, err := database.Exec(q)
-	if err != nil {
-		panic(err)
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		panic(err)
-	}
-
-	return rows
 }
 
 // Create stores a new session.

@@ -69,7 +69,6 @@ func (o oauth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tokenStr = strings.Trim(tokenStr[6:], " ")
-	data.ClearOldAccessTokens()
 	token, ok := data.GetAccessToken(tokenStr)
 	if !ok {
 		PrintErrorJSON(w, r, "Invalid bearer token", http.StatusUnauthorized)
@@ -137,8 +136,6 @@ type loginData struct {
 
 // LoginPage shows a page where the user can enter his credentials.
 func LoginPage(w http.ResponseWriter, r *http.Request) {
-	data.ClearOldGrantRequests()
-
 	query := r.URL.Query()
 	if query == nil || len(query) == 0 {
 		PrintErrorHTML(w, r, "Query parameter 'request_id' was missing", http.StatusBadRequest)
@@ -163,8 +160,6 @@ func LoginPage(w http.ResponseWriter, r *http.Request) {
 
 // Login validates user credentials.
 func Login(w http.ResponseWriter, r *http.Request) {
-	data.ClearOldGrantRequests()
-
 	param := &loginData{}
 	err := util.ReadFormIntoStruct(r, param, false)
 	if err != nil {
@@ -256,8 +251,6 @@ func finishImplicitRequest(w http.ResponseWriter, r *http.Request, request *data
 
 // ApprovePage shows a page where the user can approve client access.
 func ApprovePage(w http.ResponseWriter, r *http.Request) {
-	data.ClearOldGrantRequests()
-
 	query := r.URL.Query()
 	if query == nil || len(query) == 0 {
 		PrintErrorHTML(w, r, "Query parameter 'request_id' was missing", http.StatusBadRequest)
@@ -305,8 +298,6 @@ func ApprovePage(w http.ResponseWriter, r *http.Request) {
 
 // Approve evaluates an access approval given to a certain client.
 func Approve(w http.ResponseWriter, r *http.Request) {
-	data.ClearOldGrantRequests()
-
 	param := &struct {
 		Client    string
 		RequestID string
@@ -352,8 +343,6 @@ func Approve(w http.ResponseWriter, r *http.Request) {
 
 // Token exchanges a grant code for an access and refresh token
 func Token(w http.ResponseWriter, r *http.Request) {
-	data.ClearOldGrantRequests()
-
 	clientName, clientSecret, ok := r.BasicAuth()
 	if !ok {
 		PrintErrorJSON(w, r, "No credentials provided", http.StatusUnauthorized)
@@ -415,8 +404,6 @@ func Token(w http.ResponseWriter, r *http.Request) {
 
 // Validate validates a token and returns information about it as JSON
 func Validate(w http.ResponseWriter, r *http.Request) {
-	data.ClearOldAccessTokens()
-
 	tokenStr := mux.Vars(r)["token"]
 	token, ok := data.GetAccessToken(tokenStr)
 	if !ok {

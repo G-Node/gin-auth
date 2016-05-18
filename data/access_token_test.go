@@ -9,9 +9,10 @@
 package data
 
 import (
-	"github.com/G-Node/gin-auth/util"
 	"testing"
 	"time"
+
+	"github.com/G-Node/gin-auth/util"
 )
 
 const (
@@ -24,8 +25,8 @@ func TestListAccessTokens(t *testing.T) {
 	InitTestDb(t)
 
 	accessTokens := ListAccessTokens()
-	if len(accessTokens) != 3 {
-		t.Error("Exactly to access tokens expected in slice")
+	if len(accessTokens) != 2 {
+		t.Error("Exactly two access tokens expected in slice.")
 	}
 }
 
@@ -45,20 +46,10 @@ func TestGetAccessToken(t *testing.T) {
 	if ok {
 		t.Error("Access token should not exist")
 	}
-}
 
-func TestClearOldAccessTokens(t *testing.T) {
-	defer util.FailOnPanic(t)
-	InitTestDb(t)
-
-	deleted := ClearOldAccessTokens()
-	if deleted != 1 {
-		t.Error("Exactly one access token is supposed to be deleted")
-	}
-
-	_, ok := GetAccessToken(accessTokenBob)
+	_, ok = GetAccessToken(accessTokenBob)
 	if ok {
-		t.Error("Bobs access token should not exist")
+		t.Error("Expired access token should not be retrieved.")
 	}
 }
 
@@ -96,25 +87,27 @@ func TestCreateAccessToken(t *testing.T) {
 func TestAccessTokenUpdateExpirationTime(t *testing.T) {
 	InitTestDb(t)
 
-	tok, ok := GetAccessToken(accessTokenBob)
+	tok, ok := GetAccessToken(accessTokenAlice)
 	if !ok {
-		t.Error("Access token does not exist")
-	}
-	if time.Since(tok.Expires) < 0 {
-		t.Error("Token should be expired")
+		t.Error("Access token does not exist.")
 	}
 
-	tok.UpdateExpirationTime()
 	if time.Since(tok.Expires) > 0 {
-		t.Error("Access token should not be expired")
+		t.Error("Access token should not be expired.")
 	}
 
-	check, ok := GetAccessToken(accessTokenBob)
+	oldExpired := tok.Expires
+	tok.UpdateExpirationTime()
+	if !tok.Expires.After(oldExpired) {
+		t.Error("Access token expired was not properly updated.")
+	}
+
+	check, ok := GetAccessToken(accessTokenAlice)
 	if !ok {
-		t.Error("Access token does not exist")
+		t.Error("Access token does not exist.")
 	}
 	if time.Since(check.Expires) > 0 {
-		t.Error("Token should not be expired")
+		t.Error("Token should not be expired.")
 	}
 }
 

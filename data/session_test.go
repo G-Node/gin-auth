@@ -9,14 +9,15 @@
 package data
 
 import (
-	"github.com/G-Node/gin-auth/util"
 	"testing"
 	"time"
+
+	"github.com/G-Node/gin-auth/util"
 )
 
 const (
 	sessionTokenAlice = "DNM5RS3C"
-	sessionTokenBob   = "2MFZZUKI"
+	sessionTokenBob   = "2MFZZUKI" // is expired
 )
 
 func TestListSessions(t *testing.T) {
@@ -24,8 +25,8 @@ func TestListSessions(t *testing.T) {
 	InitTestDb(t)
 
 	sessions := ListSessions()
-	if len(sessions) != 2 {
-		t.Error("Exactly to sessions expected in slice")
+	if len(sessions) != 1 {
+		t.Error("Exactly one session expected in slice.")
 	}
 }
 
@@ -45,20 +46,10 @@ func TestGetSession(t *testing.T) {
 	if ok {
 		t.Error("Session should not exist")
 	}
-}
 
-func TestClearOldSessions(t *testing.T) {
-	defer util.FailOnPanic(t)
-	InitTestDb(t)
-
-	deleted := ClearOldSessions()
-	if deleted != 1 {
-		t.Error("Exactly one session is supposed to be deleted")
-	}
-
-	_, ok := GetSession(sessionTokenBob)
+	_, ok = GetSession(sessionTokenBob)
 	if ok {
-		t.Error("Bobs session should not exist")
+		t.Error("Expired session should not be retrieved.")
 	}
 }
 
@@ -88,20 +79,21 @@ func TestCreateSession(t *testing.T) {
 func TestSessionUpdateExpirationTime(t *testing.T) {
 	InitTestDb(t)
 
-	sess, ok := GetSession(sessionTokenBob)
+	sess, ok := GetSession(sessionTokenAlice)
 	if !ok {
 		t.Error("Session does not exist")
 	}
-	if time.Since(sess.Expires) < 0 {
-		t.Error("Session should be expired")
-	}
-
-	sess.UpdateExpirationTime()
 	if time.Since(sess.Expires) > 0 {
 		t.Error("Session should not be expired")
 	}
 
-	check, ok := GetSession(sessionTokenBob)
+	oldExpired := sess.Expires
+	sess.UpdateExpirationTime()
+	if !sess.Expires.After(oldExpired) {
+		t.Error("Session expired was not properly updated.")
+	}
+
+	check, ok := GetSession(sessionTokenAlice)
 	if !ok {
 		t.Error("Session does not exist")
 	}

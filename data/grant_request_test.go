@@ -10,14 +10,17 @@ package data
 
 import (
 	"database/sql"
-	"github.com/G-Node/gin-auth/util"
 	"testing"
+
+	"github.com/G-Node/gin-auth/util"
 )
 
 const (
-	grantReqTokenAlice = "U7JIKKYI"
-	grantReqCodeAlice  = "HGZQP6WE"
-	grantReqTokenBob   = "B4LIMIMB"
+	grantReqTokenAlice        = "U7JIKKYI"
+	grantReqTokenAliceExpired = "AGTBAI3D"
+	grantReqCodeAlice         = "HGZQP6WE"
+	grantReqCodeAliceExpired  = "KWANG2G4"
+	grantReqTokenBob          = "B4LIMIMB"
 )
 
 func TestListGrantRequests(t *testing.T) {
@@ -25,7 +28,7 @@ func TestListGrantRequests(t *testing.T) {
 	InitTestDb(t)
 
 	requests := ListGrantRequests()
-	if len(requests) != 3 {
+	if len(requests) != 2 {
 		t.Error("Exactly two grant requests expected in list")
 	}
 }
@@ -46,6 +49,11 @@ func TestGetGrantRequest(t *testing.T) {
 	if ok {
 		t.Error("Grant request should not exist")
 	}
+
+	_, ok = GetGrantRequest(grantReqTokenAliceExpired)
+	if ok {
+		t.Error("Expired grant request should not be retrieved.")
+	}
 }
 
 func TestGetGrantRequestByCode(t *testing.T) {
@@ -64,21 +72,10 @@ func TestGetGrantRequestByCode(t *testing.T) {
 	if ok {
 		t.Error("Grant request should not exist")
 	}
-}
 
-func TestClearOldGrantRequests(t *testing.T) {
-	InitTestDb(t)
-
-	all := ListGrantRequests()
-	if len(all) != 3 {
-		t.Error("There should be two grant requests")
-	}
-
-	ClearOldGrantRequests()
-
-	all = ListGrantRequests()
-	if len(all) != 2 {
-		t.Error("There should be exactly one grant requests")
+	_, ok = GetGrantRequestByCode(grantReqCodeAliceExpired)
+	if ok {
+		t.Error("Expired grant request should not be retrieved.")
 	}
 }
 

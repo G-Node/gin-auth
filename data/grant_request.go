@@ -33,10 +33,11 @@ type GrantRequest struct {
 
 // ListGrantRequests returns all current grant requests ordered by creation time.
 func ListGrantRequests() []GrantRequest {
-	const q = `SELECT * FROM GrantRequests ORDER BY createdAt`
+	const q = `SELECT * FROM GrantRequests WHERE createdAt > $1 ORDER BY createdAt`
 
 	grantRequests := make([]GrantRequest, 0)
-	err := database.Select(&grantRequests, q)
+	err := database.Select(&grantRequests, q,
+		time.Now().Add(-1*conf.GetServerConfig().GrantReqLifeTime))
 	if err != nil {
 		panic(err)
 	}
@@ -47,10 +48,11 @@ func ListGrantRequests() []GrantRequest {
 // GetGrantRequest returns a grant request with a given token.
 // Returns false if no request with a matching token exists.
 func GetGrantRequest(token string) (*GrantRequest, bool) {
-	const q = `SELECT * FROM GrantRequests WHERE token=$1`
+	const q = `SELECT * FROM GrantRequests WHERE token=$1 AND createdAt > $2`
 
 	grantRequest := &GrantRequest{}
-	err := database.Get(grantRequest, q, token)
+	err := database.Get(grantRequest, q, token,
+		time.Now().Add(-1*conf.GetServerConfig().GrantReqLifeTime))
 	if err != nil && err != sql.ErrNoRows {
 		panic(err)
 	}
@@ -61,34 +63,16 @@ func GetGrantRequest(token string) (*GrantRequest, bool) {
 // GetGrantRequestByCode returns a grant request with a given code.
 // Returns false if no request with a matching code exists.
 func GetGrantRequestByCode(code string) (*GrantRequest, bool) {
-	const q = `SELECT * FROM GrantRequests WHERE code=$1 AND code IS NOT NULL`
+	const q = `SELECT * FROM GrantRequests WHERE code=$1 AND code IS NOT NULL AND createdAt > $2`
 
 	grantRequest := &GrantRequest{}
-	err := database.Get(grantRequest, q, code)
+	err := database.Get(grantRequest, q, code,
+		time.Now().Add(-1*conf.GetServerConfig().GrantReqLifeTime))
 	if err != nil && err != sql.ErrNoRows {
 		panic(err)
 	}
 
 	return grantRequest, err == nil
-}
-
-// ClearOldGrantRequests removes requests older than 15 minutes
-// and returns the number of removed requests.
-func ClearOldGrantRequests() int64 {
-	const q = `DELETE FROM GrantRequests WHERE createdAt < $1`
-
-	minutesAgo15 := time.Now().Add(-time.Minute * 15)
-
-	res, err := database.Exec(q, minutesAgo15)
-	if err != nil {
-		panic(err)
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		panic(err)
-	}
-
-	return rows
 }
 
 // ExchangeCodeForTokens creates an access token and a refresh token.

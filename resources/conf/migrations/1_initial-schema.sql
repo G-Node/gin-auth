@@ -90,6 +90,8 @@ CREATE TABLE AccessTokens (
   updatedAt         TIMESTAMP NOT NULL
 );
 
+CREATE INDEX ON AccessTokens (expires);
+
 CREATE TABLE Sessions (
   token             VARCHAR(512) PRIMARY KEY ,      -- the session id
   expires           TIMESTAMP NOT NULL ,
@@ -97,6 +99,8 @@ CREATE TABLE Sessions (
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
 );
+
+CREATE INDEX ON Sessions (expires);
 
 -- +goose Down
 -- SQL section 'Down' is executed when this migration is rolled back

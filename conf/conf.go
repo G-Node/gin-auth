@@ -18,10 +18,12 @@ import (
 	"time"
 )
 
+// The unit of all life times and intervals is minute
 const (
 	defaultSessionLifeTime  = 2880
 	defaultTokenLifeTime    = 1440
 	defaultGrantReqLifeTime = 15
+	defaultCleanerInterval  = 15
 )
 
 var (
@@ -54,6 +56,7 @@ type ServerConfig struct {
 	SessionLifeTime  time.Duration
 	TokenLifeTime    time.Duration
 	GrantReqLifeTime time.Duration
+	CleanerInterval  time.Duration
 }
 
 var serverConfig *ServerConfig
@@ -89,6 +92,7 @@ func GetServerConfig() *ServerConfig {
 			SessionLifeTime  int    `yaml:"SessionLifeTime"`
 			TokenLifeTime    int    `yaml:"TokenLifeTime"`
 			GrantReqLifeTime int    `yaml:"GrantReqLifeTime"`
+			CleanerInterval  int    `yaml:"CleanerInterval"`
 		}{}
 		err = yaml.Unmarshal(content, config)
 		if err != nil {
@@ -112,6 +116,9 @@ func GetServerConfig() *ServerConfig {
 		if config.GrantReqLifeTime == 0 {
 			config.GrantReqLifeTime = defaultGrantReqLifeTime
 		}
+		if config.CleanerInterval == 0 {
+			config.CleanerInterval = defaultCleanerInterval
+		}
 
 		serverConfig = &ServerConfig{
 			Host:             config.Host,
@@ -119,7 +126,8 @@ func GetServerConfig() *ServerConfig {
 			BaseURL:          config.BaseURL,
 			SessionLifeTime:  time.Duration(config.SessionLifeTime) * time.Minute,
 			TokenLifeTime:    time.Duration(config.TokenLifeTime) * time.Minute,
-			GrantReqLifeTime: time.Duration(config.TokenLifeTime) * time.Minute,
+			GrantReqLifeTime: time.Duration(config.GrantReqLifeTime) * time.Minute,
+			CleanerInterval:  time.Duration(config.CleanerInterval) * time.Minute,
 		}
 	}
 
