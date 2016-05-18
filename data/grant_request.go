@@ -33,7 +33,7 @@ type GrantRequest struct {
 
 // ListGrantRequests returns all current grant requests ordered by creation time.
 func ListGrantRequests() []GrantRequest {
-	const q = `SELECT * FROM GrantRequests WHERE createdAt >= $1 ORDER BY createdAt`
+	const q = `SELECT * FROM GrantRequests WHERE createdAt > $1 ORDER BY createdAt`
 
 	grantRequests := make([]GrantRequest, 0)
 	err := database.Select(&grantRequests, q,
@@ -48,7 +48,7 @@ func ListGrantRequests() []GrantRequest {
 // GetGrantRequest returns a grant request with a given token.
 // Returns false if no request with a matching token exists.
 func GetGrantRequest(token string) (*GrantRequest, bool) {
-	const q = `SELECT * FROM GrantRequests WHERE token=$1 AND createdAt >= $2`
+	const q = `SELECT * FROM GrantRequests WHERE token=$1 AND createdAt > $2`
 
 	grantRequest := &GrantRequest{}
 	err := database.Get(grantRequest, q, token,
@@ -63,7 +63,7 @@ func GetGrantRequest(token string) (*GrantRequest, bool) {
 // GetGrantRequestByCode returns a grant request with a given code.
 // Returns false if no request with a matching code exists.
 func GetGrantRequestByCode(code string) (*GrantRequest, bool) {
-	const q = `SELECT * FROM GrantRequests WHERE code=$1 AND code IS NOT NULL AND createdAt >= $2`
+	const q = `SELECT * FROM GrantRequests WHERE code=$1 AND code IS NOT NULL AND createdAt > $2`
 
 	grantRequest := &GrantRequest{}
 	err := database.Get(grantRequest, q, code,

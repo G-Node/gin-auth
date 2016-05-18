@@ -49,11 +49,11 @@ func InitTestDb(t *testing.T) {
 // RemoveExpired removes rows of expired entries from
 // AccessTokens, Sessions and GrantRequests database tables.
 func RemoveExpired() {
-	const delGrant = `DELETE from GrantRequests WHERE createdAt < $1`
+	const delGrant = `DELETE from GrantRequests WHERE createdAt <= $1`
 	database.MustExec(delGrant, time.Now().Add(-1*conf.GetServerConfig().GrantReqLifeTime))
 
-	const q = `DELETE from AccessTokens WHERE expires < now();
-		   DELETE from Sessions WHERE expires < now();`
+	const q = `DELETE from AccessTokens WHERE expires <= now();
+		   DELETE from Sessions WHERE expires <= now();`
 	database.MustExec(q)
 }
 
