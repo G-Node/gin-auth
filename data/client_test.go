@@ -18,6 +18,7 @@ import (
 
 const (
 	uuidClientGin = "8b14d6bb-cae7-4163-bbd1-f3be46e43e31"
+	uuidClientWB  = "177c56a4-57b4-4baf-a1a7-04f3d8e5b276"
 )
 
 func TestListClients(t *testing.T) {
@@ -130,7 +131,7 @@ func TestDescribeScope(t *testing.T) {
 	}
 }
 
-func TestClientApprovalForAccountAndApprove(t *testing.T) {
+func TestClient_ApprovalForAccount_Approve(t *testing.T) {
 	InitTestDb(t)
 
 	client, ok := GetClient(uuidClientGin)
@@ -138,6 +139,7 @@ func TestClientApprovalForAccountAndApprove(t *testing.T) {
 		t.Error("Client does not exist")
 	}
 
+	// get existing approval
 	approval, ok := client.ApprovalForAccount(uuidAlice)
 	if !ok {
 		t.Error("Approval does not exist")
@@ -149,11 +151,13 @@ func TestClientApprovalForAccountAndApprove(t *testing.T) {
 		t.Error("Wrong client uuid")
 	}
 
-	approval, ok = client.ApprovalForAccount(uuidBob)
+	// get non existing approval
+	_, ok = client.ApprovalForAccount(uuidBob)
 	if ok {
 		t.Error("Approval should not exist")
 	}
 
+	// approve a new client
 	err := client.Approve(uuidBob, util.NewStringSet("repo-read"))
 	if err != nil {
 		t.Error(err)
@@ -169,6 +173,7 @@ func TestClientApprovalForAccountAndApprove(t *testing.T) {
 		t.Error("Approval scope should not contain 'repo-write'")
 	}
 
+	// expand approval for a client
 	client.Approve(uuidBob, util.NewStringSet("repo-read", "repo-write"))
 	approval, ok = client.ApprovalForAccount(uuidBob)
 	if !ok {
@@ -179,6 +184,47 @@ func TestClientApprovalForAccountAndApprove(t *testing.T) {
 	}
 	if !approval.Scope.Contains("repo-write") {
 		t.Error("Approval scope should contain 'repo-write'")
+	}
+
+	// client "wb"
+	// whitelist: account-read, repo-read
+	// blacklist: account-admin
+	client, ok = GetClient(uuidClientWB)
+
+	// approve whitelisted scope
+	err = client.Approve(uuidBob, util.NewStringSet("repo-read", "account-read"))
+	if err != nil {
+		t.Error("Approving a whitelisted scope should not result in an error")
+	}
+	_, ok = client.ApprovalForAccount(uuidBob)
+	if ok {
+		t.Error("Approving a whitelisted scope should not create an approval")
+	}
+
+	// approve blacklisted scope
+	err = client.Approve(uuidBob, util.NewStringSet("account-admin"))
+	if err == nil {
+		t.Error("Approving a blacklisted scope should result in an error")
+	}
+	_, ok = client.ApprovalForAccount(uuidBob)
+	if ok {
+		t.Error("Approving a blacklisted scope should not create an approval")
+	}
+
+	// approve partially whitelisted scope
+	err = client.Approve(uuidBob, util.NewStringSet("account-read", "account-write"))
+	if err != nil {
+		t.Error("Approving a partially whitelisted scope should not result in an error")
+	}
+	approval, ok = client.ApprovalForAccount(uuidBob)
+	if !ok {
+		t.Error("Approving a partially whitelisted scope must create an approval")
+	}
+	if approval.Scope.Contains("account-read") {
+		t.Error("Scope should not contain 'account-read' (whitelisted)")
+	}
+	if !approval.Scope.Contains("account-write") {
+		t.Error("Scope should contain 'account-write'")
 	}
 }
 
@@ -553,7 +599,7 @@ func TestClient_updateClients(t *testing.T) {
 
 	clients = make([]Client, 0)
 	clients = append(clients, dbClients...)
-	clients = append(clients, testClient)
+	clients = append(clients, *testClient)
 
 	updateClients(clients)
 
