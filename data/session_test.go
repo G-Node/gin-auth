@@ -47,7 +47,7 @@ func TestGetSession(t *testing.T) {
 		t.Error("Session should not exist")
 	}
 
-	_, ok = GetAccessToken(accessTokenBob)
+	_, ok = GetSession(sessionTokenBob)
 	if ok {
 		t.Error("Expired session should not be retrieved.")
 	}
