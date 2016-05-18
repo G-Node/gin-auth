@@ -60,11 +60,14 @@ func RemoveExpired() {
 // RunCleaner starts an infinite loop which
 // periodically executes the RemoveExpired function.
 func RunCleaner() {
-	t := time.NewTicker(conf.GetServerConfig().CleanerInterval)
-	for {
-		select {
-		case <-t.C:
-			RemoveExpired()
+	go func() {
+		// TODO add log entry once logging is implemented
+		t := time.NewTicker(conf.GetServerConfig().CleanerInterval)
+		for {
+			select {
+			case <-t.C:
+				RemoveExpired()
+			}
 		}
-	}
+	}()
 }
