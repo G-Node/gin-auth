@@ -25,7 +25,7 @@ func TestListClients(t *testing.T) {
 	InitTestDb(t)
 
 	clients := ListClients()
-	if len(clients) != 1 {
+	if len(clients) != 2 {
 		t.Error("Exactly one client expected in list")
 	}
 }
@@ -35,7 +35,7 @@ func TestListClientUUIDs(t *testing.T) {
 	InitTestDb(t)
 
 	clientList := listClientUUIDs()
-	if len(clientList) != 1 || !clientList.Contains(uuidClientGin) {
+	if len(clientList) != 2 || !clientList.Contains(uuidClientGin) {
 		t.Error("listClientUUIDs returned incomplete list.")
 	}
 }
@@ -517,25 +517,22 @@ func TestClient_updateClients(t *testing.T) {
 
 	const (
 		scopeOne      = "testScope1"
-		scopeTwo      = "testScope2"
 		testUri       = "https://testRedirecturi.com/somewhere"
 		testUriUpdate = "https://testRedirecturi.com/somewhere/else"
 	)
 
-	dbClient, ok := GetClient(uuidClientGin)
-	if !ok {
-		t.Errorf("Client '%s' not found.", uuidClientGin)
-	}
+	dbClients := ListClients()
 
-	addClient := new(Client)
-	addClient.UUID = uuid.NewRandom().String()
-	addClient.Name = "TestClient" + addClient.UUID
-	addClient.Secret = "TestSecret"
-	addClient.RedirectURIs = util.NewStringSet(testUri)
-	addClient.ScopeProvidedMap = map[string]string{scopeOne: scopeOne}
+	testClient := new(Client)
+	testClient.UUID = uuid.NewRandom().String()
+	testClient.Name = "TestClient"
+	testClient.Secret = "TestSecret"
+	testClient.RedirectURIs = util.NewStringSet(testUri)
+	testClient.ScopeProvidedMap = map[string]string{scopeOne: scopeOne}
 
 	clients := make([]Client, 0)
-	clients = append(clients, *dbClient, *addClient)
+	clients = append(clients, dbClients...)
+	clients = append(clients, *testClient)
 
 	initClientNum := len(listClientUUIDs())
 
@@ -543,44 +540,52 @@ func TestClient_updateClients(t *testing.T) {
 
 	insertClientNum := len(listClientUUIDs())
 
-	_, ok = GetClient(addClient.UUID)
+	_, ok := GetClient(testClient.UUID)
 	if !ok {
 		t.Error("Client was not created.")
 	}
-	if initClientNum == insertClientNum {
-		t.Error("Number of clients after client insert is smaller than expected.")
+	if insertClientNum != initClientNum+1 {
+		t.Error("Number of clients expected to increase by one after update.")
 	}
 
-	updClient := new(Client)
-	updClient.UUID = uuid.NewRandom().String()
-	updClient.Name = "TestClient_upd" + addClient.UUID
-	updClient.Secret = "TestSecret_upd"
-	updClient.RedirectURIs = util.NewStringSet(testUriUpdate)
-	updClient.ScopeProvidedMap = map[string]string{scopeTwo: scopeTwo}
+	testClient.Secret = "AnotherTestSecret"
+	testClient.RedirectURIs = util.NewStringSet(testUriUpdate)
 
-	updClients := make([]Client, 0)
-	updClients = append(updClients, *dbClient, *updClient)
+	clients = make([]Client, 0)
+	clients = append(clients, dbClients...)
+	clients = append(clients, testClient)
 
-	updateClients(updClients)
+	updateClients(clients)
 
 	updateClientNum := len(listClientUUIDs())
+
+	testClient, ok = GetClient(testClient.UUID)
+	if !ok {
+		t.Error("Client was not created.")
+	}
+	if testClient.Secret != "AnotherTestSecret" {
+		t.Error("Secret was not updated")
+	}
+	if testClient.RedirectURIs.Len() != 1 || !testClient.RedirectURIs.Contains(testUriUpdate) {
+		t.Error("RedirectURI was not updated")
+	}
 	if insertClientNum != updateClientNum {
-		t.Error("Number of clients after client update does not match expected number.")
+		t.Error("Number of clients expected not to change after update.")
 	}
 
-	remClients := make([]Client, 0)
-	remClients = append(remClients, *dbClient)
+	clients = make([]Client, 0)
+	clients = append(clients, dbClients...)
 
-	updateClients(remClients)
+	updateClients(clients)
 
 	remClientNum := len(listClientUUIDs())
 
-	_, ok = GetClient(addClient.UUID)
+	_, ok = GetClient(testClient.UUID)
 	if ok {
-		t.Errorf("Client '%s' was not properly deleted.", addClient.UUID)
+		t.Errorf("Client '%s' was not properly deleted.", testClient.UUID)
 	}
-	if initClientNum != remClientNum {
-		t.Error("Number of clients after client removal does not match expected number.")
+	if remClientNum != updateClientNum-1 {
+		t.Error("Number of clients expected to increase by one after update.")
 	}
 }
 
