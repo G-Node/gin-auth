@@ -54,23 +54,6 @@ func GetAccessToken(token string) (*AccessToken, bool) {
 	return accessToken, err == nil
 }
 
-// ClearOldAccessTokens removes all expired access tokens from the database
-// and returns the number of removed access tokens.
-func ClearOldAccessTokens() int64 {
-	const q = `DELETE FROM AccessTokens WHERE expires < now()`
-
-	res, err := database.Exec(q)
-	if err != nil {
-		panic(err)
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		panic(err)
-	}
-
-	return rows
-}
-
 // Create stores a new access token in the database.
 // If the token is empty a random token will be generated.
 func (tok *AccessToken) Create() error {

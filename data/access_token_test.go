@@ -53,21 +53,6 @@ func TestGetAccessToken(t *testing.T) {
 	}
 }
 
-func TestClearOldAccessTokens(t *testing.T) {
-	defer util.FailOnPanic(t)
-	InitTestDb(t)
-
-	deleted := ClearOldAccessTokens()
-	if deleted != 1 {
-		t.Error("Exactly one access token is supposed to be deleted")
-	}
-
-	_, ok := GetAccessToken(accessTokenBob)
-	if ok {
-		t.Error("Bobs access token should not exist")
-	}
-}
-
 func TestCreateAccessToken(t *testing.T) {
 	InitTestDb(t)
 

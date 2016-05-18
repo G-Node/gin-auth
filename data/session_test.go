@@ -53,21 +53,6 @@ func TestGetSession(t *testing.T) {
 	}
 }
 
-func TestClearOldSessions(t *testing.T) {
-	defer util.FailOnPanic(t)
-	InitTestDb(t)
-
-	deleted := ClearOldSessions()
-	if deleted != 1 {
-		t.Error("Exactly one session is supposed to be deleted")
-	}
-
-	_, ok := GetSession(sessionTokenBob)
-	if ok {
-		t.Error("Bobs session should not exist")
-	}
-}
-
 func TestCreateSession(t *testing.T) {
 	InitTestDb(t)
 

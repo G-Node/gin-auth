@@ -75,25 +75,6 @@ func GetGrantRequestByCode(code string) (*GrantRequest, bool) {
 	return grantRequest, err == nil
 }
 
-// ClearOldGrantRequests removes requests older than 15 minutes
-// and returns the number of removed requests.
-func ClearOldGrantRequests() int64 {
-	const q = `DELETE FROM GrantRequests WHERE createdAt < $1`
-
-	minutesAgo15 := time.Now().Add(-time.Minute * 15)
-
-	res, err := database.Exec(q, minutesAgo15)
-	if err != nil {
-		panic(err)
-	}
-	rows, err := res.RowsAffected()
-	if err != nil {
-		panic(err)
-	}
-
-	return rows
-}
-
 // ExchangeCodeForTokens creates an access token and a refresh token.
 // Finally the grant request will be deleted from the database, even if the token creation fails!
 func (req *GrantRequest) ExchangeCodeForTokens() (string, string, error) {
