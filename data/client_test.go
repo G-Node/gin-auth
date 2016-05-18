@@ -228,7 +228,7 @@ func TestClient_ApprovalForAccount_Approve(t *testing.T) {
 	}
 }
 
-func TestClientCreateGrantRequest(t *testing.T) {
+func TestClient_CreateGrantRequest(t *testing.T) {
 	InitTestDb(t)
 
 	client, ok := GetClient(uuidClientGin)
@@ -239,25 +239,31 @@ func TestClientCreateGrantRequest(t *testing.T) {
 	state := util.RandomToken()
 
 	// wrong response type
-	request, err := client.CreateGrantRequest("foo", client.RedirectURIs.Strings()[0], state, util.NewStringSet("repo-read"))
+	_, err := client.CreateGrantRequest("foo", client.RedirectURIs.Strings()[0], state, util.NewStringSet("repo-read"))
 	if err == nil {
 		t.Error("Error expected")
 	}
 
 	// wrong redirect
-	request, err = client.CreateGrantRequest("foo", "https://doesnotexist.com/callback", state, util.NewStringSet("repo-read"))
+	_, err = client.CreateGrantRequest("code", "https://doesnotexist.com/callback", state, util.NewStringSet("repo-read"))
 	if err == nil {
 		t.Error("Error expected")
 	}
 
 	// wrong scope
-	request, err = client.CreateGrantRequest("foo", client.RedirectURIs.Strings()[0], state, util.NewStringSet("foo-read"))
+	_, err = client.CreateGrantRequest("code", client.RedirectURIs.Strings()[0], state, util.NewStringSet("foo-read"))
+	if err == nil {
+		t.Error("Error expected")
+	}
+
+	// blacklisted scope
+	_, err = client.CreateGrantRequest("code", client.RedirectURIs.Strings()[0], state, util.NewStringSet("account-admin"))
 	if err == nil {
 		t.Error("Error expected")
 	}
 
 	// all OK
-	request, err = client.CreateGrantRequest("code", client.RedirectURIs.Strings()[0], state, util.NewStringSet("repo-read"))
+	request, err := client.CreateGrantRequest("code", client.RedirectURIs.Strings()[0], state, util.NewStringSet("repo-read"))
 	if err != nil {
 		t.Error(err)
 	}
