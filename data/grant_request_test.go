@@ -30,7 +30,7 @@ func TestListGrantRequests(t *testing.T) {
 
 	requests := ListGrantRequests()
 	if len(requests) != 3 {
-		t.Errorf("Exactly 3 grant requests expected in list but was %d")
+		t.Errorf("Exactly 3 grant requests expected in list but was %d", len(requests))
 	}
 }
 
