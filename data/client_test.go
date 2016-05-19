@@ -27,7 +27,7 @@ func TestListClients(t *testing.T) {
 
 	clients := ListClients()
 	if len(clients) != 2 {
-		t.Error("Exactly one client expected in list")
+		t.Error("Expected number of clients does not match")
 	}
 }
 
