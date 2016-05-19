@@ -4,7 +4,15 @@
   ScopeProvided:
     account-read: Read access to your account data
     account-write: Write access to your account data
+    account-admin: Administrator access to accounts.
     repo-read: Read access to your repositories and repositories shared with you
     repo-write: Write acces to your repositories and repositories you have write access to
+  ScopeWhitelist:
+    - account-read
+    - account-write
+    - repo-read
+    - repo-write
+  ScopeBlacklist:
+    - account-admin
   RedirectURIs:
-  - https://localhost:8081/login
+    - https://localhost:8081/login

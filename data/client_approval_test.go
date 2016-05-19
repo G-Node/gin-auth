@@ -23,7 +23,7 @@ func TestListClientApprovals(t *testing.T) {
 	InitTestDb(t)
 
 	approval := ListClientApprovals()
-	if len(approval) != 1 {
+	if len(approval) != 2 {
 		t.Error("Exactly to approval expected in slice")
 	}
 }

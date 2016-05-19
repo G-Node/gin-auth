@@ -299,7 +299,7 @@ func TestApprovePage(t *testing.T) {
 	}
 
 	// valid request_id
-	request, _ = http.NewRequest("GET", "/oauth/approve_page?request_id=U7JIKKYI", strings.NewReader(""))
+	request, _ = http.NewRequest("GET", "/oauth/approve_page?request_id=B4LIMIMB", strings.NewReader(""))
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusOK {
