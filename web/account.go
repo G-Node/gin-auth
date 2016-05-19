@@ -50,7 +50,7 @@ func GetAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if oauth.Token.AccountUUID != account.UUID || !oauth.Match.Contains("account-read") && !oauth.Match.Contains("account-admin") {
+	if oauth.Token.AccountUUID.String != account.UUID || !oauth.Match.Contains("account-read") && !oauth.Match.Contains("account-admin") {
 		PrintErrorJSON(w, r, "Access to requested account forbidden", http.StatusUnauthorized)
 		return
 	}
@@ -76,7 +76,7 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if oauth.Token.AccountUUID != account.UUID || !oauth.Match.Contains("account-write") && !oauth.Match.Contains("account-admin") {
+	if oauth.Token.AccountUUID.String != account.UUID || !oauth.Match.Contains("account-write") && !oauth.Match.Contains("account-admin") {
 		PrintErrorJSON(w, r, "Access to requested account forbidden", http.StatusUnauthorized)
 		return
 	}
@@ -115,7 +115,7 @@ func UpdateAccountPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if oauth.Token.AccountUUID != account.UUID || !oauth.Match.Contains("account-write") {
+	if oauth.Token.AccountUUID.String != account.UUID || !oauth.Match.Contains("account-write") {
 		PrintErrorJSON(w, r, "Access to requested account forbidden", http.StatusUnauthorized)
 		return
 	}
@@ -176,7 +176,7 @@ func ListAccountKeys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if oauth.Token.AccountUUID != account.UUID || !oauth.Match.Contains("account-read") && !oauth.Match.Contains("account-admin") {
+	if oauth.Token.AccountUUID.String != account.UUID || !oauth.Match.Contains("account-read") && !oauth.Match.Contains("account-admin") {
 		PrintErrorJSON(w, r, "Access to requested key forbidden", http.StatusUnauthorized)
 		return
 	}
@@ -207,7 +207,7 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if oauth.Token.AccountUUID != key.AccountUUID || !oauth.Match.Contains("account-read") && !oauth.Match.Contains("account-admin") {
+	if oauth.Token.AccountUUID.String != key.AccountUUID || !oauth.Match.Contains("account-read") && !oauth.Match.Contains("account-admin") {
 		PrintErrorJSON(w, r, "Access to requested key forbidden", http.StatusUnauthorized)
 		return
 	}
@@ -235,7 +235,7 @@ func CreateKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if oauth.Token.AccountUUID != account.UUID || !oauth.Match.Contains("account-write") {
+	if oauth.Token.AccountUUID.String != account.UUID || !oauth.Match.Contains("account-write") {
 		PrintErrorJSON(w, r, "Access to requested account forbidden", http.StatusUnauthorized)
 		return
 	}
@@ -274,7 +274,7 @@ func DeleteKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if oauth.Token.AccountUUID != key.AccountUUID || !oauth.Match.Contains("account-write") {
+	if oauth.Token.AccountUUID.String != key.AccountUUID || !oauth.Match.Contains("account-write") {
 		PrintErrorJSON(w, r, "Access to requested account forbidden", http.StatusUnauthorized)
 		return
 	}

@@ -101,7 +101,7 @@ func (req *GrantRequest) ExchangeCodeForTokens() (string, string, error) {
 		Scope:       req.ScopeRequested,
 		Expires:     time.Now().Add(conf.GetServerConfig().GrantReqLifeTime),
 		ClientUUID:  req.ClientUUID,
-		AccountUUID: req.AccountUUID.String}
+		AccountUUID: req.AccountUUID}
 
 	tx := database.MustBegin()
 	err := tx.Get(refresh, qCreateRefresh, refresh.Token, refresh.Scope, refresh.ClientUUID, refresh.AccountUUID)

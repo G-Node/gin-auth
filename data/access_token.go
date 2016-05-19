@@ -22,7 +22,7 @@ type AccessToken struct {
 	Scope       util.StringSet
 	Expires     time.Time
 	ClientUUID  string
-	AccountUUID string
+	AccountUUID sql.NullString
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

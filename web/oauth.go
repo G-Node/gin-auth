@@ -232,7 +232,7 @@ func finishImplicitRequest(w http.ResponseWriter, r *http.Request, request *data
 	token := &data.AccessToken{
 		Token:       util.RandomToken(),
 		ClientUUID:  request.ClientUUID,
-		AccountUUID: request.AccountUUID.String,
+		AccountUUID: request.AccountUUID,
 		Scope:       request.ScopeRequested,
 	}
 
@@ -420,11 +420,16 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, ok := data.GetAccount(token.AccountUUID)
-	if !ok {
-		// this really should not happen
-		PrintErrorJSON(w, r, "Unable to find account associated with the request", http.StatusInternalServerError)
-		return
+	var login, accountUrl *string
+	if token.AccountUUID.Valid {
+		if account, ok := data.GetAccount(token.AccountUUID.String); ok {
+			login = &account.Login
+			accountUrl = new(string)
+			(*accountUrl) = conf.MakeUrl("/api/accounts/%s", account.Login)
+		} else {
+			PrintErrorJSON(w, r, "Unable to find account associated with the request", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	response := &struct {
@@ -432,16 +437,16 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 		JTI        string    `json:"jti"`
 		EXP        time.Time `json:"exp"`
 		ISS        string    `json:"iss"`
-		Login      string    `json:"login"`
-		AccountURL string    `json:"account_url"`
+		Login      *string   `json:"login"`
+		AccountURL *string   `json:"account_url"`
 		Scope      []string  `json:"scope"`
 	}{
 		URL:        conf.MakeUrl("/oauth/validate/%s", token.Token),
 		JTI:        token.Token,
 		EXP:        token.Expires,
 		ISS:        "gin-auth",
-		Login:      account.Login,
-		AccountURL: conf.MakeUrl("/api/accounts/%s", account.Login),
+		Login:      login,
+		AccountURL: accountUrl,
 		Scope:      token.Scope.Strings(),
 	}
 

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"database/sql"
 	"github.com/G-Node/gin-auth/util"
 )
 
@@ -38,7 +39,7 @@ func TestGetAccessToken(t *testing.T) {
 	if !ok {
 		t.Error("Access token does not exist")
 	}
-	if tok.AccountUUID != uuidAlice {
+	if !tok.AccountUUID.Valid || tok.AccountUUID.String != uuidAlice {
 		t.Errorf("AccountUUID was expectd to be '%s'", uuidAlice)
 	}
 
@@ -62,7 +63,8 @@ func TestCreateAccessToken(t *testing.T) {
 		Scope:       util.NewStringSet("foo-read", "foo-write"),
 		Expires:     time.Now().Add(time.Hour * 12),
 		ClientUUID:  uuidClientGin,
-		AccountUUID: uuidAlice}
+		AccountUUID: sql.NullString{String: uuidAlice, Valid: true},
+	}
 
 	err := fresh.Create()
 	if err != nil {
@@ -73,7 +75,7 @@ func TestCreateAccessToken(t *testing.T) {
 	if !ok {
 		t.Error("Token does not exist")
 	}
-	if check.AccountUUID != uuidAlice {
+	if !check.AccountUUID.Valid || check.AccountUUID.String != uuidAlice {
 		t.Errorf("AccountUUID is supposed to be '%s'", uuidAlice)
 	}
 	if !check.Scope.Contains("foo-read") {
@@ -81,6 +83,27 @@ func TestCreateAccessToken(t *testing.T) {
 	}
 	if !check.Scope.Contains("foo-write") {
 		t.Error("Scope should contain 'foo-write'")
+	}
+
+	token = util.RandomToken()
+	fresh = AccessToken{
+		Token:      token,
+		Scope:      util.NewStringSet("foo-read"),
+		Expires:    time.Now().Add(time.Hour * 12),
+		ClientUUID: uuidClientGin,
+	}
+
+	err = fresh.Create()
+	if err != nil {
+		t.Error(err)
+	}
+
+	check, ok = GetAccessToken(token)
+	if !ok {
+		t.Error("Token does not exist")
+	}
+	if !check.Scope.Contains("foo-read") {
+		t.Error("Scope should contain 'foo-read'")
 	}
 }
 
