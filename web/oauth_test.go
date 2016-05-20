@@ -347,9 +347,8 @@ func TestApprove(t *testing.T) {
 	}
 }
 
-func newTokenBody(code string) *url.Values {
+func newCodeTokenBody(code string) *url.Values {
 	body := &url.Values{}
-	body.Add("redirect_uri", "https://localhost:8081/login")
 	body.Add("code", code)
 	body.Add("grant_type", "authorization_code")
 	return body
@@ -361,7 +360,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 
 	// wrong client id
-	body := newTokenBody(codeAlice)
+	body := newCodeTokenBody(codeAlice)
 	request, _ := http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("doesnotexist", "secret")
@@ -372,7 +371,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	}
 
 	// wrong client secret
-	body = newTokenBody(codeAlice)
+	body = newCodeTokenBody(codeAlice)
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("gin", "wrongsecret")
@@ -383,7 +382,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	}
 
 	// wrong code
-	body = newTokenBody("reallywrongcode")
+	body = newCodeTokenBody("reallywrongcode")
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("gin", "secret")
@@ -394,7 +393,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	}
 
 	// all OK (with authorization header)
-	body = newTokenBody(codeAlice)
+	body = newCodeTokenBody(codeAlice)
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("gin", "secret")
@@ -418,7 +417,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	}
 
 	// try to read the same code again
-	body = newTokenBody(codeAlice)
+	body = newCodeTokenBody(codeAlice)
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("gin", "secret")
@@ -431,7 +430,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 
 	// all OK (with client credentials in body)
 	data.InitTestDb(t)
-	body = newTokenBody(codeAlice)
+	body = newCodeTokenBody(codeAlice)
 	body.Add("client_id", "gin")
 	body.Add("client_secret", "secret")
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
@@ -450,6 +449,95 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	}
 	if responseBody.RefreshToken == nil {
 		t.Error("No refresh token recieved")
+	}
+	if responseBody.TokenType != "Bearer" {
+		t.Error("Token type is supposed to be 'Bearer'")
+	}
+}
+
+func newRefreshTokenBody(refreshToken string) *url.Values {
+	body := &url.Values{}
+	body.Add("refresh_token", refreshToken)
+	body.Add("grant_type", "refresh_token")
+	return body
+}
+
+func TestTokenRefreshToken(t *testing.T) {
+	const refreshTokenAlice = "YYPTDSVZ"
+
+	handler := InitTestHttpHandler(t)
+
+	// wrong client id
+	body := newRefreshTokenBody(refreshTokenAlice)
+	request, _ := http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.SetBasicAuth("doesnotexist", "secret")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// wrong client secret
+	body = newRefreshTokenBody(refreshTokenAlice)
+	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.SetBasicAuth("gin", "wrongsecret")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// wrong refresh token
+	body = newRefreshTokenBody("wrongtoken")
+	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.SetBasicAuth("gin", "secret")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// all OK (with authorization header)
+	body = newRefreshTokenBody(refreshTokenAlice)
+	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.SetBasicAuth("gin", "secret")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		fmt.Println(string(response.Body.Bytes()))
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	responseBody := &TokenResponse{}
+	json.Unmarshal(response.Body.Bytes(), responseBody)
+	if responseBody.AccessToken == "" {
+		t.Error("No access token recieved")
+	}
+	if responseBody.TokenType != "Bearer" {
+		t.Error("Token type is supposed to be 'Bearer'")
+	}
+
+	// all OK (with client credentials in body)
+	body = newRefreshTokenBody(refreshTokenAlice)
+	body.Add("client_id", "gin")
+	body.Add("client_secret", "secret")
+	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		fmt.Println(string(response.Body.Bytes()))
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	responseBody = &TokenResponse{}
+	json.Unmarshal(response.Body.Bytes(), responseBody)
+	if responseBody.AccessToken == "" {
+		t.Error("No access token recieved")
 	}
 	if responseBody.TokenType != "Bearer" {
 		t.Error("Token type is supposed to be 'Bearer'")

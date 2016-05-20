@@ -425,6 +425,36 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			RefreshToken: &refresh,
 		}
 
+	case "refresh_token":
+		refresh, ok := data.GetRefreshToken(body.RefreshToken)
+		if !ok {
+			PrintErrorJSON(w, r, "Invalid refresh token", http.StatusUnauthorized)
+			return
+		}
+		if refresh.ClientUUID != client.UUID {
+			refresh.Delete()
+			PrintErrorJSON(w, r, "Invalid refresh token", http.StatusUnauthorized)
+			return
+		}
+
+		access := data.AccessToken{
+			Token:       util.RandomToken(),
+			AccountUUID: sql.NullString{String: refresh.AccountUUID, Valid: true},
+			ClientUUID:  refresh.ClientUUID,
+			Scope:       refresh.Scope,
+		}
+		err := access.Create()
+		if err != nil {
+			PrintErrorJSON(w, r, err, http.StatusInternalServerError)
+			return
+		}
+
+		response = &TokenResponse{
+			TokenType:   "Bearer",
+			Scope:       strings.Join(refresh.Scope.Strings(), " "),
+			AccessToken: access.Token,
+		}
+
 	default:
 		PrintErrorJSON(w, r, fmt.Sprintf("Unsupported grant type %s", body.GrantType), http.StatusBadRequest)
 		return
