@@ -350,15 +350,43 @@ func Approve(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type TokenResponse struct {
+	TokenType    string  `json:"token_type"`
+	Scope        string  `json:"scope"`
+	AccessToken  string  `json:"access_token"`
+	RefreshToken *string `json:"refresh_token"`
+}
+
 // Token exchanges a grant code for an access and refresh token
 func Token(w http.ResponseWriter, r *http.Request) {
-	clientName, clientSecret, ok := r.BasicAuth()
-	if !ok {
-		PrintErrorJSON(w, r, "No credentials provided", http.StatusUnauthorized)
+	// Read authorization header
+	clientId, clientSecret, authorizeOk := r.BasicAuth()
+
+	// Parse request body
+	body := &struct {
+		GrantType    string
+		ClientId     string
+		ClientSecret string
+		Scope        string
+		Code         string
+		RefreshToken string
+		Username     string
+		Password     string
+	}{}
+	err := util.ReadFormIntoStruct(r, body, true)
+	if err != nil {
+		PrintErrorJSON(w, r, err, 400)
 		return
 	}
 
-	client, ok := data.GetClientByName(clientName)
+	// Take clientId and clientSecret from body if they are not in the header
+	if !authorizeOk {
+		clientId = body.ClientId
+		clientSecret = body.ClientSecret
+	}
+
+	// Check client
+	client, ok := data.GetClientByName(clientId)
 	if !ok {
 		PrintErrorJSON(w, r, "Wrong client id or client secret", http.StatusUnauthorized)
 		return
@@ -368,40 +396,39 @@ func Token(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	param := &struct {
-		RedirectURI string
-		Code        string
-		GrantType   string
-	}{}
-	err := util.ReadFormIntoStruct(r, param, false)
-	if err != nil {
-		PrintErrorJSON(w, r, err, 400)
-		return
-	}
-	if param.GrantType != "authorization_code" {
-		PrintErrorJSON(w, r, "Unsupported grant type", http.StatusBadRequest)
-		return
-	}
+	// Prepare a response depending on the grant type
+	var response *TokenResponse
+	switch body.GrantType {
 
-	request, ok := data.GetGrantRequestByCode(param.Code)
-	if !ok {
-		PrintErrorJSON(w, r, "Invalid grant code", http.StatusUnauthorized)
+	case "authorization_code":
+		request, ok := data.GetGrantRequestByCode(body.Code)
+		if !ok {
+			PrintErrorJSON(w, r, "Invalid grant code", http.StatusUnauthorized)
+			return
+		}
+		if request.ClientUUID != client.UUID {
+			request.Delete()
+			PrintErrorJSON(w, r, "Invalid grant code", http.StatusUnauthorized)
+			return
+		}
+
+		access, refresh, err := request.ExchangeCodeForTokens()
+		if err != nil {
+			PrintErrorJSON(w, r, "Invalid grant code", http.StatusUnauthorized)
+			return
+		}
+
+		response = &TokenResponse{
+			TokenType:    "Bearer",
+			Scope:        strings.Join(request.ScopeRequested.Strings(), " "),
+			AccessToken:  access,
+			RefreshToken: &refresh,
+		}
+
+	default:
+		PrintErrorJSON(w, r, fmt.Sprintf("Unsupported grant type %s", body.GrantType), http.StatusBadRequest)
 		return
 	}
-
-	access, refresh, err := request.ExchangeCodeForTokens()
-	if err != nil {
-		PrintErrorJSON(w, r, "Invalid grant code", http.StatusUnauthorized)
-		return
-	}
-
-	scope := strings.Join(request.ScopeRequested.Strings(), " ")
-	response := struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-		TokenType    string `json:"token_type"`
-		Scope        string `json:"scope"`
-	}{access, refresh, "Bearer", scope}
 
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
