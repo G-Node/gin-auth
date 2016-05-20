@@ -350,7 +350,7 @@ func Approve(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type TokenResponse struct {
+type tokenResponse struct {
 	TokenType    string  `json:"token_type"`
 	Scope        string  `json:"scope"`
 	AccessToken  string  `json:"access_token"`
@@ -397,7 +397,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Prepare a response depending on the grant type
-	var response *TokenResponse
+	var response *tokenResponse
 	switch body.GrantType {
 
 	case "authorization_code":
@@ -418,7 +418,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response = &TokenResponse{
+		response = &tokenResponse{
 			TokenType:    "Bearer",
 			Scope:        strings.Join(request.ScopeRequested.Strings(), " "),
 			AccessToken:  access,
@@ -449,9 +449,44 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response = &TokenResponse{
+		response = &tokenResponse{
 			TokenType:   "Bearer",
 			Scope:       strings.Join(refresh.Scope.Strings(), " "),
+			AccessToken: access.Token,
+		}
+
+	case "password":
+		account, ok := data.GetAccountByLogin(body.Username)
+		if !ok {
+			PrintErrorJSON(w, r, "Wrong username or password", http.StatusUnauthorized)
+			return
+		}
+		if !account.VerifyPassword(body.Password) {
+			PrintErrorJSON(w, r, "Wrong username or password", http.StatusUnauthorized)
+			return
+		}
+
+		scope := util.NewStringSet(strings.Split(body.Scope, " ")...)
+		if scope.Len() == 0 || !client.ScopeWhitelist.IsSuperset(scope) {
+			PrintErrorJSON(w, r, "Invalid scope", http.StatusUnauthorized)
+			return
+		}
+
+		access := data.AccessToken{
+			Token:       util.RandomToken(),
+			AccountUUID: sql.NullString{String: account.UUID, Valid: true},
+			ClientUUID:  client.UUID,
+			Scope:       scope,
+		}
+		err := access.Create()
+		if err != nil {
+			PrintErrorJSON(w, r, err, http.StatusInternalServerError)
+			return
+		}
+
+		response = &tokenResponse{
+			TokenType:   "Bearer",
+			Scope:       strings.Join(scope.Strings(), " "),
 			AccessToken: access.Token,
 		}
 
