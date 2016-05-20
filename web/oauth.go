@@ -102,7 +102,7 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 		ClientId     string
 		RedirectURI  string
 		State        string
-		Scope        []string
+		Scope        string
 	}{}
 
 	err := util.ReadQueryIntoStruct(r, param, false)
@@ -117,7 +117,7 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scope := util.NewStringSet(param.Scope...)
+	scope := util.NewStringSet(strings.Split(param.Scope, " ")...)
 	request, err := client.CreateGrantRequest(param.ResponseType, param.RedirectURI, param.State, scope)
 	if err != nil {
 		PrintErrorHTML(w, r, err, http.StatusBadRequest)
@@ -215,7 +215,7 @@ func finishCodeRequest(w http.ResponseWriter, r *http.Request, request *data.Gra
 		panic(err)
 	}
 
-	scope := url.QueryEscape(strings.Join(request.ScopeRequested.Strings(), ","))
+	scope := url.QueryEscape(strings.Join(request.ScopeRequested.Strings(), " "))
 	state := url.QueryEscape(request.State)
 	url := fmt.Sprintf("%s?scope=%s&state=%s&code=%s", request.RedirectURI, scope, state, request.Code.String)
 
@@ -241,7 +241,7 @@ func finishImplicitRequest(w http.ResponseWriter, r *http.Request, request *data
 		panic(err)
 	}
 
-	scope := url.QueryEscape(strings.Join(token.Scope.Strings(), ","))
+	scope := url.QueryEscape(strings.Join(token.Scope.Strings(), " "))
 	state := url.QueryEscape(request.State)
 	url := fmt.Sprintf("%s?token_type=bearer&scope=%s&state=%s&access_token=%s", request.RedirectURI, scope, state, token.Token)
 
@@ -395,15 +395,13 @@ func Token(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	scope := strings.Join(request.ScopeRequested.Strings(), " ")
 	response := struct {
 		AccessToken  string `json:"access_token"`
 		RefreshToken string `json:"refresh_token"`
 		TokenType    string `json:"token_type"`
-	}{
-		TokenType:    "Bearer",
-		AccessToken:  access,
-		RefreshToken: refresh,
-	}
+		Scope        string `json:"scope"`
+	}{access, refresh, "Bearer", scope}
 
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
@@ -432,6 +430,7 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	scope := strings.Join(token.Scope.Strings(), " ")
 	response := &struct {
 		URL        string    `json:"url"`
 		JTI        string    `json:"jti"`
@@ -439,7 +438,7 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 		ISS        string    `json:"iss"`
 		Login      *string   `json:"login"`
 		AccountURL *string   `json:"account_url"`
-		Scope      []string  `json:"scope"`
+		Scope      string    `json:"scope"`
 	}{
 		URL:        conf.MakeUrl("/oauth/validate/%s", token.Token),
 		JTI:        token.Token,
@@ -447,7 +446,7 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 		ISS:        "gin-auth",
 		Login:      login,
 		AccountURL: accountUrl,
-		Scope:      token.Scope.Strings(),
+		Scope:      scope,
 	}
 
 	w.Header().Add("Cache-Control", "no-cache")

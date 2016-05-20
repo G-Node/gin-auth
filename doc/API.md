@@ -472,12 +472,12 @@ Returns information about the token encoded as JSON.
 ```javascript
 {
   "url": "https://<host>/oauth/validate/<token>",
-  "jti": "<token>",     // token identifier
-  "exp": 1300819380,    // expiration time
+  "jti": "<token>",        // token identifier
+  "exp": 1300819380,       // expiration time
   "iss": "gin-auth",
-  "login": "...",       // login of the account (null if not not accociated with an account)
-  "account_url": "..."  // url to the the account (null if not not accociated with an account)
-  "scope": ["s1", "s2"] // the scope which may be accessed with the token
+  "login": "...",          // login of the account (null if not not accociated with an account)
+  "account_url": "...",    // url to the the account (null if not not accociated with an account)
+  "scope": "scope1 scope2" // space separated list of scopes
 }
 ```
 

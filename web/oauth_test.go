@@ -98,7 +98,7 @@ func newAuthQuery() url.Values {
 	query.Add("response_type", "code")
 	query.Add("client_id", "gin")
 	query.Add("redirect_uri", "https://localhost:8081/login")
-	query.Add("scope", "repo-read,repo-write")
+	query.Add("scope", "repo-read repo-write")
 	query.Add("state", "testcode")
 	return query
 }
