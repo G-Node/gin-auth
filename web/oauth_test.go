@@ -94,18 +94,18 @@ func TestOAuthHandler(t *testing.T) {
 	}
 }
 
-func newAuthQuery() url.Values {
-	query := url.Values{}
-	query.Add("response_type", "code")
-	query.Add("client_id", "gin")
-	query.Add("redirect_uri", "https://localhost:8081/login")
-	query.Add("scope", "repo-read repo-write")
-	query.Add("state", "testcode")
-	return query
-}
-
 func TestAuthorize(t *testing.T) {
 	handler := InitTestHttpHandler(t)
+
+	mkQuery := func() url.Values {
+		query := url.Values{}
+		query.Add("response_type", "code")
+		query.Add("client_id", "gin")
+		query.Add("redirect_uri", "https://localhost:8081/login")
+		query.Add("scope", "repo-read repo-write")
+		query.Add("state", "testcode")
+		return query
+	}
 
 	// missing query param
 	request, _ := http.NewRequest("GET", "/oauth/authorize", strings.NewReader(""))
@@ -116,7 +116,7 @@ func TestAuthorize(t *testing.T) {
 	}
 
 	// wrong response type
-	query := newAuthQuery()
+	query := mkQuery()
 	query.Set("response_type", "wrong")
 	request, _ = http.NewRequest("GET", "/oauth/authorize", strings.NewReader(""))
 	request.URL.RawQuery = query.Encode()
@@ -127,7 +127,7 @@ func TestAuthorize(t *testing.T) {
 	}
 
 	// wrong scope
-	query = newAuthQuery()
+	query = mkQuery()
 	query.Set("scope", "foo,bar")
 	request, _ = http.NewRequest("GET", "/oauth/authorize", strings.NewReader(""))
 	request.URL.RawQuery = query.Encode()
@@ -138,7 +138,7 @@ func TestAuthorize(t *testing.T) {
 	}
 
 	// wrong client id
-	query = newAuthQuery()
+	query = mkQuery()
 	query.Set("client_id", "doesnotexist")
 	request, _ = http.NewRequest("GET", "/oauth/authorize", strings.NewReader(""))
 	request.URL.RawQuery = query.Encode()
@@ -149,7 +149,7 @@ func TestAuthorize(t *testing.T) {
 	}
 
 	// wrong redirect
-	query = newAuthQuery()
+	query = mkQuery()
 	query.Set("redirect_uri", "https://example.com/invalid")
 	request, _ = http.NewRequest("GET", "/oauth/authorize", strings.NewReader(""))
 	request.URL.RawQuery = query.Encode()
@@ -161,7 +161,7 @@ func TestAuthorize(t *testing.T) {
 
 	// all OK
 	request, _ = http.NewRequest("GET", "/oauth/authorize", strings.NewReader(""))
-	request.URL.RawQuery = newAuthQuery().Encode()
+	request.URL.RawQuery = mkQuery().Encode()
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusFound {
@@ -207,16 +207,16 @@ func TestLoginPage(t *testing.T) {
 	}
 }
 
-func newLoginBody() *url.Values {
-	body := &url.Values{}
-	body.Add("request_id", "U7JIKKYI")
-	body.Add("login", "bob")
-	body.Add("password", "testtest")
-	return body
-}
-
 func TestLogin(t *testing.T) {
 	handler := InitTestHttpHandler(t)
+
+	mkBody := func() *url.Values {
+		body := &url.Values{}
+		body.Add("request_id", "U7JIKKYI")
+		body.Add("login", "bob")
+		body.Add("password", "testtest")
+		return body
+	}
 
 	// form param missing
 	request, _ := http.NewRequest("POST", "/oauth/login", strings.NewReader(""))
@@ -228,7 +228,7 @@ func TestLogin(t *testing.T) {
 	}
 
 	// wrong request id
-	body := newLoginBody()
+	body := mkBody()
 	body.Set("request_id", "doesnotexist")
 	request, _ = http.NewRequest("POST", "/oauth/login", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -239,7 +239,7 @@ func TestLogin(t *testing.T) {
 	}
 
 	// wrong login
-	body = newLoginBody()
+	body = mkBody()
 	body.Set("login", "doesnotexist")
 	request, _ = http.NewRequest("POST", "/oauth/login", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -250,7 +250,7 @@ func TestLogin(t *testing.T) {
 	}
 
 	// wrong password
-	body = newLoginBody()
+	body = mkBody()
 	body.Set("password", "notapassword")
 	request, _ = http.NewRequest("POST", "/oauth/login", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -261,7 +261,7 @@ func TestLogin(t *testing.T) {
 	}
 
 	// all OK
-	request, _ = http.NewRequest("POST", "/oauth/login", strings.NewReader(newLoginBody().Encode()))
+	request, _ = http.NewRequest("POST", "/oauth/login", strings.NewReader(mkBody().Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -308,19 +308,19 @@ func TestApprovePage(t *testing.T) {
 	}
 }
 
-func newApproveBody() *url.Values {
-	body := &url.Values{}
-	body.Add("request_id", "B4LIMIMB")
-	body.Add("scope", "repo-read")
-	body.Add("scope", "repo-write")
-	return body
-}
-
 func TestApprove(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 
+	mkBody := func() *url.Values {
+		body := &url.Values{}
+		body.Add("request_id", "B4LIMIMB")
+		body.Add("scope", "repo-read")
+		body.Add("scope", "repo-write")
+		return body
+	}
+
 	// wrong request id
-	body := newApproveBody()
+	body := mkBody()
 	body.Set("request_id", "doesnotexist")
 	request, _ := http.NewRequest("POST", "/oauth/approve", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -331,7 +331,7 @@ func TestApprove(t *testing.T) {
 	}
 
 	// all OK
-	request, _ = http.NewRequest("POST", "/oauth/approve", strings.NewReader(newApproveBody().Encode()))
+	request, _ = http.NewRequest("POST", "/oauth/approve", strings.NewReader(mkBody().Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -347,20 +347,20 @@ func TestApprove(t *testing.T) {
 	}
 }
 
-func newCodeTokenBody(code string) *url.Values {
-	body := &url.Values{}
-	body.Add("code", code)
-	body.Add("grant_type", "authorization_code")
-	return body
-}
-
 func TestTokenAuthorizationCode(t *testing.T) {
 	const codeAlice = "HGZQP6WE"
+
+	mkBody := func(code string) *url.Values {
+		body := &url.Values{}
+		body.Add("code", code)
+		body.Add("grant_type", "authorization_code")
+		return body
+	}
 
 	handler := InitTestHttpHandler(t)
 
 	// wrong client id
-	body := newCodeTokenBody(codeAlice)
+	body := mkBody(codeAlice)
 	request, _ := http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("doesnotexist", "secret")
@@ -371,7 +371,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	}
 
 	// wrong client secret
-	body = newCodeTokenBody(codeAlice)
+	body = mkBody(codeAlice)
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("gin", "wrongsecret")
@@ -382,7 +382,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	}
 
 	// wrong code
-	body = newCodeTokenBody("reallywrongcode")
+	body = mkBody("reallywrongcode")
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("gin", "secret")
@@ -393,7 +393,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	}
 
 	// all OK (with authorization header)
-	body = newCodeTokenBody(codeAlice)
+	body = mkBody(codeAlice)
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("gin", "secret")
@@ -417,7 +417,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	}
 
 	// try to read the same code again
-	body = newCodeTokenBody(codeAlice)
+	body = mkBody(codeAlice)
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("gin", "secret")
@@ -430,7 +430,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 
 	// all OK (with client credentials in body)
 	data.InitTestDb(t)
-	body = newCodeTokenBody(codeAlice)
+	body = mkBody(codeAlice)
 	body.Add("client_id", "gin")
 	body.Add("client_secret", "secret")
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
@@ -455,20 +455,20 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	}
 }
 
-func newRefreshTokenBody(refreshToken string) *url.Values {
-	body := &url.Values{}
-	body.Add("refresh_token", refreshToken)
-	body.Add("grant_type", "refresh_token")
-	return body
-}
-
 func TestTokenRefreshToken(t *testing.T) {
 	const refreshTokenAlice = "YYPTDSVZ"
+
+	mkBody := func(refreshToken string) *url.Values {
+		body := &url.Values{}
+		body.Add("refresh_token", refreshToken)
+		body.Add("grant_type", "refresh_token")
+		return body
+	}
 
 	handler := InitTestHttpHandler(t)
 
 	// wrong client id
-	body := newRefreshTokenBody(refreshTokenAlice)
+	body := mkBody(refreshTokenAlice)
 	request, _ := http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("doesnotexist", "secret")
@@ -479,7 +479,7 @@ func TestTokenRefreshToken(t *testing.T) {
 	}
 
 	// wrong client secret
-	body = newRefreshTokenBody(refreshTokenAlice)
+	body = mkBody(refreshTokenAlice)
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("gin", "wrongsecret")
@@ -490,7 +490,7 @@ func TestTokenRefreshToken(t *testing.T) {
 	}
 
 	// wrong refresh token
-	body = newRefreshTokenBody("wrongtoken")
+	body = mkBody("wrongtoken")
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("gin", "secret")
@@ -501,7 +501,7 @@ func TestTokenRefreshToken(t *testing.T) {
 	}
 
 	// all OK (with authorization header)
-	body = newRefreshTokenBody(refreshTokenAlice)
+	body = mkBody(refreshTokenAlice)
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("gin", "secret")
@@ -522,7 +522,7 @@ func TestTokenRefreshToken(t *testing.T) {
 	}
 
 	// all OK (with client credentials in body)
-	body = newRefreshTokenBody(refreshTokenAlice)
+	body = mkBody(refreshTokenAlice)
 	body.Add("client_id", "gin")
 	body.Add("client_secret", "secret")
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
