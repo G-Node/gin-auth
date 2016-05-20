@@ -87,7 +87,7 @@ CREATE TABLE AccessTokens (
   scope             VARCHAR[] NOT NULL ,
   expires           TIMESTAMP NOT NULL ,
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
-  accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
+  accountUUID       VARCHAR(36) REFERENCES Accounts(uuid) ON DELETE CASCADE ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
 );

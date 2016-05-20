@@ -98,7 +98,7 @@ func TestGrantRequest_ExchangeCodeForTokens(t *testing.T) {
 	if !ok {
 		t.Error("Unable to find created access token")
 	}
-	if access.AccountUUID != uuidAlice {
+	if !access.AccountUUID.Valid || access.AccountUUID.String != uuidAlice {
 		t.Error("Access token has a wrong account UUID")
 	}
 

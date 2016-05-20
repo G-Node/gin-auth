@@ -16,3 +16,8 @@
     - account-admin
   RedirectURIs:
     - https://localhost:8081/login
+- UUID: 5b2ca112-0ecc-41ff-8315-221024345ab8
+  Name: gin-shell
+  Secret: secret
+  ScopeWhitelist:
+    - account-admin

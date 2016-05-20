@@ -1,13 +1,15 @@
 GIN-Auth API
 ============
 
-### Authenticate: grant type code
 
 
-#### 1. Request access
+Authenticate: grant type code
+-----------------------------
 
-The client should redirect the browser (302 moved temporarily) to the following URL
-with the parameters listed below.
+### 1. Request access
+
+The client should redirect the browser (302) to the following URL with the parameters listed below encoded
+in the query string.
 
 ##### URL
 
@@ -15,34 +17,38 @@ with the parameters listed below.
 GET https://<host>/oauth/authorize
 ```
 
-##### Parameters
+##### Query Parameters
 
 | Name          | Type    | Description |
 | ------------- | ------- | ---- |
 | response_type | string  | Must be set to `code` |
 | client_id     | string  | The ID of a registered client |
 | redirect_uri  | string  | URL to redirect to after authorization |
-| scope         | string  | Comma separated list of scopes |
+| scope         | string  | Space separated list of scopes |
 | state         | string  | Random string to protect against CSRF |
 
-##### Errors (not redirected)
+##### Errors
 
 Show an error page if:
 
 * The client ID is unknown
 * The redirect URL does not match exactly one registered URL for the client
 * The redirect URL does not use https
-* One of the given scopes is not registered
+* One of the given scopes is not registered or blacklisted
 
 ##### Response
 
-Redirect the browser (302 moved temporarily) to the [login page](#login-page) using a newly generated request id.
+Redirect the browser (302) to a page which performs an appropriate authentication and approval process.
+If the authentication and approval was successful the response is a redirect (302) to the requested
+`redirect_uri` containing the parameters `code`, `scope` and `state` as query parameters.
 
-#### 2. Exchange token
+In the next step the `code` can be exchanged for an access and refresh token.
 
-If the authentication and approval was successful the response is a redirect (302) to the requested `redirect_uri`
-containing the parameters `code`, `scope` and `state`.
-In the next step the access code can be used to obtain an access token.
+### 2. Exchange an access code for a token
+
+To exchange a previously issued code for an access token.
+The client must provide its `client_id` and `client_secret` either with the `Authorization` header or encoded in
+the request body.
 
 ##### URL
 
@@ -50,28 +56,35 @@ In the next step the access code can be used to obtain an access token.
 POST https://<host>/oauth/token
 ```
 
-##### Basic authorization header
+##### Authorization Header
 
-Send `client_id` and `client_secret` as HTTP basic authorization header.
+Send `client_id` and `client_secret` as HTTP basic authorization header (optional).
 
-##### Parameters (application/x-www-form-urlencoded)
+##### Request Body (application/x-www-form-urlencoded)
 
 | Name          | Type    | Description |
 | ------------- | ------- | ---- |
 | code          | string  | The code obtained in step 1 |
-| redirect_uri  | string  | URL to redirect to after authorization |
 | grant_type    | string  | Must be 'authorization_code' |
+| client_id     | string  | The client id (optional if the authorization header is present) |
+| client_secret | string  | The client secret (optional if the authorization header is present) |
 
 ##### Errors
 
-Errors are returned encoded as json with the following format:
+Return an error if:
 
-```javascript
+* The client ID is unknown
+* The client secret does not match
+* The code is not valid
+
+Errors are returned encoded as JSON using the following format:
+
+```json
 {
   "code": 400,
   "error": "Bad Request",
   "message": "Unable to set one or more fields",
-  "reasons": { // reasons may be null
+  "reasons": {
     "grant_type": "Field grant type was missing"
   }
 }
@@ -79,14 +92,72 @@ Errors are returned encoded as json with the following format:
 
 ##### Response
 
-If successful the response body contains the parameters `access_token`, `refresh_token` and `token_type` as JSON.
+If successful the response body contains the `scope`, `access_token`, `refresh_token` and `token_type`
+as JSON.
 
-TODO should we also support other encodings (application/x-www-form-urlencoded) depending on the Accept header
-of the request?
+```json
+{
+  "scope": "scope1 scope2",
+  "access_token": "...",
+  "refresh_token": "...",
+  "token_type": "Bearer"
+}
+```
 
-### Authenticate: grant type implicit
+*TODO: should we also support other encodings (application/x-www-form-urlencoded) depending on the Accept header
+of the request?*
 
-#### Request implicit access token
+### 3. Exchange a refresh token for an access token
+
+To exchange a previously issued refresh token for an access token, the client must provide its `client_id` and `client_secret`
+either with the `Authorization` header or encoded in the request body.
+
+##### URL
+
+```
+POST https://<host>/oauth/token
+```
+
+##### Authorization Header
+
+Send `client_id` and `client_secret` as HTTP basic authorization header (optional).
+
+##### Request Body (application/x-www-form-urlencoded)
+
+| Name          | Type    | Description |
+| ------------- | ------- | ---- |
+| grant_type    | string  | Must be 'refresh_token' |
+| refresh_token | string  | The refresh token |
+| client_id     | string  | The client id (optional if the authorization header is present) |
+| client_secret | string  | The client secret (optional if the authorization header is present) |
+
+##### Errors
+
+Return an error if:
+
+* The client ID is unknown
+* The client secret does not match
+* The refresh token is not valid for the client
+
+Errors are returned encoded as JSON in the [above shown format](#errors-1).
+
+##### Response
+
+If successful the response body contains the parameters `scope`, `access_token` and `token_type` as JSON.
+
+```json
+{
+  "scope": "scope1 scope2",
+  "access_token": "...",
+  "refresh_token": "...",
+  "token_type": "Bearer"
+}
+```
+
+
+
+Authenticate: grant type implicit
+---------------------------------
 
 ##### URL
 
@@ -94,14 +165,14 @@ of the request?
 GET https://<host>/oauth/authorize
 ```
 
-##### Parameters
+##### Query Parameters
 
 | Name          | Type    | Description |
 | ------------- | ------- | ---- |
 | response_type | string  | Must be set to `token` |
 | client_id     | string  | The ID of a registered client |
 | redirect_uri  | string  | URL to redirect to after authorization |
-| scope         | string  | Comma separated list of scopes |
+| scope         | string  | Space separated list of scopes |
 | state         | string  | Random string to protect against CSRF |
 
 ##### Errors (not redirected)
@@ -115,16 +186,21 @@ Show an error page if:
 
 ##### Response
 
-Redirect the browser (302 moved temporarily) to the [login page](#login-page) using a newly generated request id.
+Redirect the browser (302) to a page which performs an appropriate authentication and approval process.
 
 If the authentication and approval was successful the response is a redirect (302) to the requested `redirect_uri`
 containing the parameters `access_token`, `token_type`, `scope` and `state`.
 
-### Authenticate: grant type owner credentials
 
-Non web applications can obtain a token by just using http basic auth.
 
-#### Request access token directly
+Authenticate: grant type owner credentials
+------------------------------------------
+
+Non web applications can obtain a token with the resource owners credentials.
+To get an access token, the client must provide its `client_id` and `client_secret` either with the
+`Authorization` header or encoded in the request body.
+
+### Request access token directly
 
 ##### URL
 
@@ -134,22 +210,98 @@ POST https://<host>/oauth/token
 
 ##### Headers
 
-| Name           | Value |
-| -------------- | --- |
-| Authorization  | Basic <username:password> |
-| X-OAuth-Scopes | <list-of-scopes> |
+Send `client_id` and `client_secret` as HTTP basic authorization header (optional).
 
-##### Error
+##### Request Body (application/x-www-form-urlencoded)
 
-TODO
+| Name          | Type    | Description |
+| ------------- | ------- | ---- |
+| scope         | string  | Space separated list of scopes |
+| username      | string  | The resource owners login name |
+| password      | string  | The resource owners password |
+| grant_type    | string  | Must be 'password' |
+| client_id     | string  | The client id (optional if the authorization header is present) |
+| client_secret | string  | The client secret (optional if the authorization header is present) |
+
+##### Errors
+
+Return an error if:
+
+* The client ID is unknown
+* The client secret does not match
+* The user credentials are not valid
+* The requested scope is not whitelisted
+
+Errors are returned encoded as JSON in the [above shown format](#errors-1).
 
 ##### Response
 
-If successful the response body contains the parameters `access_token` and `token_type` as application/x-www-form-urlencoded.
+If successful the response body contains the parameters `scope`, `access_token` and `token_type` as JSON.
 
-TODO should we also support other encodings (application/json) depending on the Accept header of the request?
+```json
+{
+  "scope": "scope1 scope2",
+  "access_token": "...",
+  "token_type": "Bearer"
+}
+```
 
-### Login page
+
+
+Authenticate: grant type client credentials
+-------------------------------------------
+
+Clients can request an access token with limited privileges / scope directly with their client id and secret.
+To get an access token, the client must provide its `client_id` and `client_secret` either with the
+`Authorization` header or encoded in the request body.
+
+### Request access token directly
+
+##### URL
+
+```
+POST https://<host>/oauth/token
+```
+
+##### Headers
+
+Send `client_id` and `client_secret` as HTTP basic authorization header (optional).
+
+##### Request Body (application/x-www-form-urlencoded)
+
+| Name          | Type    | Description |
+| ------------- | ------- | ---- |
+| scope         | string  | Space separated list of scopes |
+| grant_type    | string  | Must be 'client_credentials' |
+| client_id     | string  | The client id (optional if the authorization header is present) |
+| client_secret | string  | The client secret (optional if the authorization header is present) |
+
+##### Errors
+
+Return an error if:
+
+* The client ID is unknown
+* The client secret does not match
+* The requested scope is not whitelisted
+
+Errors are returned encoded as JSON in the [above shown format](#errors-1).
+
+##### Response
+
+If successful the response body contains the parameters `scope`, `access_token` and `token_type` as JSON.
+
+```json
+{
+  "scope": "scope1 scope2",
+  "access_token": "...",
+  "token_type": "Bearer"
+}
+```
+
+
+
+Login page
+----------
 
 A login page shown during a `code` or `implicit` authorization request.
 
@@ -159,7 +311,7 @@ A login page shown during a `code` or `implicit` authorization request.
 GET https://<host>/oauth/login_page
 ```
 
-##### Parameters
+##### Query Parameters
 
 | Name          | Type    | Description |
 | ------------- | ------- | ---- |
@@ -180,7 +332,10 @@ Show an error page if the the `request_id` does not belong to a registered reque
 If a valid `session` cookie is present the browser is redirected (302 moved temporarily) to the [approve page](#approve-page).
 If the browser did not send a valid session the login form is shown and submitted to [login](#login)
 
-### Login
+
+
+Login
+-----
 
 Checks the login credentials and the `request_id`
 
@@ -190,7 +345,7 @@ Checks the login credentials and the `request_id`
 POST https://<host>/oauth/login
 ```
 
-##### Parameters (application/x-www-form-urlencoded)
+##### Request Body (application/x-www-form-urlencoded)
 
 | Name          | Type    | Description |
 | ------------- | ------- | ---- |
@@ -216,7 +371,10 @@ In case of an implicit grant request the redirect uri contains the parameters `a
 If the user has not approved one of the requested scopes for this client before the browser is redirected to
 the [approve page](#approve-page).
 
-### Approve page
+
+
+Approve page
+------------
 
 Shows the resource owner a page that allows him to approve certain scopes for a specific client.
 
@@ -226,7 +384,7 @@ Shows the resource owner a page that allows him to approve certain scopes for a 
 GET https://<host>/oauth/approve_page
 ```
 
-##### Parameters
+##### Query Parameters
 
 | Name          | Type    | Description |
 | ------------- | ------- | ---- |
@@ -249,13 +407,18 @@ Redirect the user to the login form if the `session` is not valid.
 
 Submit configured scopes to [approve](#approve-scopes)
 
-### Approve scopes
+
+
+Approve scopes
+--------------
+
+##### URL
 
 ```
 POST https://<host>/oauth/approve
 ```
 
-##### Parameters (application/x-www-form-urlencoded)
+##### Request Body (application/x-www-form-urlencoded)
 
 | Name           | Type    | Description |
 | -------------- | ------- | ---- |
@@ -285,7 +448,10 @@ In case of success the browser is redirected to the `redirect_uri` associated wi
 If the grant request type was code the redirect URL contains the parameters `code`, `scope` and `state`.
 In case of an implicit grant request the redirect uri contains the parameters `access_token` and `token_type`.
 
-### Validate tokens
+
+
+Validate tokens
+---------------
 
 Validates an access token and provides information about the token such as expiration date and scope.
 
@@ -306,33 +472,37 @@ Returns information about the token encoded as JSON.
 ```javascript
 {
   "url": "https://<host>/oauth/validate/<token>",
-  "jti": "<token>",     // token identifier
-  "exp": 1300819380,    // expiration time
+  "jti": "<token>",        // token identifier
+  "exp": 1300819380,       // expiration time
   "iss": "gin-auth",
-  "login": "...",       // login of the account
-  "scope": ["s1", "s2"] // the scope which may be accessed with the token
+  "login": "...",          // login of the account (null if not not accociated with an account)
+  "account_url": "...",    // url to the the account (null if not not accociated with an account)
+  "scope": "scope1 scope2" // space separated list of scopes
 }
 ```
 
-### Account API
 
-#### Error handling
+
+Account API
+-----------
+
+### Error handling
 
 In case of errors calls to the account API result in a response with the respective HTTP status code.
 The body contains further information formatted as JSON:
 
-```javascript
+```json
 {
   "code": 400,
   "error": "Bad Request",
   "message": "...",
-  "reasons": { // reasons may be null
+  "reasons": {
     "foo": "Field foo was missing"
   }
 }
 ```
 
-#### List all accounts
+### List all accounts
 
 ##### URL
 
@@ -365,7 +535,7 @@ Returns a list of all accounts as JSON:
 ]
 ```
 
-#### Get an account
+### Get an account
 
 ##### URL
 
@@ -396,7 +566,7 @@ Returns an account object as JSON:
 }
 ```
 
-#### Update an account
+### Update an account
 
 ##### URL
 
@@ -427,7 +597,7 @@ Additional attributes may be present, but will be ignored.
 
 The changed account object as JSON (see above).
 
-#### Update account password
+### Update account password
 
 ##### URL
 
@@ -454,9 +624,12 @@ The token scope must contain 'account-write' to change the own password.
 
 If the password was successfully changed the status code is 200 and the response body is empty.
 
-### SSH-key API
 
-#### List keys per user
+
+SSH-key API
+-----------
+
+### List keys per user
 
 ##### URL
 
@@ -488,7 +661,7 @@ Returns a list of ssh key objects as JSON:
 ]
 ```
 
-#### Get ssh key
+### Get ssh key
 
 ##### URL
 
@@ -518,7 +691,7 @@ Returns an ssh key object as JSON:
 }
 ```
 
-#### Remove ssh key
+### Remove ssh key
 
 ##### URL
 

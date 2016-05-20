@@ -102,7 +102,7 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 		ClientId     string
 		RedirectURI  string
 		State        string
-		Scope        []string
+		Scope        string
 	}{}
 
 	err := util.ReadQueryIntoStruct(r, param, false)
@@ -117,7 +117,7 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scope := util.NewStringSet(param.Scope...)
+	scope := util.NewStringSet(strings.Split(param.Scope, " ")...)
 	request, err := client.CreateGrantRequest(param.ResponseType, param.RedirectURI, param.State, scope)
 	if err != nil {
 		PrintErrorHTML(w, r, err, http.StatusBadRequest)
@@ -215,7 +215,7 @@ func finishCodeRequest(w http.ResponseWriter, r *http.Request, request *data.Gra
 		panic(err)
 	}
 
-	scope := url.QueryEscape(strings.Join(request.ScopeRequested.Strings(), ","))
+	scope := url.QueryEscape(strings.Join(request.ScopeRequested.Strings(), " "))
 	state := url.QueryEscape(request.State)
 	url := fmt.Sprintf("%s?scope=%s&state=%s&code=%s", request.RedirectURI, scope, state, request.Code.String)
 
@@ -232,7 +232,7 @@ func finishImplicitRequest(w http.ResponseWriter, r *http.Request, request *data
 	token := &data.AccessToken{
 		Token:       util.RandomToken(),
 		ClientUUID:  request.ClientUUID,
-		AccountUUID: request.AccountUUID.String,
+		AccountUUID: request.AccountUUID,
 		Scope:       request.ScopeRequested,
 	}
 
@@ -241,7 +241,7 @@ func finishImplicitRequest(w http.ResponseWriter, r *http.Request, request *data
 		panic(err)
 	}
 
-	scope := url.QueryEscape(strings.Join(token.Scope.Strings(), ","))
+	scope := url.QueryEscape(strings.Join(token.Scope.Strings(), " "))
 	state := url.QueryEscape(request.State)
 	url := fmt.Sprintf("%s?token_type=bearer&scope=%s&state=%s&access_token=%s", request.RedirectURI, scope, state, token.Token)
 
@@ -350,15 +350,43 @@ func Approve(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type tokenResponse struct {
+	TokenType    string  `json:"token_type"`
+	Scope        string  `json:"scope"`
+	AccessToken  string  `json:"access_token"`
+	RefreshToken *string `json:"refresh_token"`
+}
+
 // Token exchanges a grant code for an access and refresh token
 func Token(w http.ResponseWriter, r *http.Request) {
-	clientName, clientSecret, ok := r.BasicAuth()
-	if !ok {
-		PrintErrorJSON(w, r, "No credentials provided", http.StatusUnauthorized)
+	// Read authorization header
+	clientId, clientSecret, authorizeOk := r.BasicAuth()
+
+	// Parse request body
+	body := &struct {
+		GrantType    string
+		ClientId     string
+		ClientSecret string
+		Scope        string
+		Code         string
+		RefreshToken string
+		Username     string
+		Password     string
+	}{}
+	err := util.ReadFormIntoStruct(r, body, true)
+	if err != nil {
+		PrintErrorJSON(w, r, err, 400)
 		return
 	}
 
-	client, ok := data.GetClientByName(clientName)
+	// Take clientId and clientSecret from body if they are not in the header
+	if !authorizeOk {
+		clientId = body.ClientId
+		clientSecret = body.ClientSecret
+	}
+
+	// Check client
+	client, ok := data.GetClientByName(clientId)
 	if !ok {
 		PrintErrorJSON(w, r, "Wrong client id or client secret", http.StatusUnauthorized)
 		return
@@ -368,41 +396,127 @@ func Token(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	param := &struct {
-		RedirectURI string
-		Code        string
-		GrantType   string
-	}{}
-	err := util.ReadFormIntoStruct(r, param, false)
-	if err != nil {
-		PrintErrorJSON(w, r, err, 400)
-		return
-	}
-	if param.GrantType != "authorization_code" {
-		PrintErrorJSON(w, r, "Unsupported grant type", http.StatusBadRequest)
-		return
-	}
+	// Prepare a response depending on the grant type
+	var response *tokenResponse
+	switch body.GrantType {
 
-	request, ok := data.GetGrantRequestByCode(param.Code)
-	if !ok {
-		PrintErrorJSON(w, r, "Invalid grant code", http.StatusUnauthorized)
-		return
-	}
+	case "authorization_code":
+		request, ok := data.GetGrantRequestByCode(body.Code)
+		if !ok {
+			PrintErrorJSON(w, r, "Invalid grant code", http.StatusUnauthorized)
+			return
+		}
+		if request.ClientUUID != client.UUID {
+			request.Delete()
+			PrintErrorJSON(w, r, "Invalid grant code", http.StatusUnauthorized)
+			return
+		}
 
-	access, refresh, err := request.ExchangeCodeForTokens()
-	if err != nil {
-		PrintErrorJSON(w, r, "Invalid grant code", http.StatusUnauthorized)
-		return
-	}
+		access, refresh, err := request.ExchangeCodeForTokens()
+		if err != nil {
+			PrintErrorJSON(w, r, "Invalid grant code", http.StatusUnauthorized)
+			return
+		}
 
-	response := struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
-		TokenType    string `json:"token_type"`
-	}{
-		TokenType:    "Bearer",
-		AccessToken:  access,
-		RefreshToken: refresh,
+		response = &tokenResponse{
+			TokenType:    "Bearer",
+			Scope:        strings.Join(request.ScopeRequested.Strings(), " "),
+			AccessToken:  access,
+			RefreshToken: &refresh,
+		}
+
+	case "refresh_token":
+		refresh, ok := data.GetRefreshToken(body.RefreshToken)
+		if !ok {
+			PrintErrorJSON(w, r, "Invalid refresh token", http.StatusUnauthorized)
+			return
+		}
+		if refresh.ClientUUID != client.UUID {
+			refresh.Delete()
+			PrintErrorJSON(w, r, "Invalid refresh token", http.StatusUnauthorized)
+			return
+		}
+
+		access := data.AccessToken{
+			Token:       util.RandomToken(),
+			AccountUUID: sql.NullString{String: refresh.AccountUUID, Valid: true},
+			ClientUUID:  refresh.ClientUUID,
+			Scope:       refresh.Scope,
+		}
+		err := access.Create()
+		if err != nil {
+			PrintErrorJSON(w, r, err, http.StatusInternalServerError)
+			return
+		}
+
+		response = &tokenResponse{
+			TokenType:   "Bearer",
+			Scope:       strings.Join(refresh.Scope.Strings(), " "),
+			AccessToken: access.Token,
+		}
+
+	case "password":
+		account, ok := data.GetAccountByLogin(body.Username)
+		if !ok {
+			PrintErrorJSON(w, r, "Wrong username or password", http.StatusUnauthorized)
+			return
+		}
+		if !account.VerifyPassword(body.Password) {
+			PrintErrorJSON(w, r, "Wrong username or password", http.StatusUnauthorized)
+			return
+		}
+
+		scope := util.NewStringSet(strings.Split(body.Scope, " ")...)
+		if scope.Len() == 0 || !client.ScopeWhitelist.IsSuperset(scope) {
+			PrintErrorJSON(w, r, "Invalid scope", http.StatusUnauthorized)
+			return
+		}
+
+		access := data.AccessToken{
+			Token:       util.RandomToken(),
+			AccountUUID: sql.NullString{String: account.UUID, Valid: true},
+			ClientUUID:  client.UUID,
+			Scope:       scope,
+		}
+		err := access.Create()
+		if err != nil {
+			PrintErrorJSON(w, r, err, http.StatusInternalServerError)
+			return
+		}
+
+		response = &tokenResponse{
+			TokenType:   "Bearer",
+			Scope:       strings.Join(scope.Strings(), " "),
+			AccessToken: access.Token,
+		}
+
+	case "client_credentials":
+		scope := util.NewStringSet(strings.Split(body.Scope, " ")...)
+		if scope.Len() == 0 || !client.ScopeWhitelist.IsSuperset(scope) {
+			PrintErrorJSON(w, r, "Invalid scope", http.StatusUnauthorized)
+			return
+		}
+
+		access := data.AccessToken{
+			Token:      util.RandomToken(),
+			ClientUUID: client.UUID,
+			Scope:      scope,
+		}
+		err := access.Create()
+		if err != nil {
+			PrintErrorJSON(w, r, err, http.StatusInternalServerError)
+			return
+		}
+
+		response = &tokenResponse{
+			TokenType:   "Bearer",
+			Scope:       strings.Join(scope.Strings(), " "),
+			AccessToken: access.Token,
+		}
+
+	default:
+		PrintErrorJSON(w, r, fmt.Sprintf("Unsupported grant type %s", body.GrantType), http.StatusBadRequest)
+		return
 	}
 
 	w.Header().Add("Cache-Control", "no-cache")
@@ -420,29 +534,35 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account, ok := data.GetAccount(token.AccountUUID)
-	if !ok {
-		// this really should not happen
-		PrintErrorJSON(w, r, "Unable to find account associated with the request", http.StatusInternalServerError)
-		return
+	var login, accountUrl *string
+	if token.AccountUUID.Valid {
+		if account, ok := data.GetAccount(token.AccountUUID.String); ok {
+			login = &account.Login
+			accountUrl = new(string)
+			(*accountUrl) = conf.MakeUrl("/api/accounts/%s", account.Login)
+		} else {
+			PrintErrorJSON(w, r, "Unable to find account associated with the request", http.StatusInternalServerError)
+			return
+		}
 	}
 
+	scope := strings.Join(token.Scope.Strings(), " ")
 	response := &struct {
 		URL        string    `json:"url"`
 		JTI        string    `json:"jti"`
 		EXP        time.Time `json:"exp"`
 		ISS        string    `json:"iss"`
-		Login      string    `json:"login"`
-		AccountURL string    `json:"account_url"`
-		Scope      []string  `json:"scope"`
+		Login      *string   `json:"login"`
+		AccountURL *string   `json:"account_url"`
+		Scope      string    `json:"scope"`
 	}{
 		URL:        conf.MakeUrl("/oauth/validate/%s", token.Token),
 		JTI:        token.Token,
 		EXP:        token.Expires,
 		ISS:        "gin-auth",
-		Login:      account.Login,
-		AccountURL: conf.MakeUrl("/api/accounts/%s", account.Login),
-		Scope:      token.Scope.Strings(),
+		Login:      login,
+		AccountURL: accountUrl,
+		Scope:      scope,
 	}
 
 	w.Header().Add("Cache-Control", "no-cache")
