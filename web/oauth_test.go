@@ -606,7 +606,7 @@ func TestTokenPassword(t *testing.T) {
 	}
 
 	// all OK (with authorization header)
-	body = mkBody("alice", "testtest", "account-read")
+	body = mkBody("alice", "testtest", "account-read repo-read")
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	request.SetBasicAuth("wb", "secret")
@@ -625,7 +625,90 @@ func TestTokenPassword(t *testing.T) {
 	}
 
 	// all OK (with client credentials in body)
-	body = mkBody("alice", "testtest", "account-read")
+	body = mkBody("alice", "testtest", "account-read repo-read")
+	body.Add("client_id", "wb")
+	body.Add("client_secret", "secret")
+	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+	responseBody = &tokenResponse{}
+	json.Unmarshal(response.Body.Bytes(), responseBody)
+	if responseBody.AccessToken == "" {
+		t.Error("No access token recieved")
+	}
+	if responseBody.TokenType != "Bearer" {
+		t.Error("Token type is supposed to be 'Bearer'")
+	}
+}
+
+func TestTokenClientCredentials(t *testing.T) {
+	mkBody := func(scope string) *url.Values {
+		body := &url.Values{}
+		body.Add("scope", scope)
+		body.Add("grant_type", "client_credentials")
+		return body
+	}
+
+	handler := InitTestHttpHandler(t)
+
+	// wrong client id
+	body := mkBody("account-read repo-read")
+	request, _ := http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.SetBasicAuth("doesnotexist", "secret")
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// wrong secret
+	body = mkBody("account-read repo-read")
+	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.SetBasicAuth("wb", "wrongsecret")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// wrong scope
+	body = mkBody("account-read account-write")
+	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.SetBasicAuth("wb", "secret")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// all OK (with authorization header)
+	body = mkBody("account-read repo-read")
+	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	request.SetBasicAuth("wb", "secret")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+	responseBody := &tokenResponse{}
+	json.Unmarshal(response.Body.Bytes(), responseBody)
+	if responseBody.AccessToken == "" {
+		t.Error("No access token recieved")
+	}
+	if responseBody.TokenType != "Bearer" {
+		t.Error("Token type is supposed to be 'Bearer'")
+	}
+
+	// all OK (with client credentials in body)
+	body = mkBody("account-read repo-read")
 	body.Add("client_id", "wb")
 	body.Add("client_secret", "secret")
 	request, _ = http.NewRequest("POST", "/oauth/token", strings.NewReader(body.Encode()))

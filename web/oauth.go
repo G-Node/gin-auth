@@ -490,6 +490,30 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			AccessToken: access.Token,
 		}
 
+	case "client_credentials":
+		scope := util.NewStringSet(strings.Split(body.Scope, " ")...)
+		if scope.Len() == 0 || !client.ScopeWhitelist.IsSuperset(scope) {
+			PrintErrorJSON(w, r, "Invalid scope", http.StatusUnauthorized)
+			return
+		}
+
+		access := data.AccessToken{
+			Token:      util.RandomToken(),
+			ClientUUID: client.UUID,
+			Scope:      scope,
+		}
+		err := access.Create()
+		if err != nil {
+			PrintErrorJSON(w, r, err, http.StatusInternalServerError)
+			return
+		}
+
+		response = &tokenResponse{
+			TokenType:   "Bearer",
+			Scope:       strings.Join(scope.Strings(), " "),
+			AccessToken: access.Token,
+		}
+
 	default:
 		PrintErrorJSON(w, r, fmt.Sprintf("Unsupported grant type %s", body.GrantType), http.StatusBadRequest)
 		return
