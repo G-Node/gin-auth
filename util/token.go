@@ -11,6 +11,7 @@ package util
 import (
 	"crypto/rand"
 	"encoding/base32"
+	"strings"
 )
 
 // RandomToken returns a cryptographically strong random token string.
@@ -23,5 +24,5 @@ func RandomToken() string {
 		panic(err)
 	}
 
-	return base32.StdEncoding.EncodeToString(rnd)
+	return strings.Trim(base32.StdEncoding.EncodeToString(rnd), "=")
 }

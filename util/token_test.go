@@ -14,7 +14,7 @@ import (
 
 func TestRandomToken(t *testing.T) {
 	token := RandomToken()
-	if len(token) != 104 {
-		t.Error("Token length is expected to be 104")
+	if len(token) != 103 {
+		t.Error("Token length is expected to be 103")
 	}
 }
