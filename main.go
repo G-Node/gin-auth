@@ -56,6 +56,11 @@ func main() {
 
 	handler := handlers.RecoveryHandler(handlers.PrintRecoveryStack(true))(router)
 	handler = handlers.LoggingHandler(os.Stdout, handler)
+	handler = handlers.CORS(
+		handlers.AllowedHeaders([]string{"Accept", "Content-Type", "Authorization"}),
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedMethods([]string{"GET", "PUT", "POST", "DELETE"}),
+	)(handler)
 
 	data.RunCleaner()
 
