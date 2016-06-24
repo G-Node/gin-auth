@@ -84,16 +84,6 @@ func TestGetAccount(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
 	}
 
-	// not own account
-	request, _ = http.NewRequest("GET", "/api/accounts/bob", strings.NewReader(""))
-	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
-	}
-
 	// all ok (own account)
 	request, _ = http.NewRequest("GET", "/api/accounts/alice", strings.NewReader(""))
 	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)

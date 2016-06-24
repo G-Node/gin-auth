@@ -143,6 +143,7 @@ type jsonAccount struct {
 	URL        string    `json:"url"`
 	UUID       string    `json:"uuid"`
 	Login      string    `json:"login"`
+	Email      string    `json:"email,omitempty"`
 	Title      *string   `json:"title"`
 	FirstName  string    `json:"first_name"`
 	MiddleName *string   `json:"middle_name"`
@@ -157,6 +158,7 @@ func (acc *Account) MarshalJSON() ([]byte, error) {
 		URL:       conf.MakeUrl("/api/accounts/%s", acc.Login),
 		UUID:      acc.UUID,
 		Login:     acc.Login,
+		Email:     acc.Email,
 		FirstName: acc.FirstName,
 		LastName:  acc.LastName,
 		CreatedAt: acc.CreatedAt,

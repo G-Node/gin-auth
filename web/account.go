@@ -50,9 +50,13 @@ func GetAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if oauth.Token.AccountUUID.String != account.UUID || !oauth.Match.Contains("account-read") && !oauth.Match.Contains("account-admin") {
+	if !oauth.Match.Contains("account-read") && !oauth.Match.Contains("account-admin") {
 		PrintErrorJSON(w, r, "Access to requested account forbidden", http.StatusUnauthorized)
 		return
+	}
+
+	if (oauth.Token.AccountUUID.String != account.UUID) {
+		account.Email = ""
 	}
 
 	w.Header().Add("Cache-Control", "no-cache")
