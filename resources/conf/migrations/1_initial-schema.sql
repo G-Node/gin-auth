@@ -11,17 +11,23 @@
 -- SQL in section 'Up' is executed when this migration is applied
 
 CREATE TABLE Accounts (
-  uuid              VARCHAR(36) PRIMARY KEY CHECK (char_length(uuid) = 36) ,
-  login             VARCHAR(512) NOT NULL UNIQUE ,
-  email             VARCHAR(512) NOT NULL UNIQUE ,
-  pwHash            VARCHAR(512) NOT NULL ,
-  title             VARCHAR(512),
-  firstName         VARCHAR(512) NOT NULL,
-  middleName        VARCHAR(512),
-  lastName          VARCHAR(512) NOT NULL,
-  activationCode    VARCHAR(512),
-  createdAt         TIMESTAMP NOT NULL ,
-  updatedAt         TIMESTAMP NOT NULL
+  uuid                VARCHAR(36) PRIMARY KEY CHECK (char_length(uuid) = 36) ,
+  login               VARCHAR(512) NOT NULL UNIQUE ,
+  pwHash              VARCHAR(512) NOT NULL ,
+  email               VARCHAR(512) NOT NULL UNIQUE ,
+  isEmailPublic       BOOLEAN NOT NULL DEFAULT FALSE ,
+  title               VARCHAR(512) ,
+  firstName           VARCHAR(512) NOT NULL ,
+  middleName          VARCHAR(512) ,
+  lastName            VARCHAR(512) NOT NULL ,
+  institute           VARCHAR(512) NOT NULL ,
+  department          VARCHAR(512) NOT NULL ,
+  city                VARCHAR(512) NOT NULL ,
+  country             VARCHAR(512) NOT NULL ,
+  isAffiliationPublic BOOLEAN NOT NULL DEFAULT FALSE ,
+  activationCode      VARCHAR(512) ,
+  createdAt           TIMESTAMP NOT NULL ,
+  updatedAt           TIMESTAMP NOT NULL
 );
 
 CREATE TABLE SSHKeys (

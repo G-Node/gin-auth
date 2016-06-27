@@ -20,17 +20,23 @@ import (
 
 // Account data as stored in the database
 type Account struct {
-	UUID           string
-	Login          string
-	Email          string
-	Title          sql.NullString
-	FirstName      string
-	MiddleName     sql.NullString
-	LastName       string
-	PWHash         string `json:"-"` // safety net
-	ActivationCode sql.NullString
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	UUID                string
+	Login               string
+	PWHash              string `json:"-"` // safety net
+	Email               string
+	IsEmailPublic       bool
+	Title               sql.NullString
+	FirstName           string
+	MiddleName          sql.NullString
+	LastName            string
+	Institute           string
+	Department          string
+	City                string
+	Country             string
+	IsAffiliationPublic bool
+	ActivationCode      sql.NullString
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
 }
 
 // ListAccounts returns all accounts stored in the database
@@ -93,17 +99,19 @@ func (acc *Account) VerifyPassword(plain string) bool {
 // Create stores the account as new Account in the database.
 // If the UUID string is empty a new UUID will be generated.
 func (acc *Account) Create() error {
-	const q = `INSERT INTO Accounts (uuid, login, email, title, firstName, middleName, lastName, pwHash,
-	                                 activationCode, createdAt, updatedAt)
-	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now())
+	const q = `INSERT INTO Accounts (uuid, login, pwHash, email, isEmailPublic, title, firstName, middleName, lastName,
+	                                 institute, department, city, country, isAffiliationPublic, activationCode,
+	                                 createdAt, updatedAt)
+	           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, now(), now())
 	           RETURNING *`
 
 	if acc.UUID == "" {
 		acc.UUID = uuid.NewRandom().String()
 	}
 
-	err := database.Get(acc, q, acc.UUID, acc.Login, acc.Email, acc.Title, acc.FirstName, acc.MiddleName, acc.LastName,
-		acc.PWHash, acc.ActivationCode)
+	err := database.Get(acc, q, acc.UUID, acc.Login, acc.PWHash, acc.Email, acc.IsEmailPublic, acc.Title, acc.FirstName,
+		acc.MiddleName, acc.LastName, acc.Institute, acc.Department, acc.City, acc.Country, acc.IsAffiliationPublic,
+		acc.ActivationCode)
 
 	// TODO There is a lot of room for improvement here concerning errors about constraints for certain fields
 	return err
@@ -127,12 +135,14 @@ func (acc *Account) SSHKeys() []SSHKey {
 // automatically to the current date and time.
 func (acc *Account) Update() error {
 	const q = `UPDATE Accounts
-	           SET (email, title, firstName, middleName, lastName, pwHash, activationCode, updatedAt) =
-	               ($1, $2, $3, $4, $5, $6, $7, now())
-	           WHERE uuid=$8
+	           SET (pwHash, email, isemailpublic, title, firstName, middleName, lastName, institute, department, city,
+	                country, isaffiliationpublic, activationCode, updatedAt) =
+	               ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now())
+	           WHERE uuid=$14
 	           RETURNING *`
 
-	err := database.Get(acc, q, acc.Email, acc.Title, acc.FirstName, acc.MiddleName, acc.LastName, acc.PWHash,
+	err := database.Get(acc, q, acc.PWHash, acc.Email, acc.IsEmailPublic, acc.Title, acc.FirstName, acc.MiddleName,
+		acc.LastName, acc.Institute, acc.Department, acc.City, acc.Country, acc.IsAffiliationPublic,
 		acc.ActivationCode, acc.UUID)
 
 	// TODO There is a lot of room for improvement here concerning errors about constraints for certain fields
