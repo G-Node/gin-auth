@@ -125,8 +125,8 @@ func TestListAccounts(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if len(accounts) != 2 {
-		t.Error("Two accounts expected in response")
+	if len(accounts) != 3 {
+		t.Error("Three accounts expected in response")
 	}
 	acc := accounts[0]
 	if acc.Account.Login != "alice" {
@@ -148,8 +148,8 @@ func TestListAccounts(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if len(accounts) != 2 {
-		t.Error("Two accounts expected in response")
+	if len(accounts) != 3 {
+		t.Error("Three accounts expected in response")
 	}
 	acc = accounts[0]
 	if acc.Account.Login != "alice" {
