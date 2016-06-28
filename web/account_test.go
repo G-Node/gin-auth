@@ -10,6 +10,7 @@ package web
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
@@ -24,7 +25,6 @@ import (
 
 const (
 	accessTokenAlice      = "3N7MP7M7"
-	accessTokenBob        = "LJ3W7ZFK" // is expired
 	accessTokenAliceAdmin = "KDEW57D4" // has scope 'account-admin'
 	keyPrintAlice         = "A3tkBXFQWkjU6rzhkofY55G7tPR_Lmna4B-WEGVFXOQ"
 	keyPrintAliceNew      = "WHHqtkitF7o-EyTWFgdFKCYhU1PElLnK3U0luzyc0ko"
@@ -45,43 +45,24 @@ type jsonAccount struct {
 func TestGetAccount(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 
-	// no authorization header
+	// ok (no authorization header)
 	request, _ := http.NewRequest("GET", "/api/accounts/alice", strings.NewReader(""))
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
-	if response.Code != http.StatusUnauthorized {
+	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
 	}
-
-	// wrong token
-	request, _ = http.NewRequest("GET", "/api/accounts/alice", strings.NewReader(""))
-	request.Header.Set("Authorization", "Bearer doesnotexist")
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	acc := &data.AccountMarshaler{}
+	err := json.NewDecoder(response.Body).Decode(acc)
+	if err != nil {
+		t.Error(err)
 	}
-
-	// expired token
-	request, _ = http.NewRequest("GET", "/api/accounts/bob", strings.NewReader(""))
-	request.Header.Set("Authorization", "Bearer "+accessTokenBob)
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	if acc.Account.Login != "alice" {
+		t.Errorf("Account login expected to be 'alice' but was %s", acc.Account.Login)
 	}
-
-	// non existing account
-	request, _ = http.NewRequest("GET", "/api/accounts/foo", strings.NewReader(""))
-	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusNotFound {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	if acc.Account.Email != "" {
+		t.Error("Email not expected to be present")
 	}
 
 	// all ok (own account)
@@ -93,18 +74,20 @@ func TestGetAccount(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-
-	acc := &jsonAccount{}
-	err := json.NewDecoder(response.Body).Decode(acc)
+	acc = &data.AccountMarshaler{}
+	err = json.NewDecoder(response.Body).Decode(acc)
 	if err != nil {
 		t.Error(err)
 	}
-	if acc.Login != "alice" {
+	if acc.Account.Login != "alice" {
 		t.Error("Account login expected to be 'alice'")
+	}
+	if acc.Account.Email == "" {
+		t.Error("Email expected to be present")
 	}
 
 	// all ok (token with admin scope)
-	request, _ = http.NewRequest("GET", "/api/accounts/bob", strings.NewReader(""))
+	request, _ = http.NewRequest("GET", "/api/accounts/alice", strings.NewReader(""))
 	request.Header.Set("Authorization", "Bearer "+accessTokenAliceAdmin)
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -112,60 +95,32 @@ func TestGetAccount(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-
-	acc = &jsonAccount{}
+	acc = &data.AccountMarshaler{}
 	err = json.NewDecoder(response.Body).Decode(acc)
 	if err != nil {
 		t.Error(err)
 	}
-	if acc.Login != "bob" {
-		t.Error("Account login expected to be 'bob'")
+	if acc.Account.Login != "alice" {
+		t.Error("Account login expected to be 'alice'")
+	}
+	if acc.Account.Email == "" {
+		t.Error("Email expected to be present")
 	}
 }
 
 func TestListAccounts(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 
-	// no authorization header
+	// all ok (no authorization header)
 	request, _ := http.NewRequest("GET", "/api/accounts", strings.NewReader(""))
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
-	}
-
-	// wrong token
-	request, _ = http.NewRequest("GET", "/api/accounts", strings.NewReader(""))
-	request.Header.Set("Authorization", "Bearer doesnotexist")
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
-	}
-
-	// insufficient scope
-	request, _ = http.NewRequest("GET", "/api/accounts", strings.NewReader(""))
-	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
-	}
-
-	// all ok
-	request, _ = http.NewRequest("GET", "/api/accounts", strings.NewReader(""))
-	request.Header.Set("Authorization", "Bearer "+accessTokenAliceAdmin)
-	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	accounts := []jsonAccount{}
+	accounts := []data.AccountMarshaler{}
 	err := json.NewDecoder(response.Body).Decode(&accounts)
 	if err != nil {
 		t.Error(err)
@@ -174,16 +129,45 @@ func TestListAccounts(t *testing.T) {
 		t.Error("Two accounts expected in response")
 	}
 	acc := accounts[0]
-	if acc.Login != "alice" {
+	if acc.Account.Login != "alice" {
+		t.Error("Account login expected to be 'alice'")
+	}
+
+	// all ok (with token)
+	request, _ = http.NewRequest("GET", "/api/accounts", strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAliceAdmin)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	accounts = []data.AccountMarshaler{}
+	err = json.NewDecoder(response.Body).Decode(&accounts)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(accounts) != 2 {
+		t.Error("Two accounts expected in response")
+	}
+	acc = accounts[0]
+	if acc.Account.Login != "alice" {
 		t.Error("Account login expected to be 'alice'")
 	}
 }
 
 func TestUpdateAccount(t *testing.T) {
 	mkBody := func() io.Reader {
-		title := "Dr"
-		acc := &jsonAccount{Title: &title, FirstName: "Alix", LastName: "Bonenfant"}
-		b, _ := json.Marshal(acc)
+		acc := &data.Account{
+			Login:         "alice",
+			Title:         sql.NullString{String: "Dr", Valid: true},
+			FirstName:     "Alix",
+			LastName:      "Bonenfant",
+			Email:         "alix.b@foo.com",
+			IsEmailPublic: true,
+		}
+		b, _ := json.Marshal(&data.AccountMarshaler{Account: acc})
 		return bytes.NewReader(b)
 	}
 	handler := InitTestHttpHandler(t)
@@ -227,18 +211,18 @@ func TestUpdateAccount(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	acc := &jsonAccount{}
+	acc := &data.AccountMarshaler{}
 	err := json.NewDecoder(response.Body).Decode(acc)
 	if err != nil {
 		t.Error(err)
 	}
-	if acc.FirstName != "Alix" {
+	if acc.Account.FirstName != "Alix" {
 		t.Error("Account FirstName expected to be 'Alix'")
 	}
-	if *acc.Title != "Dr" {
+	if !acc.Account.Title.Valid || acc.Account.Title.String != "Dr" {
 		t.Error("Account Title expected to be 'Dr'")
 	}
-	if acc.LastName != "Bonenfant" {
+	if acc.Account.LastName != "Bonenfant" {
 		t.Error("Account FirstName expected to be 'Alix'")
 	}
 }

@@ -36,9 +36,9 @@ func RegisterRoutes(r *mux.Router) {
 		Methods("GET")
 	// all for /api
 	api := r.PathPrefix("/api").Subrouter()
-	api.Handle("/accounts", OAuthHandler("account-admin")(http.HandlerFunc(ListAccounts))).
+	api.Handle("/accounts", OAuthHandlerPermissive()(http.HandlerFunc(ListAccounts))).
 		Methods("GET")
-	api.Handle("/accounts/{login}", OAuthHandler("account-read", "account-admin")(http.HandlerFunc(GetAccount))).
+	api.Handle("/accounts/{login}", OAuthHandlerPermissive()(http.HandlerFunc(GetAccount))).
 		Methods("GET")
 	api.Handle("/accounts/{login}", OAuthHandler("account-write", "account-admin")(http.HandlerFunc(UpdateAccount))).
 		Methods("PUT")

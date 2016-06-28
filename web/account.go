@@ -19,30 +19,31 @@ import (
 
 // ListAccounts is a handler which returns a list of existing accounts as JSON
 func ListAccounts(w http.ResponseWriter, r *http.Request) {
-	oauth, ok := OAuthToken(r)
-	if !ok {
-		panic("Request was authorized but no OAuth token is available!") // this should never happen
-	}
-
-	if !oauth.Match.Contains("account-admin") {
-		PrintErrorJSON(w, r, "Access to list accounts forbidden", http.StatusUnauthorized)
-		return
+	isAdmin := false
+	if oauth, ok := OAuthToken(r); ok {
+		isAdmin = oauth.Match.Contains("account-admin")
 	}
 
 	accounts := data.ListAccounts()
+	marshal := make([]data.AccountMarshaler, 0, len(accounts))
+	for i := 0; i < len(accounts); i++ {
+		acc := &accounts[i]
+		marshal = append(marshal, data.AccountMarshaler{
+			WithMail:        isAdmin || acc.IsEmailPublic,
+			WithAffiliation: isAdmin || acc.IsAffiliationPublic,
+			Account:         acc,
+		})
+	}
+
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(accounts)
+	enc.Encode(marshal)
 }
 
 // GetAccount is a handler which returns a requested account as JSON
 func GetAccount(w http.ResponseWriter, r *http.Request) {
 	login := mux.Vars(r)["login"]
-	oauth, ok := OAuthToken(r)
-	if !ok {
-		panic("Request was authorized but no OAuth token is available!") // this should never happen
-	}
 
 	account, ok := data.GetAccountByLogin(login)
 	if !ok {
@@ -50,19 +51,23 @@ func GetAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !oauth.Match.Contains("account-read") && !oauth.Match.Contains("account-admin") {
-		PrintErrorJSON(w, r, "Access to requested account forbidden", http.StatusUnauthorized)
-		return
+	isAdmin := false
+	isOwner := false
+	if oauth, ok := OAuthToken(r); ok {
+		isAdmin = oauth.Match.Contains("account-admin")
+		isOwner = oauth.Token.AccountUUID.String == account.UUID && oauth.Match.Contains("account-write")
 	}
 
-	if (oauth.Token.AccountUUID.String != account.UUID) {
-		account.Email = ""
+	marshal := &data.AccountMarshaler{
+		WithMail:        account.IsEmailPublic || isOwner || isAdmin,
+		WithAffiliation: account.IsAffiliationPublic || isOwner || isAdmin,
+		Account:         account,
 	}
 
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(account)
+	enc.Encode(marshal)
 }
 
 // UpdateAccount is a handler which updated all updatable fields of an account (Title, FirstName,
@@ -85,8 +90,10 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	marshal := &data.AccountMarshaler{Account: account}
+
 	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(account)
+	err := dec.Decode(marshal)
 	if err != nil {
 		PrintErrorJSON(w, r, "Error while processing account", http.StatusBadRequest)
 		return
@@ -101,7 +108,7 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(account)
+	enc.Encode(marshal)
 }
 
 // UpdateAccountPassword is a handler which parses the old and new password from the request body and
