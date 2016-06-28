@@ -50,46 +50,63 @@ var tokens = struct {
 // data can later be obtained using the OAuthToken function.
 func OAuthHandler(scope ...string) func(http.Handler) http.Handler {
 	return func(handler http.Handler) http.Handler {
-		return oauth{scope: util.NewStringSet(scope...), handler: handler}
+		return oauth{Permissive: false, scope: util.NewStringSet(scope...), handler: handler}
+	}
+}
+
+// OAuthHandlerPermissive processes a request and extracts a bearer token from the authorization
+// header. If the bearer token is valid and has a matching scope the respective AccessToken
+// data can later be obtained using the OAuthToken function.
+// A permissive handler does not strictly require the presence of a bearer token. In this case
+// the request is handled normally but no OAuth information is present in subsequent handlers.
+func OAuthHandlerPermissive() func(http.Handler) http.Handler {
+	return func(handler http.Handler) http.Handler {
+		return oauth{Permissive: true, scope: util.NewStringSet(), handler: handler}
 	}
 }
 
 // The actual OAuth handler
 type oauth struct {
-	scope   util.StringSet
-	handler http.Handler
+	Permissive bool
+	scope      util.StringSet
+	handler    http.Handler
 }
 
 // ServeHTTP implements http.Handler for oauth.
 func (o oauth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	tokenStr := r.Header.Get("Authorization")
-	if tokenStr == "" || !strings.HasPrefix(tokenStr, "Bearer ") {
+
+	if tokenStr := r.Header.Get("Authorization"); tokenStr != "" && strings.HasPrefix(tokenStr, "Bearer ") {
+		tokenStr = strings.Trim(tokenStr[6:], " ")
+
+		if token, ok := data.GetAccessToken(tokenStr); ok {
+			match := token.Scope
+
+			if !o.Permissive {
+				match = match.Intersect(o.scope)
+				if match.Len() < 1 {
+					PrintErrorJSON(w, r, "Insufficient scope", http.StatusUnauthorized)
+					return
+				}
+			}
+
+			tokens.Lock()
+			tokens.store[r] = &OAuthInfo{Match: match, Token: token}
+			tokens.Unlock()
+
+			defer func() {
+				tokens.Lock()
+				delete(tokens.store, r)
+				tokens.Unlock()
+			}()
+		} else if !o.Permissive {
+			PrintErrorJSON(w, r, "Invalid bearer token", http.StatusUnauthorized)
+			return
+		}
+
+	} else if !o.Permissive {
 		PrintErrorJSON(w, r, "No bearer token", http.StatusUnauthorized)
 		return
 	}
-
-	tokenStr = strings.Trim(tokenStr[6:], " ")
-	token, ok := data.GetAccessToken(tokenStr)
-	if !ok {
-		PrintErrorJSON(w, r, "Invalid bearer token", http.StatusUnauthorized)
-		return
-	}
-
-	match := token.Scope.Intersect(o.scope)
-	if match.Len() < 1 {
-		PrintErrorJSON(w, r, "Insufficient scope", http.StatusUnauthorized)
-		return
-	}
-
-	tokens.Lock()
-	tokens.store[r] = &OAuthInfo{Match: match, Token: token}
-	tokens.Unlock()
-
-	defer func() {
-		tokens.Lock()
-		delete(tokens.store, r)
-		tokens.Unlock()
-	}()
 
 	o.handler.ServeHTTP(w, r)
 }
