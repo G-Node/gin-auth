@@ -52,6 +52,22 @@ func ListAccounts() []Account {
 	return accounts
 }
 
+// SearchAccounts returns all accounts stored in the database where the account name (firstName, middleName, lastName
+// or login) contains the search string.
+func SearchAccounts(search string) []Account {
+	const q = `SELECT * FROM Accounts a
+	           WHERE a.firstName LIKE $1 OR a.middleName LIKE $1 OR a.lastName LIKE $1 OR a.login LIKE $1
+	           ORDER BY login`
+
+	accounts := make([]Account, 0)
+	err := database.Select(&accounts, q, "%"+search+"%")
+	if err != nil {
+		panic(err)
+	}
+
+	return accounts
+}
+
 // GetAccount returns an account with matching UUID
 // Returns false if no account with such UUID exists
 func GetAccount(uuid string) (*Account, bool) {

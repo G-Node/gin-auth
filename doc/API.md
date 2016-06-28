@@ -553,6 +553,12 @@ Returns a list of all accounts as JSON (depending on access restrictions `email`
 GET https://<host>/api/accounts
 ```
 
+##### Query Parameters
+
+| Name          | Type    | Description |
+| ------------- | ------- | ---- |
+| q             | string  | A search string (optional) |
+
 ##### Authorization
 
 No authorization header required. However, to access non public `email` or `affiliation` information a

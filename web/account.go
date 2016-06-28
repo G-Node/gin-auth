@@ -24,7 +24,14 @@ func ListAccounts(w http.ResponseWriter, r *http.Request) {
 		isAdmin = oauth.Match.Contains("account-admin")
 	}
 
-	accounts := data.ListAccounts()
+	var accounts []data.Account
+	search := r.URL.Query().Get("q")
+	if search != "" {
+		accounts = data.SearchAccounts(search)
+	} else {
+		accounts = data.ListAccounts()
+	}
+
 	marshal := make([]data.AccountMarshaler, 0, len(accounts))
 	for i := 0; i < len(accounts); i++ {
 		acc := &accounts[i]
