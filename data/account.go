@@ -150,60 +150,116 @@ func (acc *Account) Update() error {
 }
 
 type jsonAccount struct {
-	URL        string    `json:"url"`
-	UUID       string    `json:"uuid"`
-	Login      string    `json:"login"`
-	Email      string    `json:"email,omitempty"`
-	Title      *string   `json:"title"`
-	FirstName  string    `json:"first_name"`
-	MiddleName *string   `json:"middle_name"`
-	LastName   string    `json:"last_name"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	URL         string           `json:"url"`
+	UUID        string           `json:"uuid"`
+	Login       string           `json:"login"`
+	Email       *jsonEmail       `json:"email"`
+	Title       *string          `json:"title"`
+	FirstName   string           `json:"first_name"`
+	MiddleName  *string          `json:"middle_name"`
+	LastName    string           `json:"last_name"`
+	Affiliation *jsonAffiliation `json:"affiliation"`
+	CreatedAt   time.Time        `json:"created_at"`
+	UpdatedAt   time.Time        `json:"updated_at"`
 }
 
-// MarshalJSON implements Marshaler for Account
-func (acc *Account) MarshalJSON() ([]byte, error) {
+type jsonEmail struct {
+	Email    string `json:"email"`
+	IsPublic bool   `json:"is_public"`
+}
+
+type jsonAffiliation struct {
+	Institute  string `json:"institute"`
+	Department string `json:"department"`
+	City       string `json:"city"`
+	Country    string `json:"country"`
+	IsPublic   bool   `json:"is_public"`
+}
+
+// AccountMarshaler handles JSON marshalling for Account
+//
+// Fields:
+// - WithMail        If true, mail information will be serialized
+// - WithAffiliation If true, affiliation will be serialized
+type AccountMarshaler struct {
+	WithMail        bool
+	WithAffiliation bool
+	Account         *Account
+}
+
+// MarshalJSON implements Marshaler for AccountMarshaler
+func (am *AccountMarshaler) MarshalJSON() ([]byte, error) {
 	jsonData := &jsonAccount{
-		URL:       conf.MakeUrl("/api/accounts/%s", acc.Login),
-		UUID:      acc.UUID,
-		Login:     acc.Login,
-		Email:     acc.Email,
-		FirstName: acc.FirstName,
-		LastName:  acc.LastName,
-		CreatedAt: acc.CreatedAt,
-		UpdatedAt: acc.UpdatedAt,
+		URL:       conf.MakeUrl("/api/accounts/%s", am.Account.Login),
+		UUID:      am.Account.UUID,
+		Login:     am.Account.Login,
+		FirstName: am.Account.FirstName,
+		LastName:  am.Account.LastName,
+		CreatedAt: am.Account.CreatedAt,
+		UpdatedAt: am.Account.UpdatedAt,
 	}
-	if acc.Title.Valid {
-		jsonData.Title = &acc.Title.String
+	if am.Account.Title.Valid {
+		jsonData.Title = &am.Account.Title.String
 	}
-	if acc.MiddleName.Valid {
-		jsonData.MiddleName = &acc.MiddleName.String
+	if am.Account.MiddleName.Valid {
+		jsonData.MiddleName = &am.Account.MiddleName.String
+	}
+	if am.WithMail {
+		jsonData.Email = &jsonEmail{
+			Email:    am.Account.Email,
+			IsPublic: am.Account.IsEmailPublic,
+		}
+	}
+	if am.WithAffiliation {
+		jsonData.Affiliation = &jsonAffiliation{
+			Institute:  am.Account.Institute,
+			Department: am.Account.Department,
+			City:       am.Account.City,
+			Country:    am.Account.Country,
+			IsPublic:   am.Account.IsAffiliationPublic,
+		}
 	}
 	return json.Marshal(jsonData)
 }
 
-// UnmarshalJSON implements Unmarshaler for Account.
+// UnmarshalJSON implements Unmarshaler for AccountMarshaler.
 // Only parses updatable fields: Title, FirstName, MiddleName and LastName
-func (acc *Account) UnmarshalJSON(bytes []byte) error {
+func (am *AccountMarshaler) UnmarshalJSON(bytes []byte) error {
 	jsonData := &jsonAccount{}
 	err := json.Unmarshal(bytes, jsonData)
 	if err != nil {
 		return err
 	}
 
+	if am.Account == nil {
+		am.Account = &Account{}
+	}
+
+	am.Account.Login = jsonData.Login
 	if jsonData.Title != nil {
-		acc.Title = sql.NullString{String: *jsonData.Title, Valid: true}
+		am.Account.Title = sql.NullString{String: *jsonData.Title, Valid: true}
 	} else {
-		acc.Title = sql.NullString{}
+		am.Account.Title = sql.NullString{}
 	}
-	acc.FirstName = jsonData.FirstName
+	am.Account.FirstName = jsonData.FirstName
 	if jsonData.MiddleName != nil {
-		acc.MiddleName = sql.NullString{String: *jsonData.MiddleName, Valid: true}
+		am.Account.MiddleName = sql.NullString{String: *jsonData.MiddleName, Valid: true}
 	} else {
-		acc.MiddleName = sql.NullString{}
+		am.Account.MiddleName = sql.NullString{}
 	}
-	acc.LastName = jsonData.LastName
+	am.Account.LastName = jsonData.LastName
+
+	if jsonData.Email != nil {
+		am.Account.Email = jsonData.Email.Email
+		am.Account.IsEmailPublic = jsonData.Email.IsPublic
+	}
+
+	if jsonData.Affiliation != nil {
+		am.Account.Institute = jsonData.Affiliation.Institute
+		am.Account.Department = jsonData.Affiliation.Department
+		am.Account.City = jsonData.Affiliation.City
+		am.Account.Country = jsonData.Affiliation.Country
+	}
 
 	return nil
 }
