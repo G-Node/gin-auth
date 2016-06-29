@@ -26,9 +26,16 @@ CREATE TABLE Accounts (
   country             VARCHAR(512) NOT NULL ,
   isAffiliationPublic BOOLEAN NOT NULL DEFAULT FALSE ,
   activationCode      VARCHAR(512) ,
+  resetPWCode         VARCHAR(512) ,
+  isActive            BOOLEAN NOT NULL DEFAULT TRUE,
   createdAt           TIMESTAMP NOT NULL ,
   updatedAt           TIMESTAMP NOT NULL
 );
+
+CREATE VIEW ActiveAccounts AS
+  SELECT * from Accounts
+  WHERE isActive AND activationCode IS NULL AND resetPWCode IS NULL;
+
 
 CREATE TABLE SSHKeys (
   fingerprint       VARCHAR(128) PRIMARY KEY ,
@@ -113,6 +120,7 @@ CREATE INDEX ON Sessions (expires);
 -- +goose Down
 -- SQL section 'Down' is executed when this migration is rolled back
 
+DROP VIEW IF EXISTS ActiveAccounts;
 
 DROP TABLE IF EXISTS Sessions CASCADE;
 DROP TABLE IF EXISTS AccessTokens CASCADE;
