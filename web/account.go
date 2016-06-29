@@ -97,7 +97,7 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	marshal := &data.AccountMarshaler{Account: account}
+	marshal := &data.AccountMarshaler{WithMail: true, WithAffiliation: true, Account: account}
 
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(marshal)
