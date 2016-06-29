@@ -502,39 +502,6 @@ The body contains further information formatted as JSON:
 }
 ```
 
-### List all accounts
-
-##### URL
-
-```
-GET https://<host>/api/accounts
-```
-
-##### Authorization
-
-A bearer token sent with the authorization header is required.
-The token scope must contain 'account-admin'.
-
-##### Response
-
-Returns a list of all accounts as JSON:
-
-```json
-[
-   {
-       "url":  "https://<host>/api/accounts/<login>",
-       "uuid": "...",
-       "login": "<login>",
-       "title": "...",
-       "first_name": "...",
-       "middle_name": "...",
-       "last_name": "...",
-       "created_at": "YYYY-MM-DDThh:mm:ss",
-       "updated_at": "YYYY-MM-DDThh:mm:ss"
-   }
-]
-```
-
 ### Get an account
 
 ##### URL
@@ -545,12 +512,13 @@ GET https://<host>/api/accounts/<login>
 
 ##### Authorization
 
-A bearer token sent with the authorization header is required.
-The token scope must contain 'account-read' to access own accounts or 'account-admin'.
+No authorization header required. However, to access non public `email` or `affiliation` information a
+bearer token must sent with the authorization header.
+The token scope must contain 'account-read' to access the own account or 'account-admin'.
 
 ##### Response
 
-Returns an account object as JSON:
+Returns a list of all accounts as JSON (depending on access restrictions `email` and/or `affiliation` may be null):
 
 ```json
 {
@@ -561,10 +529,44 @@ Returns an account object as JSON:
    "first_name": "...",
    "middle_name": "...",
    "last_name": "...",
+   "email": {
+       "email": "...",
+       "is_public": true
+   },
+   "affiliation": {
+       "institute": "...",
+       "department": "...",
+       "city": "...",
+       "country": "...",
+       "is_public": true
+   },
    "created_at": "YYYY-MM-DDThh:mm:ss",
    "updated_at": "YYYY-MM-DDThh:mm:ss"
 }
 ```
+
+### List all accounts
+
+##### URL
+
+```
+GET https://<host>/api/accounts
+```
+
+##### Query Parameters
+
+| Name          | Type    | Description |
+| ------------- | ------- | ---- |
+| q             | string  | A search string (optional) |
+
+##### Authorization
+
+No authorization header required. However, to access non public `email` or `affiliation` information a
+bearer token must sent with the authorization header.
+
+##### Response
+
+Returns a list of all accounts as JSON in the above described format.
 
 ### Update an account
 
@@ -589,7 +591,18 @@ Additional attributes may be present, but will be ignored.
    "title": "...",
    "first_name": "...",
    "middle_name": "...",
-   "last_name": "..."
+   "last_name": "...",
+   "email": {
+      "email": "...",
+      "is_public": true
+  },
+  "affiliation": {
+      "institute": "...",
+      "department": "...",
+      "city": "...",
+      "country": "...",
+      "is_public": true
+  }
 }
 ```
 

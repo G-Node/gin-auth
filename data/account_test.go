@@ -24,8 +24,8 @@ func TestListAccounts(t *testing.T) {
 	InitTestDb(t)
 
 	accounts := ListAccounts()
-	if len(accounts) != 2 {
-		t.Error("Two accounts expected in list")
+	if len(accounts) != 3 {
+		t.Error("Three accounts expected in list")
 	}
 }
 
