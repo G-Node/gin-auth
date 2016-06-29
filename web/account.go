@@ -154,7 +154,7 @@ func UpdateAccountPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(pwData.PasswordNew) < 8 {
+	if len(pwData.PasswordNew) < 6 {
 		err := &util.ValidationError{
 			Message:     "Unable to set password",
 			FieldErrors: map[string]string{"password_new": "Password must be at least 6 characters long"}}
