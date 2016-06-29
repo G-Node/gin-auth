@@ -125,7 +125,6 @@ func TestAccount_Update(t *testing.T) {
 	newFirstName := "I am actually not Alice"
 	newMiddleName := "and my last name is"
 	newLastName := "Badchild"
-	newActivationCode := "1234567890"
 
 	acc, ok := GetAccount(uuidAlice)
 	if !ok {
@@ -139,7 +138,6 @@ func TestAccount_Update(t *testing.T) {
 	acc.FirstName = newFirstName
 	acc.MiddleName = sql.NullString{String: newMiddleName, Valid: true}
 	acc.LastName = newLastName
-	acc.ActivationCode = sql.NullString{String: newActivationCode, Valid: true}
 
 	err := acc.Update()
 	if err != nil {
@@ -171,8 +169,5 @@ func TestAccount_Update(t *testing.T) {
 	}
 	if acc.LastName != newLastName {
 		t.Error("LastName was not updated")
-	}
-	if acc.ActivationCode.String != newActivationCode {
-		t.Error("ActivationCode was not updated")
 	}
 }

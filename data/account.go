@@ -35,13 +35,15 @@ type Account struct {
 	Country             string
 	IsAffiliationPublic bool
 	ActivationCode      sql.NullString
+	ResetPWCode         sql.NullString
+	IsActive            bool
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 }
 
 // ListAccounts returns all accounts stored in the database
 func ListAccounts() []Account {
-	const q = `SELECT * FROM Accounts ORDER BY login`
+	const q = `SELECT * FROM ActiveAccounts ORDER BY login`
 
 	accounts := make([]Account, 0)
 	err := database.Select(&accounts, q)
@@ -55,7 +57,7 @@ func ListAccounts() []Account {
 // SearchAccounts returns all accounts stored in the database where the account name (firstName, middleName, lastName
 // or login) contains the search string.
 func SearchAccounts(search string) []Account {
-	const q = `SELECT * FROM Accounts a
+	const q = `SELECT * FROM ActiveAccounts a
 	           WHERE a.firstName LIKE $1 OR a.middleName LIKE $1 OR a.lastName LIKE $1 OR a.login LIKE $1
 	           ORDER BY login`
 
@@ -71,7 +73,7 @@ func SearchAccounts(search string) []Account {
 // GetAccount returns an account with matching UUID
 // Returns false if no account with such UUID exists
 func GetAccount(uuid string) (*Account, bool) {
-	const q = `SELECT * FROM Accounts a WHERE a.uuid=$1`
+	const q = `SELECT * FROM ActiveAccounts a WHERE a.uuid=$1`
 
 	account := &Account{}
 	err := database.Get(account, q, uuid)
@@ -85,7 +87,7 @@ func GetAccount(uuid string) (*Account, bool) {
 // GetAccountByLogin returns an account with matching login.
 // Returns false if no account with such login exists.
 func GetAccountByLogin(login string) (*Account, bool) {
-	const q = `SELECT * FROM Accounts a WHERE a.login=$1`
+	const q = `SELECT * FROM ActiveAccounts a WHERE a.login=$1`
 
 	account := &Account{}
 	err := database.Get(account, q, login)
@@ -152,14 +154,14 @@ func (acc *Account) SSHKeys() []SSHKey {
 func (acc *Account) Update() error {
 	const q = `UPDATE Accounts
 	           SET (pwHash, email, isemailpublic, title, firstName, middleName, lastName, institute, department, city,
-	                country, isaffiliationpublic, activationCode, updatedAt) =
-	               ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now())
-	           WHERE uuid=$14
+	                country, isaffiliationpublic, activationCode, resetPWCode, isActive, updatedAt) =
+	               ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, now())
+	           WHERE uuid=$16
 	           RETURNING *`
 
 	err := database.Get(acc, q, acc.PWHash, acc.Email, acc.IsEmailPublic, acc.Title, acc.FirstName, acc.MiddleName,
 		acc.LastName, acc.Institute, acc.Department, acc.City, acc.Country, acc.IsAffiliationPublic,
-		acc.ActivationCode, acc.UUID)
+		acc.ActivationCode, acc.ResetPWCode, acc.IsActive, acc.UUID)
 
 	// TODO There is a lot of room for improvement here concerning errors about constraints for certain fields
 	return err
