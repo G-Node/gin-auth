@@ -7,6 +7,15 @@ INSERT INTO Accounts (uuid, login, pwHash, email, isEmailPublic, title, firstNam
 -- Set pw to 'testtest'
 UPDATE Accounts SET pwHash = '$2a$10$kYB77ZPuIxon00ZPpk6APeAqi5J7aOPpqaPwS6riF40/RrfQ.EMlW';
 
+-- add account active and disabled testaccounts
+INSERT INTO Accounts (uuid, login, pwhash, email, firstname, lastname, institute, department, city, country, activationcode, resetpwcode, isdisabled, createdat, updatedat) VALUES
+  ('test0001-1234-6789-1234-678901234567', 'inact_log1', '', 'email1@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', 'ac_a', NULL, FALSE, now(), now()),
+  ('test0002-1234-6789-1234-678901234567', 'inact_log2', '', 'email2@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', NULL, 'rc_a', FALSE, now(), now()),
+  ('test0003-1234-6789-1234-678901234567', 'inact_log3', '', 'email3@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', 'ac_c', 'rc_b', FALSE, now(), now()),
+  ('test0004-1234-6789-1234-678901234567', 'inact_log4', '', 'email4@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', NULL, NULL, TRUE, now(), now()),
+  ('test0005-1234-6789-1234-678901234567', 'inact_log5', '', 'email5@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', 'ac_b', NULL, TRUE, now(), now()),
+  ('test0006-1234-6789-1234-678901234567', 'inact_log6', '', 'email6@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', 'ac_d', 'rc_c', TRUE, now(), now());
+
 DELETE FROM SSHKeys;
 INSERT INTO SSHKeys (fingerprint, accountUUID, description, key, createdAt, updatedAt) VALUES
   ('A3tkBXFQWkjU6rzhkofY55G7tPR_Lmna4B-WEGVFXOQ', 'bf431618-f696-4dca-a95d-882618ce4ef9', 'Key from alice', 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDLtRNg1UHUf0k0ZlkfoYod9NoDPpOgx2AStEaEk/0bIKBqWJUNAZUfc6CHooKXTP3YakgqI7/BxV2pVgJIFBI4K9yGeLu76mwTpIZUTjEw/VoOaNP/vfV0LmXvQXstXMOZkmWt1rFaLsBpL9REP7XxteZYc2tjyVqy32GsVZHh6pPNes2q1Cf+awhkV/kXjup5AXwROLzqRvYBRs8oMPFDRZEGGax/Pp+r2GTB44M8YC0p7JAL3tLDDWsLVyygFA0OGhUffHmOGGf69uhh5JHhOjp49GEGftABdjnJznrVAI/71ySt0xWHJIOgMScsUGLYJtOZE/9KVrOQgZ1UAQML bar@foo', now(), now()),
