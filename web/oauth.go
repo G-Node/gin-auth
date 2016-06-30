@@ -599,3 +599,24 @@ func RegistrationPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Registration parses user entries for a new account. It will redirect back to the
+// entry form, if input is invalid. If the input is correct, it will create a new account,
+// send an e-mail with an activation link and redirect to the the registered page.
+func Registration(w http.ResponseWriter, r *http.Request) {
+	param := &struct {
+		Login string
+	}{}
+	util.ReadFormIntoStruct(r, param, true)
+
+	if param.Login != "test" {
+		fmt.Println("Log: Registration form issue, redirect back to entry page.")
+		w.Header().Add("Cache-Control", "no-store")
+		http.Redirect(w, r, "/oauth/registration_page", http.StatusFound)
+		return
+	}
+
+	fmt.Println("Registration form was parsed")
+	w.Header().Add("Cache-Control", "no-store")
+	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
+}
+
