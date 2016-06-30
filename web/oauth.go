@@ -620,3 +620,13 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
 }
 
+// RegisteredPage displays information about how a newly created gin account can be activated.
+func RegisteredPage(w http.ResponseWriter, r *http.Request) {
+	tmpl := conf.MakeTemplate("registered.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+	err := tmpl.ExecuteTemplate(w, "layout", &struct{}{})
+	if err != nil {
+		panic(err)
+	}
+}
