@@ -587,3 +587,15 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	enc.Encode(response)
 }
+
+// RegistrationPage displays entry fields required for the creation of a new gin account
+func RegistrationPage(w http.ResponseWriter, r *http.Request) {
+	tmpl := conf.MakeTemplate("registration.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+	err := tmpl.ExecuteTemplate(w, "layout", &struct{}{})
+	if err != nil {
+		panic(err)
+	}
+}
+
