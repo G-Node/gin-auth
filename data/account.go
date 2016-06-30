@@ -275,6 +275,7 @@ func (am *AccountMarshaler) UnmarshalJSON(bytes []byte) error {
 		am.Account.Department = jsonData.Affiliation.Department
 		am.Account.City = jsonData.Affiliation.City
 		am.Account.Country = jsonData.Affiliation.Country
+		am.Account.IsAffiliationPublic = jsonData.Affiliation.IsPublic
 	}
 
 	return nil
