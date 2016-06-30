@@ -45,6 +45,17 @@ func TestGetAccount(t *testing.T) {
 	if ok {
 		t.Error("Account should not exist")
 	}
+
+	// Test whole barrage of inactive accounts
+	inactiveUUID := []string{"test0001", "test0002", "test0003", "test0004", "test0005", "test0006"}
+	suffix := "-1234-6789-1234-678901234567"
+	for _, v := range inactiveUUID {
+		currUUID := v + suffix
+		_, ok = GetAccount(currUUID)
+		if ok {
+			t.Errorf("Account with login '%s' should not exist", currUUID)
+		}
+	}
 }
 
 func TestGetAccountByLogin(t *testing.T) {
@@ -59,9 +70,18 @@ func TestGetAccountByLogin(t *testing.T) {
 		t.Errorf("UUID was expected to be '%s'", uuidBob)
 	}
 
-	_, ok = GetAccount("doesNotExist")
+	_, ok = GetAccountByLogin("doesNotExist")
 	if ok {
 		t.Error("Account should not exist")
+	}
+
+	// Test whole barrage of inactive accounts
+	inactiveLogin := []string{"inact_log1", "inact_log2", "inact_log3", "inact_log4", "inact_log5", "inact_log6"}
+	for _, v := range inactiveLogin {
+		_, ok = GetAccountByLogin(v)
+		if ok {
+			t.Errorf("Account with login '%s' should not exist", v)
+		}
 	}
 }
 
@@ -210,6 +230,8 @@ func TestAccount_Update(t *testing.T) {
 	newFirstName := "I am actually not Alice"
 	newMiddleName := "and my last name is"
 	newLastName := "Badchild"
+	newActivationCode := "activation code"
+	newResetPWCode := "reset password code"
 
 	acc, ok := GetAccount(uuidAlice)
 	if !ok {
@@ -254,5 +276,44 @@ func TestAccount_Update(t *testing.T) {
 	}
 	if acc.LastName != newLastName {
 		t.Error("LastName was not updated")
+	}
+
+	acc.ActivationCode = sql.NullString{String: newActivationCode, Valid: true}
+	err = acc.Update()
+	if err != nil {
+		t.Error(err)
+	}
+	acc, ok = GetAccountByActivationCode(newActivationCode)
+	if !ok {
+		t.Error("Activation code update failed")
+	}
+	if acc.ActivationCode.String != newActivationCode {
+		t.Error("Activation code was not updated")
+	}
+
+	acc.ResetPWCode = sql.NullString{String: newResetPWCode, Valid: true}
+	err = acc.Update()
+	if err != nil {
+		t.Error(err)
+	}
+	acc, ok = GetAccountByResetPWCode(newResetPWCode)
+	if !ok {
+		t.Error("Password reset code update failed")
+	}
+	if acc.ResetPWCode.String != newResetPWCode {
+		t.Error("Reset password code was not updated")
+	}
+
+	acc.IsDisabled = true
+	err = acc.Update()
+	if err != nil {
+		t.Error(err)
+	}
+	acc, ok = GetAccountDisabled(uuidAlice)
+	if !ok {
+		t.Error("Disable account update failed")
+	}
+	if !acc.IsDisabled {
+		t.Error("Account isDisabled was not updated")
 	}
 }

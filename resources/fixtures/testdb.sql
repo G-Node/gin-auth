@@ -9,12 +9,12 @@ UPDATE Accounts SET pwHash = '$2a$10$kYB77ZPuIxon00ZPpk6APeAqi5J7aOPpqaPwS6riF40
 
 -- add account active and disabled testaccounts
 INSERT INTO Accounts (uuid, login, pwhash, email, firstname, lastname, institute, department, city, country, activationcode, resetpwcode, isdisabled, createdat, updatedat) VALUES
-  ('test0001-1234-6789-1234-678901234567', 'login1', '', 'email1@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', 'ac_a', NULL, FALSE, now(), now()),
-  ('test0002-1234-6789-1234-678901234567', 'login2', '', 'email2@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', NULL, 'rc_a', FALSE, now(), now()),
-  ('test0003-1234-6789-1234-678901234567', 'login5', '', 'email5@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', 'ac_c', 'rc_b', FALSE, now(), now()),
-  ('test0004-1234-6789-1234-678901234567', 'login3', '', 'email3@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', NULL, NULL, TRUE, now(), now()),
-  ('test0005-1234-6789-1234-678901234567', 'login4', '', 'email4@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', 'ac_b', NULL, TRUE, now(), now()),
-  ('test0006-1234-6789-1234-678901234567', 'login6', '', 'email6@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', 'ac_d', 'rc_c', TRUE, now(), now());
+  ('test0001-1234-6789-1234-678901234567', 'inact_log1', '', 'email1@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', 'ac_a', NULL, FALSE, now(), now()),
+  ('test0002-1234-6789-1234-678901234567', 'inact_log2', '', 'email2@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', NULL, 'rc_a', FALSE, now(), now()),
+  ('test0003-1234-6789-1234-678901234567', 'inact_log3', '', 'email3@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', 'ac_c', 'rc_b', FALSE, now(), now()),
+  ('test0004-1234-6789-1234-678901234567', 'inact_log4', '', 'email4@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', NULL, NULL, TRUE, now(), now()),
+  ('test0005-1234-6789-1234-678901234567', 'inact_log5', '', 'email5@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', 'ac_b', NULL, TRUE, now(), now()),
+  ('test0006-1234-6789-1234-678901234567', 'inact_log6', '', 'email6@example.com', 'fname', 'lname', 'inst', 'dep', 'cty', 'ctry', 'ac_d', 'rc_c', TRUE, now(), now());
 
 DELETE FROM SSHKeys;
 INSERT INTO SSHKeys (fingerprint, accountUUID, description, key, createdAt, updatedAt) VALUES
