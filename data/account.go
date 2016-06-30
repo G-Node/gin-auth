@@ -115,10 +115,24 @@ func GetAccountByActivationCode(code string) (*Account, bool) {
 // GetAccountByResetPWCode returns an account with matching reset password code.
 // Returns false if no account with the reset password code can be found.
 func GetAccountByResetPWCode(code string) (*Account, bool) {
-	const q = `SELECT * from Accounts WHERE resetPWCode=$1 AND NOT isDisabled`
+	const q = `SELECT * FROM Accounts WHERE resetPWCode=$1 AND NOT isDisabled`
 
 	account := &Account{}
 	err := database.Get(account, q, code)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+
+	return account, err == nil
+}
+
+// GetAccountDisabled returns a disabled account with a matching uuid.
+// Returns false if no account with the uuid can be found or if it is not disabled.
+func GetAccountDisabled(uuid string) (*Account, bool) {
+	const q = `SELECT * FROM Accounts WHERE uuid=$1 AND isDisabled`
+
+	account := &Account{}
+	err := database.Get(account, q, uuid)
 	if err != nil && err != sql.ErrNoRows {
 		panic(err)
 	}
