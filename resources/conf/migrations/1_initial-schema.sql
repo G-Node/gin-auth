@@ -25,16 +25,16 @@ CREATE TABLE Accounts (
   city                VARCHAR(512) NOT NULL ,
   country             VARCHAR(512) NOT NULL ,
   isAffiliationPublic BOOLEAN NOT NULL DEFAULT FALSE ,
-  activationCode      VARCHAR(512) ,
-  resetPWCode         VARCHAR(512) ,
-  isActive            BOOLEAN NOT NULL DEFAULT TRUE,
+  activationCode      VARCHAR(512) UNIQUE,
+  resetPWCode         VARCHAR(512) UNIQUE,
+  isDisabled          BOOLEAN NOT NULL DEFAULT FALSE,
   createdAt           TIMESTAMP NOT NULL ,
   updatedAt           TIMESTAMP NOT NULL
 );
 
 CREATE VIEW ActiveAccounts AS
   SELECT * from Accounts
-  WHERE isActive AND activationCode IS NULL AND resetPWCode IS NULL;
+  WHERE NOT isDisabled AND activationCode IS NULL AND resetPWCode IS NULL;
 
 
 CREATE TABLE SSHKeys (
