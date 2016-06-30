@@ -36,7 +36,7 @@ type Account struct {
 	IsAffiliationPublic bool
 	ActivationCode      sql.NullString
 	ResetPWCode         sql.NullString
-	IsActive            bool
+	IsDisabled          bool
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
 }
@@ -154,14 +154,14 @@ func (acc *Account) SSHKeys() []SSHKey {
 func (acc *Account) Update() error {
 	const q = `UPDATE Accounts
 	           SET (pwHash, email, isemailpublic, title, firstName, middleName, lastName, institute, department, city,
-	                country, isaffiliationpublic, activationCode, resetPWCode, isActive, updatedAt) =
+	                country, isaffiliationpublic, activationCode, resetPWCode, isDisabled, updatedAt) =
 	               ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, now())
 	           WHERE uuid=$16
 	           RETURNING *`
 
 	err := database.Get(acc, q, acc.PWHash, acc.Email, acc.IsEmailPublic, acc.Title, acc.FirstName, acc.MiddleName,
 		acc.LastName, acc.Institute, acc.Department, acc.City, acc.Country, acc.IsAffiliationPublic,
-		acc.ActivationCode, acc.ResetPWCode, acc.IsActive, acc.UUID)
+		acc.ActivationCode, acc.ResetPWCode, acc.IsDisabled, acc.UUID)
 
 	// TODO There is a lot of room for improvement here concerning errors about constraints for certain fields
 	return err
