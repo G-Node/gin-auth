@@ -65,6 +65,38 @@ func TestGetAccountByLogin(t *testing.T) {
 	}
 }
 
+func TestGetAccountByActivationCode(t *testing.T) {
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
+
+	const enabledUUID = "test0001-1234-6789-1234-678901234567"
+	const enabledCode = "ac_a"
+	const disabledCode = "ac_b"
+
+	acc, ok := GetAccountByActivationCode(enabledCode)
+	if !ok {
+		t.Error("Account does not exist")
+	}
+	if acc.UUID != enabledUUID {
+		t.Errorf("UUID was expected to be '%s'", enabledUUID)
+	}
+
+	_, ok = GetAccountByActivationCode(disabledCode)
+	if ok {
+		t.Error("Account should not exist")
+	}
+
+	_, ok = GetAccountByActivationCode("")
+	if ok {
+		t.Error("Account should not exist")
+	}
+
+	_, ok = GetAccountByActivationCode("iDoNotExist")
+	if ok {
+		t.Error("Account should not exist")
+	}
+}
+
 func TestAccount_SetPassword(t *testing.T) {
 	acc := &Account{}
 	acc.SetPassword("foobar")

@@ -98,6 +98,20 @@ func GetAccountByLogin(login string) (*Account, bool) {
 	return account, err == nil
 }
 
+// GetAccountByActivationCode returns an account with matching activation code.
+// Returns false if no account with the activation code can be found.
+func GetAccountByActivationCode(code string) (*Account, bool) {
+	const q = `SELECT * FROM Accounts WHERE activationCode=$1 AND NOT isDisabled`
+
+	account := &Account{}
+	err := database.Get(account, q, code)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+
+	return account, err == nil
+}
+
 // SetPassword hashes the plain text password and
 // sets PWHash to the new value.
 func (acc *Account) SetPassword(plain string) error {
