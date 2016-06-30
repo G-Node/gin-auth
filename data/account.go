@@ -112,6 +112,20 @@ func GetAccountByActivationCode(code string) (*Account, bool) {
 	return account, err == nil
 }
 
+// GetAccountByResetPWCode returns an account with matching reset password code.
+// Returns false if no account with the reset password code can be found.
+func GetAccountByResetPWCode(code string) (*Account, bool) {
+	const q = `SELECT * from Accounts WHERE resetPWCode=$1 AND NOT isDisabled`
+
+	account := &Account{}
+	err := database.Get(account, q, code)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+
+	return account, err == nil
+}
+
 // SetPassword hashes the plain text password and
 // sets PWHash to the new value.
 func (acc *Account) SetPassword(plain string) error {
