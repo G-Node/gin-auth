@@ -785,3 +785,14 @@ func TestValidate(t *testing.T) {
 		t.Errorf("Login expected to be 'alice' but was '%s'", result.Login)
 	}
 }
+
+func TestRegistrationPage(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	request, _ := http.NewRequest("GET", "/oauth/registration_page", strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+}
