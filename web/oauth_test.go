@@ -796,3 +796,14 @@ func TestRegistrationPage(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 }
+
+func TestRegisteredPage(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	request, _ := http.NewRequest("GET", "/oauth/registered_page", strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+}
