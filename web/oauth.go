@@ -587,3 +587,46 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	enc.Encode(response)
 }
+
+// RegistrationPage displays entry fields required for the creation of a new gin account
+func RegistrationPage(w http.ResponseWriter, r *http.Request) {
+	tmpl := conf.MakeTemplate("registration.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+	err := tmpl.ExecuteTemplate(w, "layout", &struct{}{})
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Registration parses user entries for a new account. It will redirect back to the
+// entry form, if input is invalid. If the input is correct, it will create a new account,
+// send an e-mail with an activation link and redirect to the the registered page.
+func Registration(w http.ResponseWriter, r *http.Request) {
+	param := &struct {
+		Login string
+	}{}
+	util.ReadFormIntoStruct(r, param, true)
+
+	if param.Login != "test" {
+		fmt.Println("Log: Registration form issue, redirect back to entry page.")
+		w.Header().Add("Cache-Control", "no-store")
+		http.Redirect(w, r, "/oauth/registration_page", http.StatusFound)
+		return
+	}
+
+	fmt.Println("Registration form was parsed")
+	w.Header().Add("Cache-Control", "no-store")
+	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
+}
+
+// RegisteredPage displays information about how a newly created gin account can be activated.
+func RegisteredPage(w http.ResponseWriter, r *http.Request) {
+	tmpl := conf.MakeTemplate("registered.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+	err := tmpl.ExecuteTemplate(w, "layout", &struct{}{})
+	if err != nil {
+		panic(err)
+	}
+}

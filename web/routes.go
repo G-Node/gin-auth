@@ -30,6 +30,9 @@ func RegisterRoutes(r *mux.Router) {
 		Methods("GET")
 	oauth.HandleFunc("/approve", Approve).
 		Methods("POST")
+	oauth.HandleFunc("/registration_page", RegistrationPage).Methods("GET")
+	oauth.HandleFunc("/registration", Registration).Methods("POST")
+	oauth.HandleFunc("/registered_page", RegisteredPage).Methods("GET")
 	oauth.HandleFunc("/token", Token).
 		Methods("POST")
 	oauth.HandleFunc("/validate/{token}", Validate).
