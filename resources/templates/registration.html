@@ -1,10 +1,112 @@
 {{ define "content" }}
 
 <h1>Register Account</h1>
-<form action="/oauth/registration" method="post">
+<hr><br />
+
+<form action="/oauth/registration" method="post" class="form-horizontal">
+
+    <h4>Personal information</h4>
+    <hr>
     <div class="form-group">
-        <input type="text" class="form-control" id="registration-login" name="login" placeholder="enter 'test'">
-        <button type="submit" class="btn btn-default">Create account</button>
+        <label for="reg-title" class="col-sm-3 control-label">Title</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="reg-title" name="title" placeholder="Title">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="reg-fn" class="col-sm-3 control-label">First name</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="reg-fn" name="firstName" placeholder="First Name">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="reg-mn" class="col-sm-3 control-label">Middle name</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="reg-mn" name="middleName" placeholder="Middle Name">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="reg-ln" class="col-sm-3 control-label">Last name</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="reg-ln" name="lastName" placeholder="Last Name">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="reg-login" class="col-sm-3 control-label">Login</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="reg-login" name="login" placeholder="Login, enter 'test'">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="reg-email" class="col-sm-3 control-label">e-mail address</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="reg-email" name="email" placeholder="e-mail address">
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-offset-3 col-sm-9 checkbox">
+            <label for="reg-email-public">
+                <input type="checkbox" id="reg-email-public" name="emailPublic">
+                Make e-mail public
+            </label>
+        </div>
+    </div>
+
+
+    <h4>Affiliation</h4>
+    <hr>
+    <div class="form-group">
+        <label for="reg-institute" class="col-sm-3 control-label">Institute</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="reg-institute" name="institute" placeholder="Institute">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="reg-department" class="col-sm-3 control-label">Department</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="reg-department" name="department" placeholder="Department">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="reg-city" class="col-sm-3 control-label">City</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="reg-city" name="city" placeholder="City">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="reg-country" class="col-sm-3 control-label">Country</label>
+        <div class="col-sm-9">
+            <input type="text" class="form-control" id="reg-country" name="country" placeholder="Country">
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-offset-3 col-sm-9 checkbox">
+            <label for="reg-affiliation-public">
+                <input type="checkbox" id="reg-affiliation-public" name="affiliationPublic">
+                Make affiliation public
+            </label>
+        </div>
+    </div>
+
+
+    <h4>Password</h4>
+    <hr>
+    <div class="form-group">
+        <label for="reg-password-input" class="col-sm-3 control-label">Password</label>
+        <div class="col-sm-9">
+            <input type="password" class="form-control" id="reg-password-input" name="password" placeholder="Password">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="reg-password-control" class="col-sm-3 control-label">Re-enter password</label>
+        <div class="col-sm-9">
+            <input type="password" class="form-control" id="reg-password-control" name="passwordControl" placeholder="Password">
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-9 col-sm-offset-3">
+            <button type="submit" class="btn btn-default">Create account</button>
+        </div>
     </div>
 </form>
 
