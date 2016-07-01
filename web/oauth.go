@@ -632,6 +632,38 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	account := &data.Account{}
+
+	if param.Title != "" {
+		account.Title = sql.NullString{String: param.Title, Valid: true}
+	}
+	account.FirstName = param.Firstname
+	if param.Middlename != "" {
+		account.MiddleName = sql.NullString{String: param.Middlename, Valid: true}
+	}
+	account.LastName = param.Lastname
+	account.Login = param.Login
+	account.Email = param.Email
+	if param.Emailpublic == "on" {
+		account.IsEmailPublic = true
+	}
+	account.Institute = param.Institute
+	account.Department = param.Department
+	account.City = param.City
+	account.Country = param.Country
+	if param.Affiliationpublic == "on" {
+		account.IsAffiliationPublic = true
+	}
+	account.SetPassword(param.Password)
+
+	err = account.Create()
+	if err != nil {
+		fmt.Printf("Log: Registration: the following error occurred: '%s'\n", err)
+		w.Header().Add("Cache-Control", "no-store")
+		http.Redirect(w, r, "/oauth/registration_page", http.StatusFound)
+		return
+	}
+
 	fmt.Println("Registration form was parsed")
 	w.Header().Add("Cache-Control", "no-store")
 	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
