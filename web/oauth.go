@@ -604,12 +604,29 @@ func RegistrationPage(w http.ResponseWriter, r *http.Request) {
 // send an e-mail with an activation link and redirect to the the registered page.
 func Registration(w http.ResponseWriter, r *http.Request) {
 	param := &struct {
-		Login string
+		Title             string
+		Firstname         string
+		Middlename        string
+		Lastname          string
+		Login             string
+		Email             string
+		Emailpublic       string
+		Institute         string
+		Department        string
+		City              string
+		Country           string
+		Affiliationpublic string
+		Password          string
+		Passwordcontrol   string
 	}{}
-	util.ReadFormIntoStruct(r, param, true)
 
-	if param.Login != "test" {
-		fmt.Println("Log: Registration form issue, redirect back to entry page.")
+	err := util.ReadFormIntoStruct(r, param, true)
+	if err != nil {
+		PrintErrorJSON(w, r, err, http.StatusInternalServerError)
+		return
+	}
+	if r.Form.Encode() == "" {
+		fmt.Println("Log: Registration: missing form")
 		w.Header().Add("Cache-Control", "no-store")
 		http.Redirect(w, r, "/oauth/registration_page", http.StatusFound)
 		return
