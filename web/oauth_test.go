@@ -797,6 +797,49 @@ func TestRegistrationPage(t *testing.T) {
 	}
 }
 
+func TestRegistration(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	const registrationURL = "/oauth/registration"
+	const registrationPageURL = "/oauth/registration_page"
+	const registeredPageURL = "/oauth/registered_page"
+
+	mkBody := func(login string) *url.Values {
+		body := &url.Values{}
+		body.Add("login", login)
+		return body
+	}
+
+	// test that an empty request redirects back to registration page
+	request, _ := http.NewRequest("POST", registrationURL, strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	redirect, err := url.Parse(response.Header().Get("Location"))
+	if err != nil {
+		t.Error(err)
+	}
+	if redirect.String() != registrationPageURL {
+		t.Errorf("Expected to be redirected to '%s', but was '%s'", registrationPageURL, redirect.String())
+	}
+
+	// TODO update test as function progresses
+	// test that a correct request with form content login='test' redirects to registered_page
+	body := mkBody("test")
+	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	redirect, err = url.Parse(response.Header().Get("Location"))
+	if err != nil {
+		t.Error(err)
+	}
+	if redirect.String() != registeredPageURL {
+		t.Errorf("Expected to be redirected to '%s', but was '%s'", registeredPageURL, redirect.String())
+	}
+}
+
 func TestRegisteredPage(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 
