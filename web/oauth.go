@@ -604,12 +604,58 @@ func RegistrationPage(w http.ResponseWriter, r *http.Request) {
 // send an e-mail with an activation link and redirect to the the registered page.
 func Registration(w http.ResponseWriter, r *http.Request) {
 	param := &struct {
-		Login string
+		Title             string
+		FirstName         string
+		MiddleName        string
+		LastName          string
+		Login             string
+		Email             string
+		EmailPublic       bool
+		Institute         string
+		Department        string
+		City              string
+		Country           string
+		AffiliationPublic bool
+		Password          string
+		PasswordControl   string
 	}{}
-	util.ReadFormIntoStruct(r, param, true)
 
-	if param.Login != "test" {
-		fmt.Println("Log: Registration form issue, redirect back to entry page.")
+	err := util.ReadFormIntoStruct(r, param, true)
+	if err != nil {
+		PrintErrorJSON(w, r, err, http.StatusInternalServerError)
+		return
+	}
+	if r.Form.Encode() == "" {
+		fmt.Println("Log: Registration: missing form")
+		w.Header().Add("Cache-Control", "no-store")
+		http.Redirect(w, r, "/oauth/registration_page", http.StatusFound)
+		return
+	}
+
+	account := &data.Account{}
+
+	if param.Title != "" {
+		account.Title = sql.NullString{String: param.Title, Valid: true}
+	}
+	account.FirstName = param.FirstName
+	if param.MiddleName != "" {
+		account.MiddleName = sql.NullString{String: param.MiddleName, Valid: true}
+	}
+	account.LastName = param.LastName
+	account.Login = param.Login
+	account.Email = param.Email
+	account.IsEmailPublic = param.EmailPublic
+	account.Institute = param.Institute
+	account.Department = param.Department
+	account.City = param.City
+	account.Country = param.Country
+	account.IsAffiliationPublic = param.AffiliationPublic
+
+	account.SetPassword(param.Password)
+
+	err = account.Create()
+	if err != nil {
+		fmt.Printf("Log: Registration: the following error occurred: '%s'\n", err)
 		w.Header().Add("Cache-Control", "no-store")
 		http.Redirect(w, r, "/oauth/registration_page", http.StatusFound)
 		return
