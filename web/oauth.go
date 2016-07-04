@@ -702,28 +702,24 @@ func RegistrationPage(w http.ResponseWriter, r *http.Request) {
 // entry form, if input is invalid. If the input is correct, it will create a new account,
 // send an e-mail with an activation link and redirect to the the registered page.
 func Registration(w http.ResponseWriter, r *http.Request) {
-	param := &struct {
-		Title             sql.NullString
-		FirstName         string
-		MiddleName        sql.NullString
-		LastName          string
-		Login             string
-		Email             string
-		EmailPublic       bool
-		Institute         string
-		Department        string
-		City              string
-		Country           string
-		AffiliationPublic bool
-		Password          string
-		PasswordControl   string
+	account := &data.Account{}
+	pw := &struct {
+		Password        string
+		PasswordControl string
 	}{}
 
-	err := util.ReadFormIntoStruct(r, param, true)
+	err := util.ReadFormIntoStruct(r, account, true)
 	if err != nil {
 		PrintErrorJSON(w, r, err, http.StatusInternalServerError)
 		return
 	}
+
+	err = util.ReadFormIntoStruct(r, pw, true)
+	if err != nil {
+		PrintErrorJSON(w, r, err, http.StatusInternalServerError)
+		return
+	}
+
 	if r.Form.Encode() == "" {
 		fmt.Println("Log: Registration: missing form")
 		w.Header().Add("Cache-Control", "no-store")
@@ -731,22 +727,7 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account := &data.Account{}
-
-	account.Title = param.Title
-	account.FirstName = param.FirstName
-	account.MiddleName = param.MiddleName
-	account.LastName = param.LastName
-	account.Login = param.Login
-	account.Email = param.Email
-	account.IsEmailPublic = param.EmailPublic
-	account.Institute = param.Institute
-	account.Department = param.Department
-	account.City = param.City
-	account.Country = param.Country
-	account.IsAffiliationPublic = param.AffiliationPublic
-
-	account.SetPassword(param.Password)
+	account.SetPassword(pw.Password)
 
 	err = account.Create()
 	if err != nil {
