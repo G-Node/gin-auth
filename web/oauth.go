@@ -604,9 +604,9 @@ func RegistrationPage(w http.ResponseWriter, r *http.Request) {
 // send an e-mail with an activation link and redirect to the the registered page.
 func Registration(w http.ResponseWriter, r *http.Request) {
 	param := &struct {
-		Title             string
+		Title             sql.NullString
 		FirstName         string
-		MiddleName        string
+		MiddleName        sql.NullString
 		LastName          string
 		Login             string
 		Email             string
@@ -634,13 +634,9 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 
 	account := &data.Account{}
 
-	if param.Title != "" {
-		account.Title = sql.NullString{String: param.Title, Valid: true}
-	}
+	account.Title = param.Title
 	account.FirstName = param.FirstName
-	if param.MiddleName != "" {
-		account.MiddleName = sql.NullString{String: param.MiddleName, Valid: true}
-	}
+	account.MiddleName = param.MiddleName
 	account.LastName = param.LastName
 	account.Login = param.Login
 	account.Email = param.Email
