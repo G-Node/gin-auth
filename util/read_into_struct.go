@@ -99,7 +99,7 @@ func ReadMapIntoStruct(src map[string][]string, dest interface{}, ignoreMissing 
 		t := fieldVal.Interface()
 		switch t := t.(type) {
 		default:
-			panic(fmt.Sprintf("Destination fiels %s has an unsupproted type: '%T'", fieldVal, t))
+			panic(fmt.Sprintf("Destination field %s has an unsupported type: '%T'", fieldVal, t))
 		case bool:
 			if len(srcVal) < 1 {
 				if !ignoreMissing {
