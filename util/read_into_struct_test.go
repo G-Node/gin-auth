@@ -9,26 +9,29 @@
 package util
 
 import (
+	"database/sql"
 	"testing"
 )
 
 type testData struct {
-	SomeString  string
-	AnInteger   int
-	Unsigned    uint
-	StringSlice []string
-	Boolean     bool
-	AndAFloat   float32
+	SomeString    string
+	AnInteger     int
+	Unsigned      uint
+	StringSlice   []string
+	Boolean       bool
+	AndAFloat     float32
+	SqlNullString sql.NullString
 }
 
 func TestReadMapIntoStruct(t *testing.T) {
 	source := map[string][]string{
-		"some_string":  []string{"foo"},
-		"an_integer":   []string{"404"},
-		"unsigned":     []string{"111"},
-		"string_slice": []string{"foo", "bar"},
-		"boolean":      []string{"true"},
-		"AndAFloat":    []string{"3.1415"},
+		"some_string":     []string{"foo"},
+		"an_integer":      []string{"404"},
+		"unsigned":        []string{"111"},
+		"string_slice":    []string{"foo", "bar"},
+		"boolean":         []string{"true"},
+		"AndAFloat":       []string{"3.1415"},
+		"sql_null_string": []string{"nullstring"},
 	}
 	dest := &testData{}
 
