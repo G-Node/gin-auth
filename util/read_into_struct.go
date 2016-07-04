@@ -9,6 +9,7 @@
 package util
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -181,6 +182,20 @@ func ReadMapIntoStruct(src map[string][]string, dest interface{}, ignoreMissing 
 			fieldVal.SetString(srcVal[0])
 		case []string:
 			fieldVal.Set(reflect.ValueOf(srcVal))
+		case sql.NullString:
+			if len(srcVal) < 1 {
+				if !ignoreMissing {
+					valErr.FieldErrors[fieldName] = fmt.Sprintf("Field %s was missing", fieldName)
+				}
+				continue
+			}
+			if len(srcVal) > 1 {
+				valErr.FieldErrors[fieldName] = fmt.Sprintf("Field %s contains too many values", fieldName)
+				continue
+			}
+			if srcVal[0] != "" {
+				fieldVal.Set(reflect.ValueOf(sql.NullString{String: srcVal[0], Valid: true}))
+			}
 		}
 	}
 
