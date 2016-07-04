@@ -11,6 +11,7 @@ package data
 import (
 	"database/sql"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/G-Node/gin-auth/conf"
@@ -57,12 +58,12 @@ func ListAccounts() []Account {
 // SearchAccounts returns all accounts stored in the database where the account name (firstName, middleName, lastName
 // or login) contains the search string.
 func SearchAccounts(search string) []Account {
-	const q = `SELECT * FROM ActiveAccounts a
-	           WHERE a.firstName LIKE $1 OR a.middleName LIKE $1 OR a.lastName LIKE $1 OR a.login LIKE $1
+	const q = `SELECT * FROM ActiveAccounts
+	           WHERE lower(firstName) LIKE $1 OR lower(middleName) LIKE $1 OR lower(lastName) LIKE $1 OR lower(login) LIKE $1
 	           ORDER BY login`
 
 	accounts := make([]Account, 0)
-	err := database.Select(&accounts, q, "%"+search+"%")
+	err := database.Select(&accounts, q, "%"+strings.ToLower(search)+"%")
 	if err != nil {
 		panic(err)
 	}
