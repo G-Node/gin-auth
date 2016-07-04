@@ -605,19 +605,19 @@ func RegistrationPage(w http.ResponseWriter, r *http.Request) {
 func Registration(w http.ResponseWriter, r *http.Request) {
 	param := &struct {
 		Title             string
-		Firstname         string
-		Middlename        string
-		Lastname          string
+		FirstName         string
+		MiddleName        string
+		LastName          string
 		Login             string
 		Email             string
-		Emailpublic       string
+		EmailPublic       bool
 		Institute         string
 		Department        string
 		City              string
 		Country           string
-		Affiliationpublic string
+		AffiliationPublic bool
 		Password          string
-		Passwordcontrol   string
+		PasswordControl   string
 	}{}
 
 	err := util.ReadFormIntoStruct(r, param, true)
@@ -637,23 +637,20 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 	if param.Title != "" {
 		account.Title = sql.NullString{String: param.Title, Valid: true}
 	}
-	account.FirstName = param.Firstname
-	if param.Middlename != "" {
-		account.MiddleName = sql.NullString{String: param.Middlename, Valid: true}
+	account.FirstName = param.FirstName
+	if param.MiddleName != "" {
+		account.MiddleName = sql.NullString{String: param.MiddleName, Valid: true}
 	}
-	account.LastName = param.Lastname
+	account.LastName = param.LastName
 	account.Login = param.Login
 	account.Email = param.Email
-	if param.Emailpublic == "on" {
-		account.IsEmailPublic = true
-	}
+	account.IsEmailPublic = param.EmailPublic
 	account.Institute = param.Institute
 	account.Department = param.Department
 	account.City = param.City
 	account.Country = param.Country
-	if param.Affiliationpublic == "on" {
-		account.IsAffiliationPublic = true
-	}
+	account.IsAffiliationPublic = param.AffiliationPublic
+
 	account.SetPassword(param.Password)
 
 	err = account.Create()
