@@ -865,6 +865,134 @@ func TestRegistrationPage(t *testing.T) {
 	}
 }
 
+func TestValidateRegistration(t *testing.T) {
+	data.InitTestDb(t)
+
+	const errDiffUser = "Please choose a different username"
+	const errRequiredField = "Please enter all required fields (*)"
+	const errPassword = "Please enter a password"
+	const errPasswordMismatch = "Entered password did not match password control"
+
+	valAccount := &validateAccount{}
+	valAccount.Account = &data.Account{}
+	pw := &passwordData{}
+
+	// Test all data missing
+	validateRegistration(valAccount, pw)
+	if !valAccount.HasErr {
+		t.Error("Expected validation error")
+	}
+
+	valAccount.FirstName = "fn"
+	valAccount.LastName = "ln"
+	valAccount.Login = "alice"
+	valAccount.Email = "bob@foo.com"
+	valAccount.Institute = "Inst"
+	valAccount.Department = "Dep"
+	valAccount.City = "cty"
+	valAccount.Country = "ctry"
+
+	// Test existing login
+	validateRegistration(valAccount, pw)
+	if valAccount.ErrMessage != errDiffUser {
+		t.Errorf("Expected invalid username error, but got: '%s'", valAccount.ErrMessage)
+	}
+
+	// Test missing email
+	valAccount.Login = "noone"
+	valAccount.Email = ""
+	validateRegistration(valAccount, pw)
+	if valAccount.ErrMessage != errRequiredField {
+		t.Errorf("Expected required field missing error, but got: '%s'", valAccount.ErrMessage)
+	}
+
+	// Test missing first name
+	valAccount.Email = "noone@nowhere.com"
+	valAccount.FirstName = ""
+	validateRegistration(valAccount, pw)
+	if valAccount.ErrMessage != errRequiredField {
+		t.Errorf("Expected required field missing error, but got: '%s'", valAccount.ErrMessage)
+	}
+
+	// Test missing last name
+	valAccount.FirstName = "fn"
+	valAccount.LastName = ""
+	validateRegistration(valAccount, pw)
+	if valAccount.ErrMessage != errRequiredField {
+		t.Errorf("Expected required field missing error, but got: '%s'", valAccount.ErrMessage)
+	}
+
+	// Test missing institute
+	valAccount.LastName = "ln"
+	valAccount.Institute = ""
+	validateRegistration(valAccount, pw)
+	if valAccount.ErrMessage != errRequiredField {
+		t.Errorf("Expected required field missing error, but got: '%s'", valAccount.ErrMessage)
+	}
+
+	// Test missing department
+	valAccount.Institute = "Inst"
+	valAccount.Department = ""
+	validateRegistration(valAccount, pw)
+	if valAccount.ErrMessage != errRequiredField {
+		t.Errorf("Expected required field missing error, but got: '%s'", valAccount.ErrMessage)
+	}
+
+	// Test missing city
+	valAccount.Department = "Dep"
+	valAccount.City = ""
+	validateRegistration(valAccount, pw)
+	if valAccount.ErrMessage != errRequiredField {
+		t.Errorf("Expected required field missing error, but got: '%s'", valAccount.ErrMessage)
+	}
+
+	// Test missing country
+	valAccount.City = "cty"
+	valAccount.Country = ""
+	validateRegistration(valAccount, pw)
+	if valAccount.ErrMessage != errRequiredField {
+		t.Errorf("Expected required field missing error, but got: '%s'", valAccount.ErrMessage)
+	}
+
+	// Test missing password and missing password control
+	valAccount.Country = "ctry"
+	validateRegistration(valAccount, pw)
+	if valAccount.ErrMessage != errPassword {
+		t.Errorf("Expected password missing error, but got: '%s'", valAccount.ErrMessage)
+	}
+
+	// Test missing password control
+	pw.Password = "pw"
+	validateRegistration(valAccount, pw)
+	if valAccount.ErrMessage != errPassword {
+		t.Errorf("Expected password missing error, but got: '%s'", valAccount.ErrMessage)
+	}
+
+	// Test missing password
+	pw.Password = ""
+	pw.PasswordControl = "pw"
+	validateRegistration(valAccount, pw)
+	if valAccount.ErrMessage != errPassword {
+		t.Errorf("Expected password missing error, but got: '%s'", valAccount.ErrMessage)
+	}
+
+	// Test password mismatch
+	pw.Password = "pw2"
+	validateRegistration(valAccount, pw)
+	if valAccount.ErrMessage != errPasswordMismatch {
+		t.Errorf("Expected password missmatch error, but got: '%s'", valAccount.ErrMessage)
+	}
+
+	// Test valid
+	pw.Password = "pw"
+	valAccount.HasErr = false
+	valAccount.ErrMessage = ""
+	validateRegistration(valAccount, pw)
+	if valAccount.HasErr {
+		t.Errorf("Expected valid registration , but got error: '%s'", valAccount.ErrMessage)
+	}
+}
+
 func TestRegistration(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 
