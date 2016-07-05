@@ -24,6 +24,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	cookiePath = "/"
+	cookieName = "session"
+)
+
 // OAuthInfo provides information about an authorized access token
 type OAuthInfo struct {
 	Match util.StringSet
@@ -158,25 +163,37 @@ func LoginPage(w http.ResponseWriter, r *http.Request) {
 		PrintErrorHTML(w, r, "Query parameter 'request_id' was missing", http.StatusBadRequest)
 		return
 	}
-	token := query.Get("request_id")
 
-	_, ok := data.GetGrantRequest(token)
+	token := query.Get("request_id")
+	request, ok := data.GetGrantRequest(token)
 	if !ok {
 		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusNotFound)
 		return
 	}
 
+	// if there is a session cookie redirect to Login
+	cookie, err := r.Cookie(cookieName)
+	if err == nil {
+		_, ok := data.GetSession(cookie.Value)
+		if ok {
+			w.Header().Add("Cache-Control", "no-store")
+			http.Redirect(w, r, "/oauth/login?request_id="+request.Token, http.StatusFound)
+			return
+		}
+	}
+
+	// show login page
 	tmpl := conf.MakeTemplate("login.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
-	err := tmpl.ExecuteTemplate(w, "layout", &loginData{RequestID: token})
+	err = tmpl.ExecuteTemplate(w, "layout", &loginData{RequestID: token})
 	if err != nil {
 		panic(err)
 	}
 }
 
-// Login validates user credentials.
-func Login(w http.ResponseWriter, r *http.Request) {
+// LoginWithCredentials validates user credentials.
+func LoginWithCredentials(w http.ResponseWriter, r *http.Request) {
 	param := &loginData{}
 	err := util.ReadFormIntoStruct(r, param, false)
 	if err != nil {
@@ -206,11 +223,93 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// associate grant request with account
 	request.AccountUUID = sql.NullString{String: account.UUID, Valid: true}
 	err = request.Update()
 	if err != nil {
 		panic(err)
 	}
+
+	// create session
+	session := &data.Session{AccountUUID: account.UUID}
+	err = session.Create()
+	if err != nil {
+		panic(err)
+	}
+
+	cookie := &http.Cookie{
+		Name:    cookieName,
+		Value:   session.Token,
+		Path:    cookiePath,
+		Expires: session.Expires,
+	}
+	http.SetCookie(w, cookie)
+
+	// if approved finish the grant request, otherwise redirect to approve page
+	if request.IsApproved() {
+		if request.GrantType == "code" {
+			finishCodeRequest(w, r, request)
+		} else {
+			finishImplicitRequest(w, r, request)
+		}
+	} else {
+		w.Header().Add("Cache-Control", "no-store")
+		http.Redirect(w, r, "/oauth/approve_page?request_id="+request.Token, http.StatusFound)
+	}
+}
+
+// LoginWithSession validates session cookie.
+func LoginWithSession(w http.ResponseWriter, r *http.Request) {
+	requestId := r.URL.Query().Get("request_id")
+	if requestId == "" {
+		PrintErrorHTML(w, r, "Query parameter 'request_id' was missing", http.StatusBadRequest)
+		return
+	}
+
+	// look for existing grant request
+	request, ok := data.GetGrantRequest(requestId)
+	if !ok {
+		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusNotFound)
+		return
+	}
+
+	// get session cookie
+	cookie, err := r.Cookie(cookieName)
+	if err != nil {
+		PrintErrorHTML(w, r, "No session cookie provided", http.StatusBadRequest)
+		return
+	}
+
+	// validate cookie
+	session, ok := data.GetSession(cookie.Value)
+	if !ok {
+		PrintErrorHTML(w, r, "Invalid session cookie", http.StatusNotFound)
+		return
+	}
+	err = session.UpdateExpirationTime()
+	if err != nil {
+		panic(err)
+	}
+
+	account, ok := data.GetAccount(session.AccountUUID)
+	if !ok {
+		panic("Session has not account")
+	}
+
+	// associate grant request with account
+	request.AccountUUID = sql.NullString{String: account.UUID, Valid: true}
+	err = request.Update()
+	if err != nil {
+		panic(err)
+	}
+
+	cookie = &http.Cookie{
+		Name:    cookieName,
+		Value:   session.Token,
+		Path:    cookiePath,
+		Expires: session.Expires,
+	}
+	http.SetCookie(w, cookie)
 
 	// if approved finish the grant request, otherwise redirect to approve page
 	if request.IsApproved() {

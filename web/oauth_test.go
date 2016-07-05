@@ -21,6 +21,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	sessionCookieBob     = "4KDNO8T0"
+	sessionCookieExpired = "2MFZZUKI"
+)
+
 // InitTestHttpHandler initializes a handler with all registered routes and returns it
 // along with a response recorder.
 func InitTestHttpHandler(t *testing.T) http.Handler {
@@ -206,7 +211,70 @@ func TestLoginPage(t *testing.T) {
 	}
 }
 
-func TestLogin(t *testing.T) {
+func TestLoginWithSession(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	// no request id
+	request, _ := http.NewRequest("GET", "/oauth/login", strings.NewReader(""))
+	request.AddCookie(&http.Cookie{Name: cookieName, Value: sessionCookieBob})
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// wrong request id
+	request, _ = http.NewRequest("GET", "/oauth/login", strings.NewReader(""))
+	request.URL.RawQuery = url.Values{"request_id": []string{"doesnotexist"}}.Encode()
+	request.AddCookie(&http.Cookie{Name: cookieName, Value: sessionCookieBob})
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// no session
+	request, _ = http.NewRequest("GET", "/oauth/login", strings.NewReader(""))
+	request.URL.RawQuery = url.Values{"request_id": []string{"U7JIKKYI"}}.Encode()
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// expired session
+	request, _ = http.NewRequest("GET", "/oauth/login", strings.NewReader(""))
+	request.URL.RawQuery = url.Values{"request_id": []string{"U7JIKKYI"}}.Encode()
+	request.AddCookie(&http.Cookie{Name: cookieName, Value: sessionCookieExpired})
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// all ok
+	request, _ = http.NewRequest("GET", "/oauth/login", strings.NewReader(""))
+	request.URL.RawQuery = url.Values{"request_id": []string{"U7JIKKYI"}}.Encode()
+	request.AddCookie(&http.Cookie{Name: cookieName, Value: sessionCookieBob})
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusFound {
+		t.Error(response)
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
+	}
+	redirect, err := url.Parse(response.Header().Get("Location"))
+	if err != nil {
+		t.Error(err)
+	}
+	if redirect.Path != "/oauth/approve_page" {
+		t.Errorf("Wrong redirect %s", redirect.Path)
+	}
+	if redirect.Query().Get("request_id") == "" {
+		t.Error("Request id not found")
+	}
+}
+
+func TestLoginWithCredentials(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 
 	mkBody := func() *url.Values {

@@ -25,8 +25,8 @@ func TestListSessions(t *testing.T) {
 	InitTestDb(t)
 
 	sessions := ListSessions()
-	if len(sessions) != 1 {
-		t.Error("Exactly one session expected in slice.")
+	if len(sessions) != 2 {
+		t.Error("Exactly two sessions expected in slice.")
 	}
 }
 
