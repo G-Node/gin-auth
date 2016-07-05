@@ -721,13 +721,13 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 
 	err := util.ReadFormIntoStruct(r, account, true)
 	if err != nil {
-		PrintErrorJSON(w, r, err, http.StatusInternalServerError)
+		PrintErrorHTML(w, r, err, http.StatusInternalServerError)
 		return
 	}
 
 	err = util.ReadFormIntoStruct(r, pw, true)
 	if err != nil {
-		PrintErrorJSON(w, r, err, http.StatusInternalServerError)
+		PrintErrorHTML(w, r, err, http.StatusInternalServerError)
 		return
 	}
 
