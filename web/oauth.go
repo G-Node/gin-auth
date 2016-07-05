@@ -689,14 +689,14 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 
 type validateAccount struct {
 	*data.Account
-	HasErr     bool
-	ErrMessage string
+	*util.ValidationError
 }
 
 // RegistrationPage displays entry fields required for the creation of a new gin account
 func RegistrationPage(w http.ResponseWriter, r *http.Request) {
 	valAccount := &validateAccount{}
 	valAccount.Account = &data.Account{}
+	valAccount.ValidationError = &util.ValidationError{}
 
 	tmpl := conf.MakeTemplate("registration.html")
 	w.Header().Add("Cache-Control", "no-store")
@@ -736,10 +736,11 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 	}
 
 	valAccount := &validateAccount{}
+	valAccount.ValidationError = &util.ValidationError{}
 	valAccount.Account = account
 
 	if r.Form.Encode() == "" {
-		fmt.Println("Error: Registration failed due to empty form")
+		valAccount.Message = "Please add all required fields (*)"
 		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
 		if err != nil {
 			panic(err)
@@ -747,8 +748,19 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validateRegistration(valAccount, pw)
-	if valAccount.HasErr {
+	valAccount.ValidationError = valAccount.Account.Validate()
+
+	if valAccount.Message == "" {
+		if pw.Password != pw.PasswordControl {
+			valAccount.FieldErrors["password"] = "Entered password did not match password control"
+			valAccount.Message = "Provided password did not match password control"
+		}
+		if pw.Password == "" || pw.PasswordControl == "" {
+			valAccount.FieldErrors["password"] = "Please enter password and password control"
+			valAccount.Message = "Please enter password and password control"
+		}
+	}
+	if valAccount.Message != "" {
 		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
 		if err != nil {
 			panic(err)
@@ -761,10 +773,9 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 
 	err = account.Create()
 	if err != nil {
-		fmt.Printf("Error: Registration failed due to: '%s'\n", err)
+		fmt.Printf("Error: Registration failed due to error: '%s'\n", err)
 
-		valAccount.HasErr = true
-		valAccount.ErrMessage = "An error occurred during registration."
+		valAccount.Message = "An error occurred during registration."
 		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
 		if err != nil {
 			panic(err)
@@ -775,30 +786,6 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("Registration of user '%s' (%s) successful\n", valAccount.Account.Login, valAccount.Account.Email)
 	w.Header().Add("Cache-Control", "no-store")
 	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
-}
-
-func validateRegistration(validate *validateAccount, pw *passwordData) {
-	if pw.Password != pw.PasswordControl {
-		validate.HasErr = true
-		validate.ErrMessage = "Entered password did not match password control"
-	}
-
-	if pw.Password == "" || pw.PasswordControl == "" {
-		validate.HasErr = true
-		validate.ErrMessage = "Please enter a password"
-	}
-	if validate.Login == "" || validate.Email == "" || validate.FirstName == "" ||
-		validate.LastName == "" || validate.Institute == "" || validate.Department == "" ||
-		validate.City == "" || validate.Country == "" {
-
-		validate.HasErr = true
-		validate.ErrMessage = "Please enter all required fields (*)"
-	}
-	_, exists := data.GetAccountByLogin(validate.Login)
-	if exists {
-		validate.HasErr = true
-		validate.ErrMessage = "Please choose a different username"
-	}
 }
 
 // RegisteredPage displays information about how a newly created gin account can be activated.
