@@ -866,7 +866,6 @@ func TestRegistrationPage(t *testing.T) {
 }
 
 func TestRegistration(t *testing.T) {
-	data.InitTestDb(t)
 	handler := InitTestHttpHandler(t)
 
 	const registrationURL = "/oauth/registration"
@@ -875,19 +874,19 @@ func TestRegistration(t *testing.T) {
 
 	body := &url.Values{}
 	body.Add("Title", "Title")
-	body.Add("Firstname", "First Name")
-	body.Add("Middlename", "Middle Name")
-	body.Add("Lastname", "Last Name")
+	body.Add("FirstName", "First Name")
+	body.Add("MiddleName", "Middle Name")
+	body.Add("LastName", "Last Name")
 	body.Add("Login", "tl")
 	body.Add("Email", "testemail@example.com")
-	body.Add("Emailpublic", "on")
+	body.Add("EmailPublic", "on")
 	body.Add("Institute", "Institute")
 	body.Add("Department", "Department")
 	body.Add("City", "City")
 	body.Add("Country", "Country")
-	body.Add("Affiliationpublic", "on")
+	body.Add("AffiliationPublic", "on")
 	body.Add("Password", "pw")
-	body.Add("Passwordcontrol", "pw")
+	body.Add("PasswordControl", "pw")
 
 	// test that a request without a posted form redirects back to registration page
 	request, _ := http.NewRequest("POST", registrationURL, strings.NewReader(""))
