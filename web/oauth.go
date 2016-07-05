@@ -698,6 +698,17 @@ func RegistrationPage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type passwordData struct {
+	Password        string
+	PasswordControl string
+}
+
+type validateAccount struct {
+	*data.Account
+	HasErr     bool
+	ErrMessage string
+}
+
 // Registration parses user entries for a new account. It will redirect back to the
 // entry form, if input is invalid. If the input is correct, it will create a new account,
 // send an e-mail with an activation link and redirect to the the registered page.
@@ -740,6 +751,30 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Registration form was parsed")
 	w.Header().Add("Cache-Control", "no-store")
 	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
+}
+
+func validateRegistration(validate *validateAccount, pw *passwordData) {
+	if pw.Password != pw.PasswordControl {
+		validate.HasErr = true
+		validate.ErrMessage = "Entered password did not match password control"
+	}
+
+	if pw.Password == "" || pw.PasswordControl == "" {
+		validate.HasErr = true
+		validate.ErrMessage = "Please enter a password"
+	}
+	if validate.Login == "" || validate.Email == "" || validate.FirstName == "" ||
+		validate.LastName == "" || validate.Institute == "" || validate.Department == "" ||
+		validate.City == "" || validate.Country == "" {
+
+		validate.HasErr = true
+		validate.ErrMessage = "Please enter all required fields (*)"
+	}
+	_, exists := data.GetAccountByLogin(validate.Login)
+	if exists {
+		validate.HasErr = true
+		validate.ErrMessage = "Please choose a different username"
+	}
 }
 
 // RegisteredPage displays information about how a newly created gin account can be activated.
