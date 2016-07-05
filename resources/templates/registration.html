@@ -3,6 +3,12 @@
 <h1>Register Account</h1>
 <hr><br />
 
+{{ if .HasErr }}
+<div class="alert alert-danger fade in">
+    <strong>Registration warning:</strong> {{ .ErrMessage }}
+</div>
+{{ end }}
+
 <form action="/oauth/registration" method="post" class="form-horizontal">
 
     <h4>User information</h4>

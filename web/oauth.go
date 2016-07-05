@@ -689,10 +689,15 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 
 // RegistrationPage displays entry fields required for the creation of a new gin account
 func RegistrationPage(w http.ResponseWriter, r *http.Request) {
+	parseErr := &struct {
+		HasErr     bool
+		ErrMessage string
+	}{}
+
 	tmpl := conf.MakeTemplate("registration.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
-	err := tmpl.ExecuteTemplate(w, "layout", &struct{}{})
+	err := tmpl.ExecuteTemplate(w, "layout", parseErr)
 	if err != nil {
 		panic(err)
 	}
