@@ -687,17 +687,21 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(response)
 }
 
+type validateAccount struct {
+	*data.Account
+	HasErr     bool
+	ErrMessage string
+}
+
 // RegistrationPage displays entry fields required for the creation of a new gin account
 func RegistrationPage(w http.ResponseWriter, r *http.Request) {
-	parseErr := &struct {
-		HasErr     bool
-		ErrMessage string
-	}{}
+	valAccount := &validateAccount{}
+	valAccount.Account = &data.Account{}
 
 	tmpl := conf.MakeTemplate("registration.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
-	err := tmpl.ExecuteTemplate(w, "layout", parseErr)
+	err := tmpl.ExecuteTemplate(w, "layout", valAccount)
 	if err != nil {
 		panic(err)
 	}
@@ -706,12 +710,6 @@ func RegistrationPage(w http.ResponseWriter, r *http.Request) {
 type passwordData struct {
 	Password        string
 	PasswordControl string
-}
-
-type validateAccount struct {
-	*data.Account
-	HasErr     bool
-	ErrMessage string
 }
 
 // Registration parses user entries for a new account. It will redirect back to the
