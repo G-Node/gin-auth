@@ -718,11 +718,12 @@ type validateAccount struct {
 // entry form, if input is invalid. If the input is correct, it will create a new account,
 // send an e-mail with an activation link and redirect to the the registered page.
 func Registration(w http.ResponseWriter, r *http.Request) {
+	tmpl := conf.MakeTemplate("registration.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+
 	account := &data.Account{}
-	pw := &struct {
-		Password        string
-		PasswordControl string
-	}{}
+	pw := &passwordData{}
 
 	err := util.ReadFormIntoStruct(r, account, true)
 	if err != nil {
@@ -736,24 +737,44 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	valAccount := &validateAccount{}
+	valAccount.Account = account
+
 	if r.Form.Encode() == "" {
-		fmt.Println("Log: Registration: missing form")
-		w.Header().Add("Cache-Control", "no-store")
-		http.Redirect(w, r, "/oauth/registration_page", http.StatusFound)
+		fmt.Println("Error: Registration failed due to empty form")
+		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
+		if err != nil {
+			panic(err)
+		}
 		return
 	}
 
-	account.SetPassword(pw.Password)
+	validateRegistration(valAccount, pw)
+	if valAccount.HasErr {
+		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	valAccount.Account.SetPassword(pw.Password)
+	valAccount.Account.ActivationCode = sql.NullString{String: util.RandomToken(), Valid: true}
 
 	err = account.Create()
 	if err != nil {
-		fmt.Printf("Log: Registration: the following error occurred: '%s'\n", err)
-		w.Header().Add("Cache-Control", "no-store")
-		http.Redirect(w, r, "/oauth/registration_page", http.StatusFound)
+		fmt.Printf("Error: Registration failed due to: '%s'\n", err)
+
+		valAccount.HasErr = true
+		valAccount.ErrMessage = "An error occurred during registration."
+		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
+		if err != nil {
+			panic(err)
+		}
 		return
 	}
 
-	fmt.Println("Registration form was parsed")
+	fmt.Printf("Registration of user '%s' (%s) successful\n", valAccount.Account.Login, valAccount.Account.Email)
 	w.Header().Add("Cache-Control", "no-store")
 	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
 }
