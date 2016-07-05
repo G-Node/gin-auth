@@ -49,6 +49,7 @@ INSERT INTO GrantRequests (token, grantType, state, code, scopeRequested, redire
 DELETE FROM Sessions;
 INSERT INTO Sessions (token, expires, accountUUID, createdAt, updatedAt) VALUES
   ('DNM5RS3C', 'tomorrow', 'bf431618-f696-4dca-a95d-882618ce4ef9', now(), now()),
+  ('4KDNO8T0', 'tomorrow', '51f5ac36-d332-4889-8023-6e033fcd8e17', now(), now()),
   ('2MFZZUKI', 'yesterday', '51f5ac36-d332-4889-8023-6e033fcd8e17', 'yesterday', 'yesterday');
 
 DELETE FROM AccessTokens;
