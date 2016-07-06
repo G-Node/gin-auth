@@ -217,40 +217,31 @@ func (acc *Account) Update() error {
 // A given login must not exist in the database.
 func (acc *Account) Validate() *util.ValidationError {
 	valErr := &util.ValidationError{FieldErrors: make(map[string]string)}
-	const valMessage = "Registration requirements are not met"
 
 	if acc.Login == "" {
 		valErr.FieldErrors["login"] = "Please add login"
-		valErr.Message = valMessage
 	}
-	if acc.Email == "" {
-		valErr.FieldErrors["email"] = "Please add email"
-		valErr.Message = valMessage
+	if !(len(acc.Email) > 2) || !strings.Contains(acc.Email, "@") {
+		valErr.FieldErrors["email"] = "Please add a valid e-mail address"
 	}
 	if acc.FirstName == "" {
 		valErr.FieldErrors["first_name"] = "Please add first name"
-		valErr.Message = valMessage
 	}
 	if acc.LastName == "" {
 		valErr.FieldErrors["last_name"] = "Please add last name"
-		valErr.Message = valMessage
 	}
 
 	if acc.Institute == "" {
 		valErr.FieldErrors["institute"] = "Please add institute"
-		valErr.Message = valMessage
 	}
 	if acc.Department == "" {
 		valErr.FieldErrors["department"] = "Please add department"
-		valErr.Message = valMessage
 	}
 	if acc.City == "" {
 		valErr.FieldErrors["city"] = "Please add city"
-		valErr.Message = valMessage
 	}
 	if acc.Country == "" {
 		valErr.FieldErrors["country"] = "Please add country"
-		valErr.Message = valMessage
 	}
 
 	exists := &struct {
@@ -268,11 +259,13 @@ func (acc *Account) Validate() *util.ValidationError {
 	}
 	if exists.Login {
 		valErr.FieldErrors["login"] = "Please choose a different login"
-		valErr.Message = valMessage
 	}
 	if exists.Email {
 		valErr.FieldErrors["email"] = "Please choose a different email address"
-		valErr.Message = valMessage
+	}
+
+	if len(valErr.FieldErrors) > 0 {
+		valErr.Message = "Registration requirements are not met"
 	}
 
 	return valErr

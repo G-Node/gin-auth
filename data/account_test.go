@@ -341,12 +341,24 @@ func TestValidate(t *testing.T) {
 	// Test existing login
 	valErr = account.Validate()
 	if valErr.FieldErrors["login"] != "Please choose a different login" {
-		t.Errorf("Expected invalid login error, but got: '%s'", valErr.FieldErrors["login"])
+		t.Errorf("Expected existing login error, but got: '%s'", valErr.FieldErrors["login"])
 	}
 
 	// Test existing email
 	valErr = account.Validate()
 	if valErr.FieldErrors["email"] != "Please choose a different email address" {
+		t.Errorf("Expected existing email error, but got: '%s'", valErr.FieldErrors["email"])
+	}
+
+	// Test invalid email
+	account.Email = "typoemail"
+	valErr = account.Validate()
+	if valErr.FieldErrors["email"] != "Please add a valid e-mail address" {
+		t.Errorf("Expected invalid email error, but got: '%s'", valErr.FieldErrors["email"])
+	}
+	account.Email = "t@"
+	valErr = account.Validate()
+	if valErr.FieldErrors["email"] != "Please add a valid e-mail address" {
 		t.Errorf("Expected invalid email error, but got: '%s'", valErr.FieldErrors["email"])
 	}
 
@@ -361,7 +373,7 @@ func TestValidate(t *testing.T) {
 	account.Login = "noone"
 	account.Email = ""
 	valErr = account.Validate()
-	if valErr.FieldErrors["email"] != "Please add email" {
+	if valErr.FieldErrors["email"] != "Please add a valid e-mail address" {
 		t.Errorf("Expected missing email error, but got: '%s'", valErr.FieldErrors["email"])
 	}
 
