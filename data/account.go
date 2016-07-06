@@ -101,34 +101,6 @@ func GetAccountByLogin(login string) (*Account, bool) {
 	return account, err == nil
 }
 
-// GetAnyAccountByLogin returns an account with matching login.
-// Returns false if no account with such login exists.
-func GetAnyAccountByLogin(login string) (*Account, bool) {
-	const q = `SELECT * FROM Accounts a WHERE a.login=$1`
-
-	account := &Account{}
-	err := database.Get(account, q, login)
-	if err != nil && err != sql.ErrNoRows {
-		panic(err)
-	}
-
-	return account, err == nil
-}
-
-// GetAnyAccountByEmail returns an account with matching email.
-// Returns false if no account with such email exists.
-func GetAnyAccountByEmail(email string) (*Account, bool) {
-	const q = `SELECT * FROM Accounts a WHERE a.email=$1`
-
-	account := &Account{}
-	err := database.Get(account, q, email)
-	if err != nil && err != sql.ErrNoRows {
-		panic(err)
-	}
-
-	return account, err == nil
-}
-
 // GetAccountByActivationCode returns an account with matching activation code.
 // Returns false if no account with the activation code can be found.
 func GetAccountByActivationCode(code string) (*Account, bool) {
@@ -280,13 +252,25 @@ func (acc *Account) Validate() *util.ValidationError {
 		valErr.FieldErrors["country"] = "Please add country"
 		valErr.Message = valMessage
 	}
-	_, exists := GetAnyAccountByLogin(acc.Login)
-	if exists {
+
+	exists := &struct {
+		Login bool
+		Email bool
+	}{}
+
+	const q = `SELECT
+	             (SELECT COUNT(*) FROM accounts WHERE login = $1) <> 0 AS login,
+	             (SELECT COUNT(*) FROM accounts WHERE email = $2) <> 0 AS email`
+
+	err := database.Get(exists, q, acc.Login, acc.Email)
+	if err != nil {
+		panic(err)
+	}
+	if exists.Login {
 		valErr.FieldErrors["login"] = "Please choose a different login"
 		valErr.Message = valMessage
 	}
-	_, exists = GetAnyAccountByEmail(acc.Email)
-	if exists {
+	if exists.Email {
 		valErr.FieldErrors["email"] = "Please choose a different email address"
 		valErr.Message = valMessage
 	}

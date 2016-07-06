@@ -85,61 +85,6 @@ func TestGetAccountByLogin(t *testing.T) {
 	}
 }
 
-func TestGetAnyAccountByLogin(t *testing.T) {
-	defer util.FailOnPanic(t)
-	InitTestDb(t)
-
-	acc, ok := GetAnyAccountByLogin("bob")
-	if !ok {
-		t.Error("Account does not exist")
-	}
-	if acc.UUID != uuidBob {
-		t.Errorf("UUID was expected to be '%s'", uuidBob)
-	}
-
-	_, ok = GetAnyAccountByLogin("doesNotExist")
-	if ok {
-		t.Error("Account should not exist")
-	}
-
-	// Test whole barrage of inactive accounts
-	inactiveLogin := []string{"inact_log1", "inact_log2", "inact_log3", "inact_log4", "inact_log5", "inact_log6"}
-	for _, v := range inactiveLogin {
-		_, ok = GetAnyAccountByLogin(v)
-		if !ok {
-			t.Errorf("Account with login '%s' should exist", v)
-		}
-	}
-}
-
-func TestGetAnyAccountByEmail(t *testing.T) {
-	defer util.FailOnPanic(t)
-	InitTestDb(t)
-
-	acc, ok := GetAnyAccountByEmail("bob@foo.com")
-	if !ok {
-		t.Error("Account does not exist")
-	}
-	if acc.UUID != uuidBob {
-		t.Errorf("UUID was expected to be '%s'", uuidBob)
-	}
-
-	_, ok = GetAnyAccountByEmail("doesNotExist")
-	if ok {
-		t.Error("Account should not exist")
-	}
-
-	// Test whole barrage of inactive accounts
-	inactive := []string{"email1@example.com", "email2@example.com", "email3@example.com",
-		"email4@example.com", "email5@example.com", "email6@example.com"}
-	for _, v := range inactive {
-		_, ok = GetAnyAccountByEmail(v)
-		if !ok {
-			t.Errorf("Account with email '%s' should exist", v)
-		}
-	}
-}
-
 func TestGetAccountByActivationCode(t *testing.T) {
 	defer util.FailOnPanic(t)
 	InitTestDb(t)
