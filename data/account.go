@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/G-Node/gin-auth/conf"
+	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -208,6 +209,55 @@ func (acc *Account) Update() error {
 
 	// TODO There is a lot of room for improvement here concerning errors about constraints for certain fields
 	return err
+}
+
+// Validate the content of an Account.
+// First name, last name, login, email, institute, department, city and country must not be empty.
+// A given login must not exist in the database.
+func (acc *Account) Validate() *util.ValidationError {
+	valErr := &util.ValidationError{FieldErrors: make(map[string]string)}
+	const valMessage = "Registration requirements are not met"
+
+	if acc.Login == "" {
+		valErr.FieldErrors["login"] = "Please add login"
+		valErr.Message = valMessage
+	}
+	if acc.Email == "" {
+		valErr.FieldErrors["email"] = "Please add email"
+		valErr.Message = valMessage
+	}
+	if acc.FirstName == "" {
+		valErr.FieldErrors["first_name"] = "Please add first name"
+		valErr.Message = valMessage
+	}
+	if acc.LastName == "" {
+		valErr.FieldErrors["last_name"] = "Please add last name"
+		valErr.Message = valMessage
+	}
+
+	if acc.Institute == "" {
+		valErr.FieldErrors["institute"] = "Please add institute"
+		valErr.Message = valMessage
+	}
+	if acc.Department == "" {
+		valErr.FieldErrors["department"] = "Please add department"
+		valErr.Message = valMessage
+	}
+	if acc.City == "" {
+		valErr.FieldErrors["city"] = "Please add city"
+		valErr.Message = valMessage
+	}
+	if acc.Country == "" {
+		valErr.FieldErrors["country"] = "Please add country"
+		valErr.Message = valMessage
+	}
+	_, exists := GetAccountByLogin(acc.Login)
+	if exists {
+		valErr.FieldErrors["login"] = "Please choose a different username"
+		valErr.Message = valMessage
+	}
+
+	return valErr
 }
 
 type jsonAccount struct {

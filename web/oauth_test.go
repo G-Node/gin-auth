@@ -866,28 +866,26 @@ func TestRegistrationPage(t *testing.T) {
 }
 
 func TestRegistration(t *testing.T) {
-	data.InitTestDb(t)
 	handler := InitTestHttpHandler(t)
 
 	const registrationURL = "/oauth/registration"
-	const registrationPageURL = "/oauth/registration_page"
 	const registeredPageURL = "/oauth/registered_page"
 
 	body := &url.Values{}
 	body.Add("Title", "Title")
-	body.Add("Firstname", "First Name")
-	body.Add("Middlename", "Middle Name")
-	body.Add("Lastname", "Last Name")
+	body.Add("FirstName", "First Name")
+	body.Add("MiddleName", "Middle Name")
+	body.Add("LastName", "Last Name")
 	body.Add("Login", "tl")
 	body.Add("Email", "testemail@example.com")
-	body.Add("Emailpublic", "on")
+	body.Add("IsEmailPublic", "true")
 	body.Add("Institute", "Institute")
 	body.Add("Department", "Department")
 	body.Add("City", "City")
 	body.Add("Country", "Country")
-	body.Add("Affiliationpublic", "on")
+	body.Add("IsAffiliationPublic", "true")
 	body.Add("Password", "pw")
-	body.Add("Passwordcontrol", "pw")
+	body.Add("PasswordControl", "pw")
 
 	// test that a request without a posted form redirects back to registration page
 	request, _ := http.NewRequest("POST", registrationURL, strings.NewReader(""))
@@ -898,11 +896,10 @@ func TestRegistration(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if redirect.String() != registrationPageURL {
-		t.Errorf("Expected to be redirected to '%s', but was '%s'", registrationPageURL, redirect.String())
+	if redirect.String() != "" {
+		t.Errorf("Expected empty location header, but was '%s'", redirect.String())
 	}
 
-	// TODO update test as function progresses
 	// test that a request with correct form content redirects to registered_page
 	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")

@@ -3,6 +3,12 @@
 <h1>Register Account</h1>
 <hr><br />
 
+{{ if .ValidationError.Message }}
+<div class="alert alert-danger fade in">
+    <strong>{{ .ValidationError.Message }}</strong>
+</div>
+{{ end }}
+
 <form action="/oauth/registration" method="post" class="form-horizontal">
 
     <h4>User information</h4>
@@ -10,43 +16,55 @@
     <div class="form-group">
         <label for="reg-title" class="col-sm-3 control-label">Title</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-title" name="title" placeholder="Title">
+            <input type="text" class="form-control" id="reg-title" name="title" placeholder="Title" value="{{ .Title.String }}">
         </div>
     </div>
-    <div class="form-group">
-        <label for="reg-fn" class="col-sm-3 control-label">First name</label>
+    <div class="form-group {{ if .FieldErrors.first_name }}has-error{{ end }}">
+        <label for="reg-fn" class="col-sm-3 control-label">First name *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-fn" name="first_name" placeholder="First Name">
+            <input type="text" class="form-control" id="reg-fn" name="first_name" placeholder="First Name" value="{{ .FirstName }}">
+            {{ if .FieldErrors.first_name }}
+                <span class="help-block">{{ .FieldErrors.first_name }}</span>
+            {{ end }}
         </div>
     </div>
     <div class="form-group">
         <label for="reg-mn" class="col-sm-3 control-label">Middle name</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-mn" name="middle_name" placeholder="Middle Name">
+            <input type="text" class="form-control" id="reg-mn" name="middle_name" placeholder="Middle Name" value="{{ .MiddleName.String }}">
         </div>
     </div>
-    <div class="form-group">
-        <label for="reg-ln" class="col-sm-3 control-label">Last name</label>
+    <div class="form-group {{ if .FieldErrors.last_name }}has-error{{ end }}">
+        <label for="reg-ln" class="col-sm-3 control-label">Last name *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-ln" name="last_name" placeholder="Last Name">
+            <input type="text" class="form-control" id="reg-ln" name="last_name" placeholder="Last Name" value="{{ .LastName }}">
+            {{ if .FieldErrors.last_name }}
+                <span class="help-block">{{ .FieldErrors.last_name }}</span>
+            {{ end }}
         </div>
     </div>
-    <div class="form-group">
-        <label for="reg-login" class="col-sm-3 control-label">Login</label>
+    <div class="form-group {{ if .FieldErrors.login }}has-error{{ end }}">
+        <label for="reg-login" class="col-sm-3 control-label">Login *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-login" name="login" placeholder="Login, enter 'test'">
+            <input type="text" class="form-control" id="reg-login" name="login" placeholder="Login" value="{{ .Login }}">
+            {{ if .FieldErrors.login }}
+                <span class="help-block">{{ .FieldErrors.login }}</span>
+            {{ end }}
         </div>
     </div>
-    <div class="form-group">
-        <label for="reg-email" class="col-sm-3 control-label">e-mail address</label>
+    <div class="form-group {{ if .FieldErrors.email }}has-error{{ end }}">
+        <label for="reg-email" class="col-sm-3 control-label">e-mail address *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-email" name="email" placeholder="e-mail address">
+            <input type="text" class="form-control" id="reg-email" name="email" placeholder="e-mail address" value="{{ .Email }}">
+            {{ if .FieldErrors.email }}
+                <span class="help-block">{{ .FieldErrors.email }}</span>
+            {{ end }}
         </div>
     </div>
     <div class="form-group">
         <div class="col-sm-offset-3 col-sm-9 checkbox">
             <label for="reg-email-public">
-                <input type="checkbox" id="reg-email-public" name="email_public" value="true">
+                <input type="checkbox" id="reg-email-public" name="is_email_public" value="true">
                 Make e-mail public
             </label>
         </div>
@@ -55,34 +73,47 @@
 
     <h4>Affiliation</h4>
     <hr>
-    <div class="form-group">
-        <label for="reg-institute" class="col-sm-3 control-label">Institute</label>
+    <div class="form-group {{ if .FieldErrors.institute }}has-error{{ end }}">
+        <label for="reg-institute" class="col-sm-3 control-label">Institute *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-institute" name="institute" placeholder="Institute">
+            <input type="text" class="form-control" id="reg-institute" name="institute" placeholder="Institute" value="{{ .Institute }}">
+            {{ if .FieldErrors.institute }}
+                <span class="help-block">{{ .FieldErrors.institute }}</span>
+            {{ end }}
         </div>
     </div>
-    <div class="form-group">
-        <label for="reg-department" class="col-sm-3 control-label">Department</label>
+
+    <div class="form-group {{ if .FieldErrors.department }}has-error{{ end }}">
+        <label for="reg-department" class="col-sm-3 control-label">Department *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-department" name="department" placeholder="Department">
+            <input type="text" class="form-control" id="reg-department" name="department" placeholder="Department" value="{{ .Department }}">
+            {{ if .FieldErrors.department }}
+                <span class="help-block">{{ .FieldErrors.department }}</span>
+            {{ end }}
         </div>
     </div>
-    <div class="form-group">
-        <label for="reg-city" class="col-sm-3 control-label">City</label>
+    <div class="form-group {{ if .FieldErrors.city }}has-error{{ end }}">
+        <label for="reg-city" class="col-sm-3 control-label">City *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-city" name="city" placeholder="City">
+            <input type="text" class="form-control" id="reg-city" name="city" placeholder="City" value="{{ .City }}">
+            {{ if .FieldErrors.city }}
+                <span class="help-block">{{ .FieldErrors.city }}</span>
+            {{ end }}
         </div>
     </div>
-    <div class="form-group">
-        <label for="reg-country" class="col-sm-3 control-label">Country</label>
+    <div class="form-group {{ if .FieldErrors.country }}has-error{{ end }}">
+        <label for="reg-country" class="col-sm-3 control-label">Country *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-country" name="country" placeholder="Country">
+            <input type="text" class="form-control" id="reg-country" name="country" placeholder="Country" value="{{ .Country }}">
+            {{ if .FieldErrors.country }}
+                <span class="help-block">{{ .FieldErrors.country }}</span>
+            {{ end }}
         </div>
     </div>
     <div class="form-group">
         <div class="col-sm-offset-3 col-sm-9 checkbox">
             <label for="reg-affiliation-public">
-                <input type="checkbox" id="reg-affiliation-public" name="affiliation_public" value="true">
+                <input type="checkbox" id="reg-affiliation-public" name="is_affiliation_public"  value="true">
                 Make affiliation public
             </label>
         </div>
@@ -91,16 +122,19 @@
 
     <h4>Password</h4>
     <hr>
-    <div class="form-group">
-        <label for="reg-password-input" class="col-sm-3 control-label">Password</label>
+    <div class="form-group {{ if .FieldErrors.password }}has-error{{ end }}">
+        <label for="reg-password-input" class="col-sm-3 control-label">Password *</label>
         <div class="col-sm-9">
             <input type="password" class="form-control" id="reg-password-input" name="password" placeholder="Password">
         </div>
     </div>
-    <div class="form-group">
-        <label for="reg-password-control" class="col-sm-3 control-label">Re-enter password</label>
+    <div class="form-group {{ if .FieldErrors.password }}has-error{{ end }}">
+        <label for="reg-password-control" class="col-sm-3 control-label">Re-enter password *</label>
         <div class="col-sm-9">
             <input type="password" class="form-control" id="reg-password-control" name="password_control" placeholder="Password">
+            {{ if .FieldErrors.password }}
+                <span class="help-block">{{ .FieldErrors.password }}</span>
+            {{ end }}
         </div>
     </div>
     <div class="form-group">

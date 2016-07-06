@@ -687,76 +687,103 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 	enc.Encode(response)
 }
 
+type validateAccount struct {
+	*data.Account
+	*util.ValidationError
+}
+
 // RegistrationPage displays entry fields required for the creation of a new gin account
 func RegistrationPage(w http.ResponseWriter, r *http.Request) {
+	valAccount := &validateAccount{}
+	valAccount.Account = &data.Account{}
+	valAccount.ValidationError = &util.ValidationError{}
+
 	tmpl := conf.MakeTemplate("registration.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
-	err := tmpl.ExecuteTemplate(w, "layout", &struct{}{})
+	err := tmpl.ExecuteTemplate(w, "layout", valAccount)
 	if err != nil {
 		panic(err)
 	}
+}
+
+type passwordData struct {
+	Password        string
+	PasswordControl string
 }
 
 // Registration parses user entries for a new account. It will redirect back to the
 // entry form, if input is invalid. If the input is correct, it will create a new account,
 // send an e-mail with an activation link and redirect to the the registered page.
 func Registration(w http.ResponseWriter, r *http.Request) {
-	param := &struct {
-		Title             sql.NullString
-		FirstName         string
-		MiddleName        sql.NullString
-		LastName          string
-		Login             string
-		Email             string
-		EmailPublic       bool
-		Institute         string
-		Department        string
-		City              string
-		Country           string
-		AffiliationPublic bool
-		Password          string
-		PasswordControl   string
-	}{}
-
-	err := util.ReadFormIntoStruct(r, param, true)
-	if err != nil {
-		PrintErrorJSON(w, r, err, http.StatusInternalServerError)
-		return
-	}
-	if r.Form.Encode() == "" {
-		fmt.Println("Log: Registration: missing form")
-		w.Header().Add("Cache-Control", "no-store")
-		http.Redirect(w, r, "/oauth/registration_page", http.StatusFound)
-		return
-	}
+	tmpl := conf.MakeTemplate("registration.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
 
 	account := &data.Account{}
+	pw := &passwordData{}
 
-	account.Title = param.Title
-	account.FirstName = param.FirstName
-	account.MiddleName = param.MiddleName
-	account.LastName = param.LastName
-	account.Login = param.Login
-	account.Email = param.Email
-	account.IsEmailPublic = param.EmailPublic
-	account.Institute = param.Institute
-	account.Department = param.Department
-	account.City = param.City
-	account.Country = param.Country
-	account.IsAffiliationPublic = param.AffiliationPublic
+	err := util.ReadFormIntoStruct(r, account, true)
+	if err != nil {
+		PrintErrorHTML(w, r, err, http.StatusInternalServerError)
+		return
+	}
 
-	account.SetPassword(param.Password)
+	err = util.ReadFormIntoStruct(r, pw, true)
+	if err != nil {
+		PrintErrorHTML(w, r, err, http.StatusInternalServerError)
+		return
+	}
+
+	valAccount := &validateAccount{}
+	valAccount.ValidationError = &util.ValidationError{}
+	valAccount.Account = account
+
+	if r.Form.Encode() == "" {
+		valAccount.Message = "Please add all required fields (*)"
+		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	valAccount.ValidationError = valAccount.Account.Validate()
+
+	if valAccount.Message == "" {
+		if pw.Password != pw.PasswordControl {
+			valAccount.FieldErrors["password"] = "Entered password did not match password control"
+			valAccount.Message = "Provided password did not match password control"
+		}
+		if pw.Password == "" || pw.PasswordControl == "" {
+			valAccount.FieldErrors["password"] = "Please enter password and password control"
+			valAccount.Message = "Please enter password and password control"
+		}
+	}
+	if valAccount.Message != "" {
+		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	valAccount.Account.SetPassword(pw.Password)
+	valAccount.Account.ActivationCode = sql.NullString{String: util.RandomToken(), Valid: true}
 
 	err = account.Create()
 	if err != nil {
-		fmt.Printf("Log: Registration: the following error occurred: '%s'\n", err)
-		w.Header().Add("Cache-Control", "no-store")
-		http.Redirect(w, r, "/oauth/registration_page", http.StatusFound)
+		fmt.Printf("Error: Registration failed due to error: '%s'\n", err)
+
+		valAccount.Message = "An error occurred during registration."
+		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
+		if err != nil {
+			panic(err)
+		}
 		return
 	}
 
-	fmt.Println("Registration form was parsed")
+	fmt.Printf("Registration of user '%s' (%s) successful\n", valAccount.Account.Login, valAccount.Account.Email)
 	w.Header().Add("Cache-Control", "no-store")
 	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
 }
