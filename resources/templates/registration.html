@@ -16,7 +16,7 @@
     <div class="form-group {{ if .FieldErrors.title }}has-error{{ end }}">
         <label for="reg-title" class="col-sm-3 control-label">Title</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-title" name="title" placeholder="Title" value="{{ .Title.String }}">
+            <input type="text" class="form-control" id="reg-title" name="title" placeholder="Title" value="{{ .Title.String }}" maxlength="512">
             {{ if .FieldErrors.title }}
                 <span class="help-block">{{ .FieldErrors.title }}</span>
             {{ end }}
@@ -25,7 +25,7 @@
     <div class="form-group {{ if .FieldErrors.first_name }}has-error{{ end }}">
         <label for="reg-fn" class="col-sm-3 control-label">First name *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-fn" name="first_name" placeholder="First Name" value="{{ .FirstName }}">
+            <input type="text" class="form-control" id="reg-fn" name="first_name" placeholder="First Name" value="{{ .FirstName }}" maxlength="512">
             {{ if .FieldErrors.first_name }}
                 <span class="help-block">{{ .FieldErrors.first_name }}</span>
             {{ end }}
@@ -34,7 +34,7 @@
     <div class="form-group {{ if .FieldErrors.middle_name }}has-error{{ end }}">
         <label for="reg-mn" class="col-sm-3 control-label">Middle name</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-mn" name="middle_name" placeholder="Middle Name" value="{{ .MiddleName.String }}">
+            <input type="text" class="form-control" id="reg-mn" name="middle_name" placeholder="Middle Name" value="{{ .MiddleName.String }}" maxlength="512">
             {{ if .FieldErrors.middle_name }}
                 <span class="help-block">{{ .FieldErrors.middle_name }}</span>
             {{ end }}
@@ -43,7 +43,7 @@
     <div class="form-group {{ if .FieldErrors.last_name }}has-error{{ end }}">
         <label for="reg-ln" class="col-sm-3 control-label">Last name *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-ln" name="last_name" placeholder="Last Name" value="{{ .LastName }}">
+            <input type="text" class="form-control" id="reg-ln" name="last_name" placeholder="Last Name" value="{{ .LastName }}" maxlength="512">
             {{ if .FieldErrors.last_name }}
                 <span class="help-block">{{ .FieldErrors.last_name }}</span>
             {{ end }}
@@ -52,7 +52,7 @@
     <div class="form-group {{ if .FieldErrors.login }}has-error{{ end }}">
         <label for="reg-login" class="col-sm-3 control-label">Login *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-login" name="login" placeholder="Login" value="{{ .Login }}">
+            <input type="text" class="form-control" id="reg-login" name="login" placeholder="Login" value="{{ .Login }}" maxlength="512">
             {{ if .FieldErrors.login }}
                 <span class="help-block">{{ .FieldErrors.login }}</span>
             {{ end }}
@@ -61,7 +61,7 @@
     <div class="form-group {{ if .FieldErrors.email }}has-error{{ end }}">
         <label for="reg-email" class="col-sm-3 control-label">e-mail address *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-email" name="email" placeholder="e-mail address" value="{{ .Email }}">
+            <input type="text" class="form-control" id="reg-email" name="email" placeholder="e-mail address" value="{{ .Email }}" maxlength="512">
             <span class="help-block">Note: A valid e-mail address is required to finish the registration process.</span>
         </div>
     </div>
@@ -80,7 +80,7 @@
     <div class="form-group {{ if .FieldErrors.institute }}has-error{{ end }}">
         <label for="reg-institute" class="col-sm-3 control-label">Institute *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-institute" name="institute" placeholder="Institute" value="{{ .Institute }}">
+            <input type="text" class="form-control" id="reg-institute" name="institute" placeholder="Institute" value="{{ .Institute }}" maxlength="512">
             {{ if .FieldErrors.institute }}
                 <span class="help-block">{{ .FieldErrors.institute }}</span>
             {{ end }}
@@ -90,7 +90,7 @@
     <div class="form-group {{ if .FieldErrors.department }}has-error{{ end }}">
         <label for="reg-department" class="col-sm-3 control-label">Department *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-department" name="department" placeholder="Department" value="{{ .Department }}">
+            <input type="text" class="form-control" id="reg-department" name="department" placeholder="Department" value="{{ .Department }}" maxlength="512">
             {{ if .FieldErrors.department }}
                 <span class="help-block">{{ .FieldErrors.department }}</span>
             {{ end }}
@@ -99,7 +99,7 @@
     <div class="form-group {{ if .FieldErrors.city }}has-error{{ end }}">
         <label for="reg-city" class="col-sm-3 control-label">City *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-city" name="city" placeholder="City" value="{{ .City }}">
+            <input type="text" class="form-control" id="reg-city" name="city" placeholder="City" value="{{ .City }}" maxlength="512">
             {{ if .FieldErrors.city }}
                 <span class="help-block">{{ .FieldErrors.city }}</span>
             {{ end }}
@@ -108,7 +108,7 @@
     <div class="form-group {{ if .FieldErrors.country }}has-error{{ end }}">
         <label for="reg-country" class="col-sm-3 control-label">Country *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-country" name="country" placeholder="Country" value="{{ .Country }}">
+            <input type="text" class="form-control" id="reg-country" name="country" placeholder="Country" value="{{ .Country }}" maxlength="512">
             {{ if .FieldErrors.country }}
                 <span class="help-block">{{ .FieldErrors.country }}</span>
             {{ end }}
@@ -129,13 +129,13 @@
     <div class="form-group {{ if .FieldErrors.password }}has-error{{ end }}">
         <label for="reg-password-input" class="col-sm-3 control-label">Password *</label>
         <div class="col-sm-9">
-            <input type="password" class="form-control" id="reg-password-input" name="password" placeholder="Password">
+            <input type="password" class="form-control" id="reg-password-input" name="password" placeholder="Password" maxlength="512">
         </div>
     </div>
     <div class="form-group {{ if .FieldErrors.password }}has-error{{ end }}">
         <label for="reg-password-control" class="col-sm-3 control-label">Re-enter password *</label>
         <div class="col-sm-9">
-            <input type="password" class="form-control" id="reg-password-control" name="password_control" placeholder="Password">
+            <input type="password" class="form-control" id="reg-password-control" name="password_control" placeholder="Password" maxlength="512">
             {{ if .FieldErrors.password }}
                 <span class="help-block">{{ .FieldErrors.password }}</span>
             {{ end }}
