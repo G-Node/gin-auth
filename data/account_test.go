@@ -130,12 +130,12 @@ func TestGetAnyAccountByEmail(t *testing.T) {
 	}
 
 	// Test whole barrage of inactive accounts
-	inactiveLogin := []string{"email1@example.com", "email2@example.com", "email3@example.com",
+	inactive := []string{"email1@example.com", "email2@example.com", "email3@example.com",
 		"email4@example.com", "email5@example.com", "email6@example.com"}
-	for _, v := range inactiveLogin {
+	for _, v := range inactive {
 		_, ok = GetAnyAccountByEmail(v)
 		if !ok {
-			t.Errorf("Account with login '%s' should exist", v)
+			t.Errorf("Account with email '%s' should exist", v)
 		}
 	}
 }
