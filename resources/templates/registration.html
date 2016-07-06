@@ -62,7 +62,7 @@
     <div class="form-group">
         <div class="col-sm-offset-3 col-sm-9 checkbox">
             <label for="reg-email-public">
-                <input type="checkbox" id="reg-email-public" name="is_email_public" value="true">
+                <input type="checkbox" id="reg-email-public" name="is_email_public" value="true" {{ if .IsEmailPublic }} checked {{ end }}>
                 Make e-mail public
             </label>
         </div>
@@ -111,7 +111,7 @@
     <div class="form-group">
         <div class="col-sm-offset-3 col-sm-9 checkbox">
             <label for="reg-affiliation-public">
-                <input type="checkbox" id="reg-affiliation-public" name="is_affiliation_public"  value="true">
+                <input type="checkbox" id="reg-affiliation-public" name="is_affiliation_public"  value="true"  {{ if .IsAffiliationPublic }} checked {{ end }}>
                 Make affiliation public
             </label>
         </div>
