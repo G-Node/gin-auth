@@ -762,6 +762,11 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 			valAccount.Message = "Please enter password and password control"
 		}
 	}
+	if len(pw.Password) > 512 || len(pw.PasswordControl) > 512 {
+		valAccount.FieldErrors["password"] =
+			fmt.Sprintf("Entry too long, please shorten to %d characters", 512)
+	}
+
 	if valAccount.Message != "" {
 		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
 		if err != nil {
