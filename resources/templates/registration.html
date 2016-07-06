@@ -56,9 +56,7 @@
         <label for="reg-email" class="col-sm-3 control-label">e-mail address *</label>
         <div class="col-sm-9">
             <input type="text" class="form-control" id="reg-email" name="email" placeholder="e-mail address" value="{{ .Email }}">
-            {{ if .FieldErrors.email }}
-                <span class="help-block">{{ .FieldErrors.email }}</span>
-            {{ end }}
+            <span class="help-block">Note: A valid e-mail address is required to finish the registration process.</span>
         </div>
     </div>
     <div class="form-group">
