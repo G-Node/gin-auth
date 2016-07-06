@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
@@ -213,8 +214,10 @@ func (acc *Account) Update() error {
 }
 
 // Validate the content of an Account.
-// First name, last name, login, email, institute, department, city and country must not be empty.
-// A given login must not exist in the database.
+// First name, last name, login, email, institute, department, city and country must not be empty;
+// Title, first name, middle name last name, login, email, institute, department, city
+// and country must not be longer than 521 characters;
+// A given login and e-mail address must not exist in the database; An e-mail address must contain an "@".
 func (acc *Account) Validate() *util.ValidationError {
 	valErr := &util.ValidationError{FieldErrors: make(map[string]string)}
 
@@ -230,7 +233,6 @@ func (acc *Account) Validate() *util.ValidationError {
 	if acc.LastName == "" {
 		valErr.FieldErrors["last_name"] = "Please add last name"
 	}
-
 	if acc.Institute == "" {
 		valErr.FieldErrors["institute"] = "Please add institute"
 	}
@@ -242,6 +244,40 @@ func (acc *Account) Validate() *util.ValidationError {
 	}
 	if acc.Country == "" {
 		valErr.FieldErrors["country"] = "Please add country"
+	}
+
+	const fieldLength = 512
+	var lenMessage = fmt.Sprintf("Entry too long, please shorten to %d characters", fieldLength)
+
+	if len(acc.Login) > fieldLength {
+		valErr.FieldErrors["login"] = lenMessage
+	}
+	if len(acc.Email) > fieldLength {
+		valErr.FieldErrors["email"] = lenMessage
+	}
+	if len(acc.Title.String) > fieldLength {
+		valErr.FieldErrors["title"] = lenMessage
+	}
+	if len(acc.FirstName) > fieldLength {
+		valErr.FieldErrors["first_name"] = lenMessage
+	}
+	if len(acc.MiddleName.String) > fieldLength {
+		valErr.FieldErrors["middle_name"] = lenMessage
+	}
+	if len(acc.LastName) > fieldLength {
+		valErr.FieldErrors["last_name"] = lenMessage
+	}
+	if len(acc.Institute) > fieldLength {
+		valErr.FieldErrors["institute"] = lenMessage
+	}
+	if len(acc.Department) > fieldLength {
+		valErr.FieldErrors["department"] = lenMessage
+	}
+	if len(acc.City) > fieldLength {
+		valErr.FieldErrors["city"] = lenMessage
+	}
+	if len(acc.Country) > fieldLength {
+		valErr.FieldErrors["country"] = lenMessage
 	}
 
 	exists := &struct {
