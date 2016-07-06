@@ -280,9 +280,14 @@ func (acc *Account) Validate() *util.ValidationError {
 		valErr.FieldErrors["country"] = "Please add country"
 		valErr.Message = valMessage
 	}
-	_, exists := GetAccountByLogin(acc.Login)
+	_, exists := GetAnyAccountByLogin(acc.Login)
 	if exists {
-		valErr.FieldErrors["login"] = "Please choose a different username"
+		valErr.FieldErrors["login"] = "Please choose a different login"
+		valErr.Message = valMessage
+	}
+	_, exists = GetAnyAccountByEmail(acc.Email)
+	if exists {
+		valErr.FieldErrors["email"] = "Please choose a different email address"
 		valErr.Message = valMessage
 	}
 
