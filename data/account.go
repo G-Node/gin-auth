@@ -86,7 +86,8 @@ func GetAccount(uuid string) (*Account, bool) {
 	return account, err == nil
 }
 
-// GetAccountByLogin returns an account with matching login.
+// GetAccountByLogin returns an active account (non disabled, no activation code, no reset password code)
+// with matching login.
 // Returns false if no account with such login exists.
 func GetAccountByLogin(login string) (*Account, bool) {
 	const q = `SELECT * FROM ActiveAccounts a WHERE a.login=$1`
@@ -251,9 +252,26 @@ func (acc *Account) Validate() *util.ValidationError {
 		valErr.FieldErrors["country"] = "Please add country"
 		valErr.Message = valMessage
 	}
-	_, exists := GetAccountByLogin(acc.Login)
-	if exists {
-		valErr.FieldErrors["login"] = "Please choose a different username"
+
+	exists := &struct {
+		Login bool
+		Email bool
+	}{}
+
+	const q = `SELECT
+	             (SELECT COUNT(*) FROM accounts WHERE login = $1) <> 0 AS login,
+	             (SELECT COUNT(*) FROM accounts WHERE email = $2) <> 0 AS email`
+
+	err := database.Get(exists, q, acc.Login, acc.Email)
+	if err != nil {
+		panic(err)
+	}
+	if exists.Login {
+		valErr.FieldErrors["login"] = "Please choose a different login"
+		valErr.Message = valMessage
+	}
+	if exists.Email {
+		valErr.FieldErrors["email"] = "Please choose a different email address"
 		valErr.Message = valMessage
 	}
 

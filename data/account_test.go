@@ -321,8 +321,6 @@ func TestAccount_Update(t *testing.T) {
 func TestValidate(t *testing.T) {
 	InitTestDb(t)
 
-	const errDiffUser = "Please choose a different username"
-
 	account := &Account{}
 
 	// Test all data missing
@@ -342,8 +340,21 @@ func TestValidate(t *testing.T) {
 
 	// Test existing login
 	valErr = account.Validate()
-	if valErr.FieldErrors["login"] != errDiffUser {
-		t.Errorf("Expected invalid username error, but got: '%s'", valErr.FieldErrors["login"])
+	if valErr.FieldErrors["login"] != "Please choose a different login" {
+		t.Errorf("Expected invalid login error, but got: '%s'", valErr.FieldErrors["login"])
+	}
+
+	// Test existing email
+	valErr = account.Validate()
+	if valErr.FieldErrors["email"] != "Please choose a different email address" {
+		t.Errorf("Expected invalid email error, but got: '%s'", valErr.FieldErrors["email"])
+	}
+
+	// Test missing login
+	account.Login = ""
+	valErr = account.Validate()
+	if valErr.FieldErrors["login"] != "Please add login" {
+		t.Errorf("Expected missing login error, but got: '%s'", valErr.FieldErrors["login"])
 	}
 
 	// Test missing email
