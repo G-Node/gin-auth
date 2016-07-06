@@ -13,10 +13,13 @@
 
     <h4>User information</h4>
     <hr>
-    <div class="form-group">
+    <div class="form-group {{ if .FieldErrors.title }}has-error{{ end }}">
         <label for="reg-title" class="col-sm-3 control-label">Title</label>
         <div class="col-sm-9">
             <input type="text" class="form-control" id="reg-title" name="title" placeholder="Title" value="{{ .Title.String }}">
+            {{ if .FieldErrors.title }}
+                <span class="help-block">{{ .FieldErrors.title }}</span>
+            {{ end }}
         </div>
     </div>
     <div class="form-group {{ if .FieldErrors.first_name }}has-error{{ end }}">
@@ -28,10 +31,13 @@
             {{ end }}
         </div>
     </div>
-    <div class="form-group">
+    <div class="form-group {{ if .FieldErrors.middle_name }}has-error{{ end }}">
         <label for="reg-mn" class="col-sm-3 control-label">Middle name</label>
         <div class="col-sm-9">
             <input type="text" class="form-control" id="reg-mn" name="middle_name" placeholder="Middle Name" value="{{ .MiddleName.String }}">
+            {{ if .FieldErrors.middle_name }}
+                <span class="help-block">{{ .FieldErrors.middle_name }}</span>
+            {{ end }}
         </div>
     </div>
     <div class="form-group {{ if .FieldErrors.last_name }}has-error{{ end }}">
