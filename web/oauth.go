@@ -818,4 +818,10 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 		PrintErrorHTML(w, r, "Account activation code was absent", http.StatusBadRequest)
 		return
 	}
+
+	_, exists := data.GetAccountByActivationCode(getCode)
+	if !exists {
+		PrintErrorHTML(w, r, "Requested account does not exist", http.StatusBadRequest)
+		return
+	}
 }
