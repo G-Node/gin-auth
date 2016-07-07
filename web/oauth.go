@@ -882,3 +882,14 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 }
+
+// ResetInitPage provides an input form for resetting an account password
+func ResetInitPage(w http.ResponseWriter, r *http.Request) {
+	tmpl := conf.MakeTemplate("resetinit.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+	err := tmpl.ExecuteTemplate(w, "layout", &struct{}{})
+	if err != nil {
+		panic(err)
+	}
+}

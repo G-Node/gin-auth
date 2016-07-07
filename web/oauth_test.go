@@ -1074,3 +1074,16 @@ func TestActivation(t *testing.T) {
 			account.ActivationCode.String, account.ActivationCode.Valid)
 	}
 }
+
+func TestResetInitPage(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+	const resetURL = "/oauth/reset_init_page"
+
+	request, _ := http.NewRequest("GET", resetURL, strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Expected StatusOK but got '%d'", response.Code)
+	}
+}
