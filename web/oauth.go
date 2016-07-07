@@ -825,6 +825,12 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	account.ActivationCode.Valid = false
+	err = account.Update()
+	if err != nil {
+		PrintErrorHTML(w, r, "An error during activation", http.StatusInternalServerError)
+	}
+
 	tmpl := conf.MakeTemplate("activation.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")

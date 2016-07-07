@@ -929,7 +929,10 @@ func TestRegisteredPage(t *testing.T) {
 func TestActivation(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 	const activationURL = "/oauth/activation"
+	const activationCodeDisabled = "ac_b"
+	const activationCode = "ac_a"
 
+	// Test missing query
 	request, _ := http.NewRequest("GET", activationURL, strings.NewReader(""))
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -937,6 +940,7 @@ func TestActivation(t *testing.T) {
 		t.Errorf("Expected StatusBadRequest on empty activationCode but got '%d'", response.Code)
 	}
 
+	// Test invalid activation code
 	request, _ = http.NewRequest("GET", activationURL, strings.NewReader(""))
 	q := request.URL.Query()
 	q.Add("activation_code", "iDoNotExist")
@@ -948,14 +952,46 @@ func TestActivation(t *testing.T) {
 		t.Errorf("Expected StatusBadRequest on invalid activationCode but got '%d'", response.Code)
 	}
 
+	// Test activation code of disabled account
 	request, _ = http.NewRequest("GET", activationURL, strings.NewReader(""))
 	q = request.URL.Query()
-	q.Add("activation_code", "ac_a")
+	q.Add("activation_code", activationCodeDisabled)
+	request.URL.RawQuery = q.Encode()
+
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Expected StatusBadRequest on disabled account but got '%d'", response.Code)
+	}
+
+	// Test valid activation
+	account, exists := data.GetAccountByActivationCode(activationCode)
+	if !exists {
+		t.Errorf("Error on fetching account by activation code '%s'", activationCode)
+	}
+	if account.ActivationCode.String != activationCode {
+		t.Errorf("Expected activation code to be '%s' but got '%s'",
+			activationCode, account.ActivationCode.String)
+	}
+	accountLogin := account.Login
+
+	request, _ = http.NewRequest("GET", activationURL, strings.NewReader(""))
+	q = request.URL.Query()
+	q.Add("activation_code", activationCode)
 	request.URL.RawQuery = q.Encode()
 
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusOK {
 		t.Errorf("Expected StatusOK on valid activationCode but got '%d'", response.Code)
+	}
+
+	account, exists = data.GetAccountByLogin(accountLogin)
+	if !exists {
+		t.Errorf("Error on fetching account by login '%s'", accountLogin)
+	}
+	if account.ActivationCode.String != "" || account.ActivationCode.Valid {
+		t.Errorf("Activation code should be cleared after activation but was '%s', '%t'",
+			account.ActivationCode.String, account.ActivationCode.Valid)
 	}
 }
