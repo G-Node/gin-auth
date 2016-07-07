@@ -947,4 +947,15 @@ func TestActivation(t *testing.T) {
 	if response.Code != http.StatusBadRequest {
 		t.Errorf("Expected StatusBadRequest on invalid activationCode but got '%d'", response.Code)
 	}
+
+	request, _ = http.NewRequest("GET", activationURL, strings.NewReader(""))
+	q = request.URL.Query()
+	q.Add("activation_code", "ac_a")
+	request.URL.RawQuery = q.Encode()
+
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Errorf("Expected StatusOK on valid activationCode but got '%d'", response.Code)
+	}
 }

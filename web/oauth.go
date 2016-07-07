@@ -819,9 +819,18 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, exists := data.GetAccountByActivationCode(getCode)
+	account, exists := data.GetAccountByActivationCode(getCode)
 	if !exists {
 		PrintErrorHTML(w, r, "Requested account does not exist", http.StatusBadRequest)
 		return
+	}
+
+	tmpl := conf.MakeTemplate("activation.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+
+	err = tmpl.ExecuteTemplate(w, "layout", account)
+	if err != nil {
+		panic(err)
 	}
 }
