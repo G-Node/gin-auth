@@ -925,3 +925,15 @@ func TestRegisteredPage(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 }
+
+func TestActivation(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+	const activationURL = "/oauth/activation"
+
+	request, _ := http.NewRequest("GET", activationURL, strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Expected StatusBadRequest on empty activationCode but got '%d'", response.Code)
+	}
+}
