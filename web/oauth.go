@@ -810,7 +810,8 @@ func RegisteredPage(w http.ResponseWriter, r *http.Request) {
 func Activation(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		panic(err)
+		PrintErrorHTML(w, r, "Activation request was malformed", http.StatusBadRequest)
+		return
 	}
 
 	getCode := r.Form.Get("activation_code")
@@ -828,7 +829,8 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 	account.ActivationCode.Valid = false
 	err = account.Update()
 	if err != nil {
-		PrintErrorHTML(w, r, "An error during activation", http.StatusInternalServerError)
+		PrintErrorHTML(w, r, "An error occured during activation", http.StatusInternalServerError)
+		return
 	}
 
 	tmpl := conf.MakeTemplate("activation.html")
