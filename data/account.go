@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
@@ -213,44 +214,70 @@ func (acc *Account) Update() error {
 }
 
 // Validate the content of an Account.
-// First name, last name, login, email, institute, department, city and country must not be empty.
-// A given login must not exist in the database.
+// First name, last name, login, email, institute, department, city and country must not be empty;
+// Title, first name, middle name last name, login, email, institute, department, city
+// and country must not be longer than 521 characters;
+// A given login and e-mail address must not exist in the database; An e-mail address must contain an "@".
 func (acc *Account) Validate() *util.ValidationError {
 	valErr := &util.ValidationError{FieldErrors: make(map[string]string)}
-	const valMessage = "Registration requirements are not met"
 
 	if acc.Login == "" {
 		valErr.FieldErrors["login"] = "Please add login"
-		valErr.Message = valMessage
 	}
-	if acc.Email == "" {
-		valErr.FieldErrors["email"] = "Please add email"
-		valErr.Message = valMessage
+	if !(len(acc.Email) > 2) || !strings.Contains(acc.Email, "@") {
+		valErr.FieldErrors["email"] = "Please add a valid e-mail address"
 	}
 	if acc.FirstName == "" {
 		valErr.FieldErrors["first_name"] = "Please add first name"
-		valErr.Message = valMessage
 	}
 	if acc.LastName == "" {
 		valErr.FieldErrors["last_name"] = "Please add last name"
-		valErr.Message = valMessage
 	}
-
 	if acc.Institute == "" {
 		valErr.FieldErrors["institute"] = "Please add institute"
-		valErr.Message = valMessage
 	}
 	if acc.Department == "" {
 		valErr.FieldErrors["department"] = "Please add department"
-		valErr.Message = valMessage
 	}
 	if acc.City == "" {
 		valErr.FieldErrors["city"] = "Please add city"
-		valErr.Message = valMessage
 	}
 	if acc.Country == "" {
 		valErr.FieldErrors["country"] = "Please add country"
-		valErr.Message = valMessage
+	}
+
+	const fieldLength = 512
+	var lenMessage = fmt.Sprintf("Entry too long, please shorten to %d characters", fieldLength)
+
+	if len(acc.Login) > fieldLength {
+		valErr.FieldErrors["login"] = lenMessage
+	}
+	if len(acc.Email) > fieldLength {
+		valErr.FieldErrors["email"] = lenMessage
+	}
+	if len(acc.Title.String) > fieldLength {
+		valErr.FieldErrors["title"] = lenMessage
+	}
+	if len(acc.FirstName) > fieldLength {
+		valErr.FieldErrors["first_name"] = lenMessage
+	}
+	if len(acc.MiddleName.String) > fieldLength {
+		valErr.FieldErrors["middle_name"] = lenMessage
+	}
+	if len(acc.LastName) > fieldLength {
+		valErr.FieldErrors["last_name"] = lenMessage
+	}
+	if len(acc.Institute) > fieldLength {
+		valErr.FieldErrors["institute"] = lenMessage
+	}
+	if len(acc.Department) > fieldLength {
+		valErr.FieldErrors["department"] = lenMessage
+	}
+	if len(acc.City) > fieldLength {
+		valErr.FieldErrors["city"] = lenMessage
+	}
+	if len(acc.Country) > fieldLength {
+		valErr.FieldErrors["country"] = lenMessage
 	}
 
 	exists := &struct {
@@ -268,11 +295,13 @@ func (acc *Account) Validate() *util.ValidationError {
 	}
 	if exists.Login {
 		valErr.FieldErrors["login"] = "Please choose a different login"
-		valErr.Message = valMessage
 	}
 	if exists.Email {
 		valErr.FieldErrors["email"] = "Please choose a different email address"
-		valErr.Message = valMessage
+	}
+
+	if len(valErr.FieldErrors) > 0 {
+		valErr.Message = "Registration requirements are not met"
 	}
 
 	return valErr

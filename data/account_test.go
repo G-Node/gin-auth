@@ -11,6 +11,7 @@ package data
 import (
 	"database/sql"
 	"github.com/G-Node/gin-auth/util"
+	"strings"
 	"testing"
 )
 
@@ -341,12 +342,24 @@ func TestValidate(t *testing.T) {
 	// Test existing login
 	valErr = account.Validate()
 	if valErr.FieldErrors["login"] != "Please choose a different login" {
-		t.Errorf("Expected invalid login error, but got: '%s'", valErr.FieldErrors["login"])
+		t.Errorf("Expected existing login error, but got: '%s'", valErr.FieldErrors["login"])
 	}
 
 	// Test existing email
 	valErr = account.Validate()
 	if valErr.FieldErrors["email"] != "Please choose a different email address" {
+		t.Errorf("Expected existing email error, but got: '%s'", valErr.FieldErrors["email"])
+	}
+
+	// Test invalid email
+	account.Email = "typoemail"
+	valErr = account.Validate()
+	if valErr.FieldErrors["email"] != "Please add a valid e-mail address" {
+		t.Errorf("Expected invalid email error, but got: '%s'", valErr.FieldErrors["email"])
+	}
+	account.Email = "t@"
+	valErr = account.Validate()
+	if valErr.FieldErrors["email"] != "Please add a valid e-mail address" {
 		t.Errorf("Expected invalid email error, but got: '%s'", valErr.FieldErrors["email"])
 	}
 
@@ -361,7 +374,7 @@ func TestValidate(t *testing.T) {
 	account.Login = "noone"
 	account.Email = ""
 	valErr = account.Validate()
-	if valErr.FieldErrors["email"] != "Please add email" {
+	if valErr.FieldErrors["email"] != "Please add a valid e-mail address" {
 		t.Errorf("Expected missing email error, but got: '%s'", valErr.FieldErrors["email"])
 	}
 
@@ -418,5 +431,56 @@ func TestValidate(t *testing.T) {
 	valErr = account.Validate()
 	if valErr.Message != "" {
 		t.Errorf("Expected valid registration , but got error in fields: '%s'", valErr.FieldErrors)
+	}
+
+	// Test maximal length error
+	s := []string{}
+	for i := 0; i < 513; i++ {
+		s = append(s, "s")
+	}
+	js := strings.Join(s, "")
+
+	account.Title.String = js
+	account.FirstName = js
+	account.MiddleName.String = js
+	account.LastName = js
+	account.Login = js
+	account.Email = js
+	account.Institute = js
+	account.Department = js
+	account.City = js
+	account.Country = js
+
+	valErr = account.Validate()
+
+	if valErr.FieldErrors["title"] != "Entry too long, please shorten to 512 characters" {
+		t.Errorf("Expected title length error, but got: '%s'", valErr.FieldErrors["title"])
+	}
+	if valErr.FieldErrors["first_name"] != "Entry too long, please shorten to 512 characters" {
+		t.Errorf("Expected first name length error, but got: '%s'", valErr.FieldErrors["first_name"])
+	}
+	if valErr.FieldErrors["middle_name"] != "Entry too long, please shorten to 512 characters" {
+		t.Errorf("Expected middle name length error, but got: '%s'", valErr.FieldErrors["middle_name"])
+	}
+	if valErr.FieldErrors["last_name"] != "Entry too long, please shorten to 512 characters" {
+		t.Errorf("Expected last name length error, but got: '%s'", valErr.FieldErrors["last_name"])
+	}
+	if valErr.FieldErrors["login"] != "Entry too long, please shorten to 512 characters" {
+		t.Errorf("Expected login length error, but got: '%s'", valErr.FieldErrors["login"])
+	}
+	if valErr.FieldErrors["email"] != "Entry too long, please shorten to 512 characters" {
+		t.Errorf("Expected e-mail length error, but got: '%s'", valErr.FieldErrors["email"])
+	}
+	if valErr.FieldErrors["institute"] != "Entry too long, please shorten to 512 characters" {
+		t.Errorf("Expected institute length error, but got: '%s'", valErr.FieldErrors["institute"])
+	}
+	if valErr.FieldErrors["department"] != "Entry too long, please shorten to 512 characters" {
+		t.Errorf("Expected department length error, but got: '%s'", valErr.FieldErrors["department"])
+	}
+	if valErr.FieldErrors["city"] != "Entry too long, please shorten to 512 characters" {
+		t.Errorf("Expected city length error, but got: '%s'", valErr.FieldErrors["city"])
+	}
+	if valErr.FieldErrors["country"] != "Entry too long, please shorten to 512 characters" {
+		t.Errorf("Expected title length error, but got: '%s'", valErr.FieldErrors["country"])
 	}
 }
