@@ -805,3 +805,39 @@ func RegisteredPage(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 }
+
+// Activation removes an existing activation code from an account, thus rendering the account active.
+func Activation(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		PrintErrorHTML(w, r, "Activation request was malformed", http.StatusBadRequest)
+		return
+	}
+
+	getCode := r.Form.Get("activation_code")
+	if getCode == "" {
+		PrintErrorHTML(w, r, "Account activation code was absent", http.StatusBadRequest)
+		return
+	}
+
+	account, exists := data.GetAccountByActivationCode(getCode)
+	if !exists {
+		PrintErrorHTML(w, r, "Requested account does not exist", http.StatusNotFound)
+		return
+	}
+
+	account.ActivationCode.Valid = false
+	err = account.Update()
+	if err != nil {
+		panic(err)
+	}
+
+	tmpl := conf.MakeTemplate("activation.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+
+	err = tmpl.ExecuteTemplate(w, "layout", account)
+	if err != nil {
+		panic(err)
+	}
+}
