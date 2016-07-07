@@ -948,7 +948,7 @@ func TestActivation(t *testing.T) {
 
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
-	if response.Code != http.StatusBadRequest {
+	if response.Code != http.StatusNotFound {
 		t.Errorf("Expected StatusBadRequest on invalid activationCode but got '%d'", response.Code)
 	}
 
@@ -960,7 +960,7 @@ func TestActivation(t *testing.T) {
 
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
-	if response.Code != http.StatusBadRequest {
+	if response.Code != http.StatusNotFound {
 		t.Errorf("Expected StatusBadRequest on disabled account but got '%d'", response.Code)
 	}
 

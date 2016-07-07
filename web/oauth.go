@@ -822,15 +822,14 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 
 	account, exists := data.GetAccountByActivationCode(getCode)
 	if !exists {
-		PrintErrorHTML(w, r, "Requested account does not exist", http.StatusBadRequest)
+		PrintErrorHTML(w, r, "Requested account does not exist", http.StatusNotFound)
 		return
 	}
 
 	account.ActivationCode.Valid = false
 	err = account.Update()
 	if err != nil {
-		PrintErrorHTML(w, r, "An error occured during activation", http.StatusInternalServerError)
-		return
+		panic(err)
 	}
 
 	tmpl := conf.MakeTemplate("activation.html")
