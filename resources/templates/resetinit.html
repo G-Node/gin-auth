@@ -7,4 +7,23 @@
     An e-mail with an activation code will be sent to your e-mail address.
 </div>
 
+<hr><br />
+
+<form action="/oauth/reset_init" method="post" class="form-horizontal">
+    <div class="form-group">
+        <label for="credential" class="col-sm-3 control-label">Login or e-mail address</label>
+        <div class="col-sm-9 {{ if .ErrMessage }}has-error{{ end }}">
+            <input class="form-control" id="credential" name="credential" placeholder="Login or e-mail address" value="{{ .Credential }}">
+            {{ if .ErrMessage }}
+                <span class="help-block">{{ .ErrMessage }}</span>
+            {{ end }}
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-sm-9 col-sm-offset-3">
+            <button type="submit" class="btn btn-default">Reset password</button>
+        </div>
+    </div>
+</form>
+
 {{ end }}
