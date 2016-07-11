@@ -347,6 +347,85 @@ func TestLoginWithCredentials(t *testing.T) {
 	}
 }
 
+func TestLogout(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	// wrong token
+	request, _ := http.NewRequest("GET", "/oauth/logout/doesnotexist", strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// expired token
+	request, _ = http.NewRequest("GET", "/oauth/logout/LJ3W7ZFK", strings.NewReader(""))
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// valid token
+	request, _ = http.NewRequest("GET", "/oauth/logout/3N7MP7M7", strings.NewReader(""))
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	_, ok := data.GetAccessToken("3N7MP7M7")
+	if ok {
+		t.Error("Token should not exist")
+	}
+}
+
+func TestLogoutWithRedirect(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	request, _ := http.NewRequest("GET", "/oauth/logout/3N7MP7M7?redirect_uri=http%3A%2F%2Fexample.com", strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
+	}
+
+	_, ok := data.GetAccessToken("3N7MP7M7")
+	if ok {
+		t.Error("Token should not exist")
+	}
+
+	redirect, err := url.Parse(response.Header().Get("Location"))
+	if err != nil {
+		t.Error(err)
+	}
+	if redirect.String() != "http://example.com" {
+		t.Error("Wron redirect uri")
+	}
+}
+
+func TestLogoutWithSession(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	request, _ := http.NewRequest("GET", "/oauth/logout/3N7MP7M7", strings.NewReader(""))
+	request.AddCookie(&http.Cookie{Name: cookieName, Value: sessionCookieBob})
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	_, ok := data.GetAccessToken("3N7MP7M7")
+	if ok {
+		t.Error("Token should not exist")
+	}
+
+	_, ok = data.GetSession(sessionCookieBob)
+	if ok {
+		t.Error("Session should not exist")
+	}
+}
+
 func TestApprovePage(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 

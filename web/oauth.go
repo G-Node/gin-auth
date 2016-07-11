@@ -365,6 +365,47 @@ func finishImplicitRequest(w http.ResponseWriter, r *http.Request, request *data
 	http.Redirect(w, r, url, http.StatusFound)
 }
 
+// Logout remove a valid token (and if present the session cookie too) so it can't be used any more.
+func Logout(w http.ResponseWriter, r *http.Request) {
+	tokenStr := mux.Vars(r)["token"]
+	if token, ok := data.GetAccessToken(tokenStr); ok {
+		if err := token.Delete(); err != nil {
+			panic(err)
+		}
+	} else {
+		PrintErrorHTML(w, r, "Access token does not exist", http.StatusNotFound)
+		return
+	}
+
+	cookie, err := r.Cookie(cookieName)
+	if err == nil {
+		if session, ok := data.GetSession(cookie.Value); ok {
+			if err := session.Delete(); err != nil {
+				panic(err)
+			}
+		}
+	}
+
+	uri := r.URL.Query().Get("redirect_uri")
+	if uri != "" {
+		w.Header().Add("Cache-Control", "no-store")
+		http.Redirect(w, r, uri, http.StatusFound)
+	} else {
+		pageData := struct {
+			Header  string
+			Message string
+		}{"You successfully signed out!", ""}
+
+		tmpl := conf.MakeTemplate("success.html")
+		w.Header().Add("Cache-Control", "no-store")
+		w.Header().Add("Content-Type", "text/html")
+		err := tmpl.ExecuteTemplate(w, "layout", pageData)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 // ApprovePage shows a page where the user can approve client access.
 func ApprovePage(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
