@@ -873,11 +873,19 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	tmpl := conf.MakeTemplate("activation.html")
+	head := "Account activation"
+	message := fmt.Sprintf("Congratulation %s %s! The account for %s has been activated and can now be used.",
+		account.FirstName, account.LastName, account.Login)
+	info := struct {
+		Header  string
+		Message string
+	}{head, message}
+
+	tmpl := conf.MakeTemplate("success.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
 
-	err = tmpl.ExecuteTemplate(w, "layout", account)
+	err = tmpl.ExecuteTemplate(w, "layout", info)
 	if err != nil {
 		panic(err)
 	}
