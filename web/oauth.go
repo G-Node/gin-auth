@@ -883,12 +883,20 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type credentialData struct {
+	Credential string
+	ErrMessage string
+}
+
 // ResetInitPage provides an input form for resetting an account password
 func ResetInitPage(w http.ResponseWriter, r *http.Request) {
+
+	credData := &credentialData{}
+
 	tmpl := conf.MakeTemplate("resetinit.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
-	err := tmpl.ExecuteTemplate(w, "layout", &struct{}{})
+	err := tmpl.ExecuteTemplate(w, "layout", credData)
 	if err != nil {
 		panic(err)
 	}
