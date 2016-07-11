@@ -901,3 +901,46 @@ func ResetInitPage(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 }
+
+// ResetInit checks whether a provided login or e-mail address
+// belongs to a non-disabled account. If this is the case, the corresponding
+// account is updated with a password reset code and an email containing
+// the code is sent to the e-mail address of the account.
+func ResetInit(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+
+	credData := &credentialData{}
+
+	err := util.ReadFormIntoStruct(r, credData, true)
+	if err != nil {
+		panic(err)
+	}
+
+	if credData.Credential == "" {
+		credData.ErrMessage = "Please enter your login or e-mail address"
+		tmpl := conf.MakeTemplate("resetinit.html")
+		w.Header().Add("Warning", credData.ErrMessage)
+		err = tmpl.ExecuteTemplate(w, "layout", credData)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	account, ok := data.SetPasswordReset(credData.Credential)
+	if !ok {
+		credData.ErrMessage = "Invalid login or e-mail address"
+		tmpl := conf.MakeTemplate("resetinit.html")
+		w.Header().Add("Warning", credData.ErrMessage)
+		err = tmpl.ExecuteTemplate(w, "layout", credData)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	fmt.Printf("Update pw code '%s' of account with login '%s' and email '%s'\n",
+		account.ResetPWCode.String, account.Login, account.Email)
+}
