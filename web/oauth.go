@@ -943,4 +943,16 @@ func ResetInit(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Printf("Update pw code '%s' of account with login '%s' and email '%s'\n",
 		account.ResetPWCode.String, account.Login, account.Email)
+
+	head := "Success!"
+	message := "An e-mail with a password reset token has been sent to your e-mail address. "
+	message += "Please follow the contained link to reset your password. "
+	message += "Please note that your account will stay deactivated until your password reset has been completed."
+	info := struct {
+		Header  string
+		Message string
+	}{head, message}
+
+	tmpl := conf.MakeTemplate("success.html")
+	err = tmpl.ExecuteTemplate(w, "layout", info)
 }

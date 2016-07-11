@@ -1168,4 +1168,7 @@ func TestResetInit(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Expected StatusOK but got '%d'", response.Code)
 	}
+	if response.Header().Get("Warning") != "" {
+		t.Errorf("Expected empty warning message but got '%s'", response.Header().Get("Warning"))
+	}
 }
