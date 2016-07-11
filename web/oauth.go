@@ -838,10 +838,19 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 
 // RegisteredPage displays information about how a newly created gin account can be activated.
 func RegisteredPage(w http.ResponseWriter, r *http.Request) {
-	tmpl := conf.MakeTemplate("registered.html")
+	head := "Account registered"
+	message := "Your account activation is pending. "
+	message += "An e-mail with an activation code has been sent to your e-mail address."
+
+	info := struct {
+		Header  string
+		Message string
+	}{head, message}
+
+	tmpl := conf.MakeTemplate("success.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
-	err := tmpl.ExecuteTemplate(w, "layout", &struct{}{})
+	err := tmpl.ExecuteTemplate(w, "layout", info)
 	if err != nil {
 		panic(err)
 	}
