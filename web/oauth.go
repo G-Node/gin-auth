@@ -388,7 +388,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 	uri := r.URL.Query().Get("redirect_uri")
 	if uri != "" {
-		w.Header().Add("Cache-Control", "no-cache")
+		w.Header().Add("Cache-Control", "no-store")
 		http.Redirect(w, r, uri, http.StatusFound)
 	} else {
 		pageData := struct {
@@ -397,7 +397,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 		}{"You successfully signed out!", ""}
 
 		tmpl := conf.MakeTemplate("success.html")
-		w.Header().Add("Cache-Control", "no-cache")
+		w.Header().Add("Cache-Control", "no-store")
 		w.Header().Add("Content-Type", "text/html")
 		err := tmpl.ExecuteTemplate(w, "layout", pageData)
 		if err != nil {
