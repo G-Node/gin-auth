@@ -144,6 +144,23 @@ func GetAccountDisabled(uuid string) (*Account, bool) {
 	return account, err == nil
 }
 
+// SetPasswordReset updates the password reset code with a new token, if an
+// account can be found, that is non disabled and has either email or login of a provided credential.
+// Returns false, if no non-disabled account with the credential as email or login can be found.
+func SetPasswordReset(credential string) (*Account, bool) {
+	const q = `UPDATE Accounts SET resetpwcode=$2
+		   WHERE NOT isdisabled AND (login=$1 OR email=$1) RETURNING *`
+
+	code := util.RandomToken()
+	account := &Account{}
+	err := database.Get(account, q, credential, code)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+
+	return account, err == nil
+}
+
 // SetPassword hashes the plain text password and
 // sets PWHash to the new value.
 func (acc *Account) SetPassword(plain string) error {
