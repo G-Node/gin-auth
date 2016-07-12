@@ -1172,3 +1172,57 @@ func TestResetInit(t *testing.T) {
 		t.Errorf("Expected empty warning message but got '%s'", response.Header().Get("Warning"))
 	}
 }
+
+func TestResetPage(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+	const resetURL = "/oauth/reset_page"
+	const codeKey = "reset_code"
+	const codeInvalid = "iDoNotExist"
+	const codeDisabled = "rc_c"
+	const codeValid = "rc_a"
+
+	// Test missing password reset code
+	request, _ := http.NewRequest("GET", resetURL, strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Expected StatusBadRequest on missing reset code but got '%d'", response.Code)
+	}
+
+	// Test invalid password reset code
+	request, _ = http.NewRequest("GET", resetURL, strings.NewReader(""))
+	q := request.URL.Query()
+	q.Add(codeKey, codeInvalid)
+	request.URL.RawQuery = q.Encode()
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Expected StatusNotFound on invalid reset code but got '%d'", response.Code)
+	}
+
+	// Test valid password reset code of disabled account
+	request, _ = http.NewRequest("GET", resetURL, strings.NewReader(""))
+	q = request.URL.Query()
+	q.Add(codeKey, codeDisabled)
+	request.URL.RawQuery = q.Encode()
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Expected StatusNotFound on disabled reset code but got '%d'", response.Code)
+	}
+
+	// Test valid password reset code
+	request, _ = http.NewRequest("GET", resetURL, strings.NewReader(""))
+	q = request.URL.Query()
+	q.Add(codeKey, codeValid)
+	request.URL.RawQuery = q.Encode()
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Expected StatusOK on valid reset code but got '%d'", response.Code)
+	}
+}
