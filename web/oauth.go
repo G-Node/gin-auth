@@ -976,3 +976,39 @@ func ResetInit(w http.ResponseWriter, r *http.Request) {
 	tmpl := conf.MakeTemplate("success.html")
 	err = tmpl.ExecuteTemplate(w, "layout", info)
 }
+
+// ResetPage checks whether a submitted password reset code exists and is still valid.
+// Display password entry fields if valid, an error message otherwise.
+func ResetPage(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Println("Request was malformed")
+		PrintErrorHTML(w, r, "Request was malformed", http.StatusBadRequest)
+		return
+	}
+
+	code := r.Form.Get("reset_code")
+	if code == "" {
+		fmt.Println("Request was malformed")
+		PrintErrorHTML(w, r, "Request was malformed", http.StatusBadRequest)
+		return
+	}
+
+	_, exists := data.GetAccountByResetPWCode(code)
+	if !exists {
+		fmt.Println("Your request is invalid or outdated. Please request a new reset code.")
+		PrintErrorHTML(w, r, "Your request is invalid or outdated. Please request a new reset code.",
+			http.StatusNotFound)
+		return
+	}
+
+	hidden := &struct {
+		ResetCode string
+		*util.ValidationError
+	}{code, &util.ValidationError{}}
+
+	tmpl := conf.MakeTemplate("reset.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+	err = tmpl.ExecuteTemplate(w, "layout", hidden)
+}
