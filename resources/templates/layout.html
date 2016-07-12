@@ -6,16 +6,26 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
-    <link rel="stylesheet" media="screen" href="/static/css/main.css">
-    <link rel="shortcut icon" type="image/png" href="/static/favicon.png">
+    <link rel="stylesheet" href="//projects.g-node.org/assets/gnode-bootstrap-theme/1.0.0-snapshot/css/bootstrap.min.css">
+    <link rel="shortcut icon" type="image/png" href="//projects.g-node.org/assets/gnode-bootstrap-theme/1.0.0-snapshot/img/favicon.png">
 </head>
 <body>
-    <div class="container">
-        {{ template "content" . }}
+    <div>
+        <nav class="navbar navbar-inverse navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <a class="navbar-brand-gnode" href="#"></a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container main-container">
+            {{ template "content" . }}
+        </div>
     </div>
+
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="//projects.g-node.org/assets/gnode-bootstrap-theme/1.0.0-snapshot/js/bootstrap.min.js"></script>
 </body>
 </html>
 {{ end }}

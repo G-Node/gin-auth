@@ -50,7 +50,6 @@ func main() {
 
 	router := mux.NewRouter()
 	router.NotFoundHandler = &web.NotFoundHandler{}
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(conf.GetStaticFilesDir()))))
 
 	web.RegisterRoutes(router)
 
