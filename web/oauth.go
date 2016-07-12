@@ -379,6 +379,12 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 	cookie, err := r.Cookie(cookieName)
 	if err == nil {
+		delCookie := &http.Cookie{
+			Name:    cookieName,
+			Path:    cookiePath,
+			Expires: time.Now().Add(-24 * time.Hour),
+		}
+		http.SetCookie(w, delCookie)
 		if session, ok := data.GetSession(cookie.Value); ok {
 			if err := session.Delete(); err != nil {
 				panic(err)
