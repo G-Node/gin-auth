@@ -827,8 +827,6 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 
 	err = account.Create()
 	if err != nil {
-		fmt.Printf("Error: Registration failed due to error: '%s'\n", err)
-
 		valAccount.Message = "An error occurred during registration."
 		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
 		if err != nil {
@@ -837,7 +835,6 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("Registration of user '%s' (%s) successful\n", valAccount.Account.Login, valAccount.Account.Email)
 	w.Header().Add("Cache-Control", "no-store")
 	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
 }
