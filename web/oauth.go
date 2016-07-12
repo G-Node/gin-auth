@@ -800,18 +800,21 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 	if pw.Password != pw.PasswordControl {
 		valAccount.FieldErrors["password"] = "Provided password did not match password control"
 		if valAccount.Message == "" {
-			valAccount.Message = "Provided password did not match password control"
+			valAccount.Message = valAccount.FieldErrors["password"]
 		}
 	}
 	if pw.Password == "" || pw.PasswordControl == "" {
 		valAccount.FieldErrors["password"] = "Please enter password and password control"
 		if valAccount.Message == "" {
-			valAccount.Message = "Please enter password and password control"
+			valAccount.Message = valAccount.FieldErrors["password"]
 		}
 	}
 	if len(pw.Password) > 512 || len(pw.PasswordControl) > 512 {
 		valAccount.FieldErrors["password"] =
 			fmt.Sprintf("Entry too long, please shorten to %d characters", 512)
+		if valAccount.Message == "" {
+			valAccount.Message = valAccount.FieldErrors["password"]
+		}
 	}
 
 	if valAccount.Message != "" {
