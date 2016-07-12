@@ -1,0 +1,37 @@
+{{ define "content" }}
+
+    <h1>Enter new password</h1>
+    <hr /><br>
+
+    <form action="" method="post" class="form-horizontal">
+
+        <div class="form-group {{ if .FieldErrors.password }}has-error{{ end }}">
+            <label for="password-input" class="col-sm-3 control-label">Password *</label>
+            <div class="col-sm-9">
+                <input type="password" class="form-control" id="password-input"
+                       name="password" placeholder="Password" maxlength="512">
+            </div>
+        </div>
+
+        <div class="form-group {{ if .FieldErrors.password }}has-error{{ end }}">
+            <label for="password-control" class="col-sm-3 control-label">Re-enter password *</label>
+            <div class="col-sm-9">
+                <input type="password" class="form-control" id="password-control"
+                       name="password_control" placeholder="Password" maxlength="512">
+                {{ if .FieldErrors.password }}
+                    <span class="help-block">{{ .FieldErrors.password }}</span>
+                {{ end }}
+            </div>
+        </div>
+
+        <input type="hidden" id="reset_code" name="reset_code" value="{{ .ResetCode }}">
+
+        <div class="form-group">
+            <div class="col-sm-9 col-sm-offset-3">
+                <button type="submit" class="btn btn-default">Send</button>
+            </div>
+        </div>
+
+    </form>
+
+{{ end }}
