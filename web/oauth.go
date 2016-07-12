@@ -838,10 +838,19 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 
 // RegisteredPage displays information about how a newly created gin account can be activated.
 func RegisteredPage(w http.ResponseWriter, r *http.Request) {
-	tmpl := conf.MakeTemplate("registered.html")
+	head := "Account registered"
+	message := "Your account activation is pending. "
+	message += "An e-mail with an activation code has been sent to your e-mail address."
+
+	info := struct {
+		Header  string
+		Message string
+	}{head, message}
+
+	tmpl := conf.MakeTemplate("success.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
-	err := tmpl.ExecuteTemplate(w, "layout", &struct{}{})
+	err := tmpl.ExecuteTemplate(w, "layout", info)
 	if err != nil {
 		panic(err)
 	}
@@ -873,12 +882,94 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	tmpl := conf.MakeTemplate("activation.html")
+	head := "Account activation"
+	message := fmt.Sprintf("Congratulation %s %s! The account for %s has been activated and can now be used.",
+		account.FirstName, account.LastName, account.Login)
+	info := struct {
+		Header  string
+		Message string
+	}{head, message}
+
+	tmpl := conf.MakeTemplate("success.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
 
-	err = tmpl.ExecuteTemplate(w, "layout", account)
+	err = tmpl.ExecuteTemplate(w, "layout", info)
 	if err != nil {
 		panic(err)
 	}
+}
+
+type credentialData struct {
+	Credential string
+	ErrMessage string
+}
+
+// ResetInitPage provides an input form for resetting an account password
+func ResetInitPage(w http.ResponseWriter, r *http.Request) {
+
+	credData := &credentialData{}
+
+	tmpl := conf.MakeTemplate("resetinit.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+	err := tmpl.ExecuteTemplate(w, "layout", credData)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// ResetInit checks whether a provided login or e-mail address
+// belongs to a non-disabled account. If this is the case, the corresponding
+// account is updated with a password reset code and an email containing
+// the code is sent to the e-mail address of the account.
+func ResetInit(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+
+	credData := &credentialData{}
+
+	err := util.ReadFormIntoStruct(r, credData, true)
+	if err != nil {
+		panic(err)
+	}
+
+	if credData.Credential == "" {
+		credData.ErrMessage = "Please enter your login or e-mail address"
+		tmpl := conf.MakeTemplate("resetinit.html")
+		w.Header().Add("Warning", credData.ErrMessage)
+		err = tmpl.ExecuteTemplate(w, "layout", credData)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	account, ok := data.SetPasswordReset(credData.Credential)
+	if !ok {
+		credData.ErrMessage = "Invalid login or e-mail address"
+		tmpl := conf.MakeTemplate("resetinit.html")
+		w.Header().Add("Warning", credData.ErrMessage)
+		err = tmpl.ExecuteTemplate(w, "layout", credData)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	fmt.Printf("Update pw code '%s' of account with login '%s' and email '%s'\n",
+		account.ResetPWCode.String, account.Login, account.Email)
+
+	head := "Success!"
+	message := "An e-mail with a password reset token has been sent to your e-mail address. "
+	message += "Please follow the contained link to reset your password. "
+	message += "Please note that your account will stay deactivated until your password reset has been completed."
+	info := struct {
+		Header  string
+		Message string
+	}{head, message}
+
+	tmpl := conf.MakeTemplate("success.html")
+	err = tmpl.ExecuteTemplate(w, "layout", info)
 }

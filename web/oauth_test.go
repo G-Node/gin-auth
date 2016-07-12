@@ -1074,3 +1074,101 @@ func TestActivation(t *testing.T) {
 			account.ActivationCode.String, account.ActivationCode.Valid)
 	}
 }
+
+func TestResetInitPage(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+	const resetURL = "/oauth/reset_init_page"
+
+	request, _ := http.NewRequest("GET", resetURL, strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Expected StatusOK but got '%d'", response.Code)
+	}
+}
+
+func TestResetInit(t *testing.T) {
+	handler := InitTestHttpHandler(t)
+
+	const resetInitURL = "/oauth/reset_init"
+	const disabledLogin = "inact_log4"
+	const disabledEmail = "email4@example.com"
+	const enabledLogin = "inact_log1"
+
+	// Test post empty body
+	request, _ := http.NewRequest("POST", resetInitURL, strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Expected StatusOK but got '%d'", response.Code)
+	}
+	if response.Header().Get("Warning") != "Please enter your login or e-mail address" {
+		t.Errorf("Expected empty id field message but got '%s'", response.Header().Get("Warning"))
+	}
+
+	mkBody := &url.Values{}
+	mkBody.Add("Credential", "iDoNotExist")
+
+	// Test invalid login
+	request, _ = http.NewRequest("POST", resetInitURL, strings.NewReader(mkBody.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Expected StatusOK but got '%d'", response.Code)
+	}
+	if response.Header().Get("Warning") != "Invalid login or e-mail address" {
+		t.Errorf("Expected invalid login message but got '%s'", response.Header().Get("Warning"))
+	}
+
+	// Test login of disabled account
+	mkBody = &url.Values{}
+	mkBody.Add("Credential", disabledLogin)
+
+	request, _ = http.NewRequest("POST", resetInitURL, strings.NewReader(mkBody.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Expected StatusOK but got '%d'", response.Code)
+	}
+	if response.Header().Get("Warning") != "Invalid login or e-mail address" {
+		t.Errorf("Expected invalid login message but got '%s'", response.Header().Get("Warning"))
+	}
+
+	// Test e-mail of disabled account
+	mkBody = &url.Values{}
+	mkBody.Add("Credential", disabledEmail)
+
+	request, _ = http.NewRequest("POST", resetInitURL, strings.NewReader(mkBody.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Expected StatusOK but got '%d'", response.Code)
+	}
+	if response.Header().Get("Warning") != "Invalid login or e-mail address" {
+		t.Errorf("Expected invalid login message but got '%s'", response.Header().Get("Warning"))
+	}
+
+	// Test valid update using login
+	mkBody = &url.Values{}
+	mkBody.Add("Credential", enabledLogin)
+
+	request, _ = http.NewRequest("POST", resetInitURL, strings.NewReader(mkBody.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Expected StatusOK but got '%d'", response.Code)
+	}
+	if response.Header().Get("Warning") != "" {
+		t.Errorf("Expected empty warning message but got '%s'", response.Header().Get("Warning"))
+	}
+}

@@ -171,6 +171,62 @@ func TestGetAccountDisabled(t *testing.T) {
 	}
 }
 
+func TestSetPasswordReset(t *testing.T) {
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
+
+	const disabledLogin = "inact_log4"
+	const disabledEmail = "email4@example.com"
+	const enabledLogin = "inact_log1"
+	const enabledEmail = "email1@example.com"
+
+	// Test empty credential
+	_, ok := SetPasswordReset("")
+	if ok {
+		t.Error("Account should not have been updated using an empty credential")
+	}
+
+	// Test non existing credential
+	_, ok = SetPasswordReset("iDoNotExist")
+	if ok {
+		t.Error("Account should not have been updated using non existing credential")
+	}
+
+	// Test valid login of disabled account
+	_, ok = SetPasswordReset(disabledLogin)
+	if ok {
+		t.Error("Account should not have been updated using disabled account login")
+	}
+
+	// Test valid email of disabled account
+	_, ok = SetPasswordReset(disabledEmail)
+	if ok {
+		t.Error("Account should not have been updated using disabled account email")
+	}
+
+	// Test valid update using login
+	account, ok := SetPasswordReset(enabledLogin)
+	if !ok {
+		t.Errorf("Account should have been updated using valid account login '%s'", enabledLogin)
+	}
+	if account.ResetPWCode.String == "" {
+		t.Errorf("Account should have reset pw code, but was empty (using login '%s')", enabledLogin)
+	}
+
+	// Test valid update using email
+	old := account.ResetPWCode.String
+	account, ok = SetPasswordReset(enabledEmail)
+	if !ok {
+		t.Errorf("Account should have been updated using valid account email '%s'", enabledEmail)
+	}
+	if account.ResetPWCode.String == "" {
+		t.Errorf("Account should have reset pw code, but was empty (using email '%s')", enabledEmail)
+	}
+	if account.ResetPWCode.String == old {
+		t.Errorf("Account should have new reset pw code, but was unchanged (using email '%s')", enabledEmail)
+	}
+}
+
 func TestAccount_SetPassword(t *testing.T) {
 	acc := &Account{}
 	acc.SetPassword("foobar")
