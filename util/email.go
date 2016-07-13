@@ -10,6 +10,7 @@ package util
 
 import (
 	"bytes"
+	"net/smtp"
 	"strings"
 	"text/template"
 )
@@ -45,4 +46,18 @@ Subject: {{ .Subject }}
 		panic("Error executing e-mail template")
 	}
 	return &doc
+}
+
+// Send will send an e-mail with the handed message to the number of specified recipients.
+func Send(recipient []string, subject string, message []byte) error {
+
+	const identity = ""
+	const sender = ""
+	const pw = ""
+	const host = "mail.gmx.net"
+	const port = "587"
+
+	auth := smtp.PlainAuth(identity, sender, pw, host)
+
+	return smtp.SendMail(host+":"+port, auth, sender, recipient, message)
 }
