@@ -34,3 +34,16 @@ func TestMakePlainEmailTemplate(t *testing.T) {
 		t.Errorf("Body is malformed or missing:\n'%s'", body)
 	}
 }
+
+func TestSend(t *testing.T) {
+	const sender = "sender@example.com"
+	const subject = "This is a test message from your conscience!"
+	const message = "Give up your evil ways!"
+	recipient := []string{"recipient1@example.com", "recipient2@example.com"}
+	body := MakePlainEmailTemplate(sender, recipient, subject, message).Bytes()
+
+	err := Send(recipient, subject, body)
+	if err != nil {
+		t.Error(err.Error())
+	}
+}
