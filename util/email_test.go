@@ -33,7 +33,7 @@ func TestMakePlainEmailTemplate(t *testing.T) {
 		t.Errorf("Subject is malformed or missing:\n'%s'", content)
 	}
 	if !strings.Contains(content, "\n"+message+"\n") {
-		t.Errorf("Body is malformed or missing:\n'%s'", content)
+		t.Errorf("Body is malformed or missing:\n\n%s", content)
 	}
 }
 

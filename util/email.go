@@ -10,6 +10,7 @@ package util
 
 import (
 	"bytes"
+	"github.com/G-Node/gin-auth/conf"
 	"net/smtp"
 	"strings"
 	"text/template"
@@ -47,33 +48,30 @@ func NewSmtpSendMailDispatcher(conf EmailConfig) EmailDispatcher {
 	return &emailDispatcher{conf, smtp.SendMail}
 }
 
-// MakePlainEmailTemplate returns a bytes.Buffer containing a standard e-mail
-func MakePlainEmailTemplate(from string, to []string, subj string, messageBody string) *bytes.Buffer {
-	const emailTemplate = `From: {{ .From }}
-To: {{ .To }}
-Subject: {{ .Subject }}
+// EmailFields specifies all fields required for a standard format e-mail
+type EmailFields struct {
+	From    string
+	To      string
+	Subject string
+	Body    string
+}
 
-{{ .Body }}
-`
+// MakePlainEmailTemplate returns a bytes.Buffer containing a standard format e-mail
+func MakePlainEmailTemplate(from string, to []string, subj string, messageBody string) *bytes.Buffer {
 	var doc bytes.Buffer
 
-	content := &struct {
-		From    string
-		To      string
-		Subject string
-		Body    string
-	}{
+	content := &EmailFields{
 		from,
 		strings.Join(to, ", "),
 		subj,
 		messageBody,
 	}
-	t := template.New("emailTemplate")
-	t, err := t.Parse(emailTemplate)
+
+	tmpl, err := template.ParseFiles(conf.GetResourceFile("templates", "emailplain.txt"))
 	if err != nil {
 		panic("Error parsing e-mail template")
 	}
-	err = t.Execute(&doc, content)
+	err = tmpl.Execute(&doc, content)
 	if err != nil {
 		panic("Error executing e-mail template")
 	}
