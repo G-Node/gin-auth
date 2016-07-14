@@ -1,0 +1,5 @@
+From: {{ .From }}
+To: {{ .To }}
+Subject: {{ .Subject }}
+
+{{ .Body }}
