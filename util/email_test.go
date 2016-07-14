@@ -21,7 +21,13 @@ func TestMakePlainEmailTemplate(t *testing.T) {
 	const message = "Give up your evil ways!"
 	recipient := []string{"recipient1@example.com", "recipient2@example.com"}
 
-	content := MakePlainEmailTemplate(sender, recipient, subject, message).String()
+	fields := &EmailStandardFields{}
+	fields.From = sender
+	fields.To = strings.Join(recipient, ", ")
+	fields.Subject = subject
+	fields.Body = message
+
+	content := MakePlainEmailTemplate(fields).String()
 
 	if !strings.Contains(content, "From: "+sender) {
 		t.Errorf("Sender line is malformed or missing:\n'%s'", content)
@@ -47,10 +53,17 @@ func TestEmailDispatcher_Send(t *testing.T) {
 	const subject = "This is a test message from your conscience!"
 	const message = "Give up your evil ways!"
 
-	config := EmailConfig{identity, dispatcher, pw, host, port}
-
 	recipient := []string{"recipient1@example.com", "recipient2@example.com"}
-	content := MakePlainEmailTemplate(sender, recipient, subject, message).Bytes()
+
+	fields := &EmailStandardFields{}
+	fields.From = sender
+	fields.To = strings.Join(recipient, ", ")
+	fields.Subject = subject
+	fields.Body = message
+
+	content := MakePlainEmailTemplate(fields).Bytes()
+
+	config := EmailConfig{identity, dispatcher, pw, host, port}
 
 	f := func(addr string, auth smtp.Auth, sender string, recipient []string, cont []byte) error {
 		var err error
