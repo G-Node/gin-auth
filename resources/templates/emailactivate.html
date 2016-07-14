@@ -1,0 +1,51 @@
+{{ define "content" }}
+--{{ .Boundary }}
+Content-Type: text/plain; charset=UTF-8
+
+Your GIN account is ready for activation!
+
+Please click the link below to activate your GIN account or copy paste it to a browser of your choice.
+<{{ .BaseUrl }}/oauth/activation?activation_code={{ .Code }}>
+
+Please finish the activation procedure within a week, otherwise your account request will be removed.
+
+--{{ .Boundary }}
+Content-Type: text/html; charset=UTF-8
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//projects.g-node.org/assets/gnode-bootstrap-theme/1.0.0-snapshot/css/bootstrap.min.css">
+    <link rel="shortcut icon" type="image/png" href="//projects.g-node.org/assets/gnode-bootstrap-theme/1.0.0-snapshot/img/favicon.png">
+</head>
+<body>
+<div>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+        <div class="container">
+            <div class="navbar-header">
+                <a class="navbar-brand-gnode" href="#"></a>
+            </div>
+        </div>
+    </nav>
+    <div class="container main-container">
+        <h1>Your GIN account is ready for activation!</h1>
+
+        <p>
+            Please click the link below to activate your GIN account or copy paste it to a browser of your choice.
+        </p>
+        <a href="{{ .BaseUrl }}/oauth/activation?activation_code={{ .Code }}">
+            {{ .BaseUrl }}/oauth/activation?activation_code={{ .Code }}
+        </a>
+        <p>
+            Please finish the activation procedure within a week, otherwise your account request will be removed.
+        </p>
+    </div>
+</div>
+</body>
+</html>
+--{{ .Boundary }}--
+{{ end }}
