@@ -980,26 +980,23 @@ func ResetInit(w http.ResponseWriter, r *http.Request) {
 	err = tmpl.ExecuteTemplate(w, "layout", info)
 }
 
-// ResetPage checks whether a submitted password reset code exists and is still valid.
-// Display password entry fields if valid, an error message otherwise.
+// ResetPage checks whether a password reset code submitted by request URI query exists and is still valid.
+// Display enter password form if valid, an error message otherwise.
 func ResetPage(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		fmt.Println("Request was malformed")
 		PrintErrorHTML(w, r, "Request was malformed", http.StatusBadRequest)
 		return
 	}
 
 	code := r.Form.Get("reset_code")
 	if code == "" {
-		fmt.Println("Request was malformed")
 		PrintErrorHTML(w, r, "Request was malformed", http.StatusBadRequest)
 		return
 	}
 
 	_, exists := data.GetAccountByResetPWCode(code)
 	if !exists {
-		fmt.Println("Your request is invalid or outdated. Please request a new reset code.")
 		PrintErrorHTML(w, r, "Your request is invalid or outdated. Please request a new reset code.",
 			http.StatusNotFound)
 		return
@@ -1017,9 +1014,9 @@ func ResetPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // Reset checks whether a submitted password reset code exists and is still valid. It further checks,
-// if submitted password and confirm password are identical and updates the account corresponding
-// to the password reset code with the new password. This update further removes any existing
-// password reset and account activation codes.
+// whether posted password and confirm password are identical and updates the account associated with
+// the password reset code with the new password. This update further removes any existing
+// password reset and account activation codes rendering the account active.
 func Reset(w http.ResponseWriter, r *http.Request) {
 	formData := &struct {
 		ResetCode       string
