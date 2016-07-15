@@ -46,6 +46,48 @@ func TestMakePlainEmailTemplate(t *testing.T) {
 	}
 }
 
+func TestMakeMultipartEmailTemplate(t *testing.T) {
+	const code = "activation_code"
+	const sender = "sender@example.com"
+	const subject = "This is another test message from your conscience!"
+	const boundary = "__boundary__"
+	const url = "/points/to/nowhere"
+	recipient := []string{"recipient@example.com"}
+
+	basicFields := &EmailStandardFields{}
+	basicFields.From = sender
+	basicFields.To = strings.Join(recipient, ", ")
+	basicFields.Subject = subject
+
+	activateFields := &struct {
+		*EmailStandardFields
+		Code     string
+		BaseUrl  string
+		Boundary string
+	}{basicFields, code, url, boundary}
+
+	content := MakeMultipartEmailTemplate("emailactivate.html", activateFields).String()
+	if strings.Contains(content, "<no value>") {
+		t.Errorf("Part of the template was not properly parsed:\n\n%s", content)
+	}
+
+	if !strings.Contains(content, "From: "+sender) {
+		t.Errorf("Sender line is malformed or missing:\n\n%s", content)
+	}
+	if !strings.Contains(content, "To: "+recipient[0]+"\n") {
+		t.Errorf("Recipient line is malformed or missing:\n\n%s", content)
+	}
+	if !strings.Contains(content, "Subject: "+subject) {
+		t.Errorf("Subject is malformed or missing:\n\n%s", content)
+	}
+	if !strings.Contains(content, "boundary=\""+boundary+"\"") {
+		t.Errorf("Boundary definition is malformed or missing:\n\n%s", content)
+	}
+	if !strings.Contains(content, "--"+boundary) || !strings.Contains(content, "--"+boundary+"--") {
+		t.Errorf("Boundary usage is malformed or missing:\n\n%s", content)
+	}
+}
+
 func TestEmailDispatcher_Send(t *testing.T) {
 	const identity = ""
 	const dispatcher = "dispatcher@some.host.com"
