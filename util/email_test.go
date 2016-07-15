@@ -28,15 +28,18 @@ func TestMakePlainEmailTemplate(t *testing.T) {
 	fields.Body = message
 
 	content := MakePlainEmailTemplate(fields).String()
+	if strings.Contains(content, "<no value>") {
+		t.Errorf("Part of the template was not properly parsed:\n\n%s", content)
+	}
 
 	if !strings.Contains(content, "From: "+sender) {
-		t.Errorf("Sender line is malformed or missing:\n'%s'", content)
+		t.Errorf("Sender line is malformed or missing:\n\n%s", content)
 	}
 	if !strings.Contains(content, "To: "+recipient[0]+", "+recipient[1]) {
-		t.Errorf("Recipient line is malformed or missing:\n'%s'", content)
+		t.Errorf("Recipient line is malformed or missing:\n\n%s", content)
 	}
 	if !strings.Contains(content, "Subject: "+subject) {
-		t.Errorf("Subject is malformed or missing:\n'%s'", content)
+		t.Errorf("Subject is malformed or missing:\n\n%s", content)
 	}
 	if !strings.Contains(content, "\n"+message+"\n") {
 		t.Errorf("Body is malformed or missing:\n\n%s", content)
