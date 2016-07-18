@@ -121,3 +121,25 @@ func TestEmailDispatcher_Send(t *testing.T) {
 		t.Error(err.Error())
 	}
 }
+
+func TestNewEmailDispatcher(t *testing.T) {
+	const from = "sender@example.com"
+	const subject = "This is a test message from your conscience!"
+	const message = "Give up your evil ways!"
+
+	recipient := []string{"recipient1@example.com", "recipient2@example.com"}
+
+	fields := &EmailStandardFields{}
+	fields.From = from
+	fields.To = strings.Join(recipient, ", ")
+	fields.Subject = subject
+	fields.Body = message
+
+	content := MakePlainEmailTemplate(fields).Bytes()
+
+	mail := NewEmailDispatcher()
+	err := mail.Send(recipient, content)
+	if err != nil {
+		t.Error(err.Error())
+	}
+}
