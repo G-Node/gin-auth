@@ -10,19 +10,20 @@ package util
 
 import (
 	"fmt"
+	"github.com/G-Node/gin-auth/conf"
 	"net/smtp"
 	"strings"
 	"testing"
 )
 
 func TestMakePlainEmailTemplate(t *testing.T) {
-	const sender = "sender@example.com"
+	const from = "sender@example.com"
 	const subject = "This is a test message from your conscience!"
 	const message = "Give up your evil ways!"
 	recipient := []string{"recipient1@example.com", "recipient2@example.com"}
 
 	fields := &EmailStandardFields{}
-	fields.From = sender
+	fields.From = from
 	fields.To = strings.Join(recipient, ", ")
 	fields.Subject = subject
 	fields.Body = message
@@ -32,7 +33,7 @@ func TestMakePlainEmailTemplate(t *testing.T) {
 		t.Errorf("Part of the template was not properly parsed:\n\n%s", content)
 	}
 
-	if !strings.Contains(content, "From: "+sender) {
+	if !strings.Contains(content, "From: "+from) {
 		t.Errorf("Sender line is malformed or missing:\n\n%s", content)
 	}
 	if !strings.Contains(content, "To: "+recipient[0]+", "+recipient[1]) {
@@ -89,28 +90,21 @@ func TestMakeMultipartEmailTemplate(t *testing.T) {
 }
 
 func TestEmailDispatcher_Send(t *testing.T) {
-	const identity = ""
-	const dispatcher = "dispatcher@some.host.com"
-	const pw = "somepw"
-	const host = "some.host.com"
-	const port = "587"
-	const sender = "sender@example.com"
+	const from = "sender@example.com"
 	const subject = "This is a test message from your conscience!"
 	const message = "Give up your evil ways!"
 
 	recipient := []string{"recipient1@example.com", "recipient2@example.com"}
 
 	fields := &EmailStandardFields{}
-	fields.From = sender
+	fields.From = from
 	fields.To = strings.Join(recipient, ", ")
 	fields.Subject = subject
 	fields.Body = message
 
 	content := MakePlainEmailTemplate(fields).Bytes()
 
-	config := EmailConfig{identity, dispatcher, pw, host, port}
-
-	f := func(addr string, auth smtp.Auth, sender string, recipient []string, cont []byte) error {
+	f := func(addr string, auth smtp.Auth, from string, recipient []string, cont []byte) error {
 		var err error
 		content := string(cont)
 		if !strings.Contains(content, "\n"+message+"\n") {
@@ -118,6 +112,8 @@ func TestEmailDispatcher_Send(t *testing.T) {
 		}
 		return err
 	}
+
+	config := conf.GetSmtpCredentials()
 
 	disp := &emailDispatcher{conf: config, send: f}
 	err := disp.Send(recipient, content)
