@@ -77,11 +77,11 @@ func MakePlainEmailTemplate(content *EmailStandardFields) *bytes.Buffer {
 	return &doc
 }
 
-// MakeMultipartEmailTemplate returns a bytes.Buffer containing a multipart format e-mail
-func MakeMultipartEmailTemplate(fileName string, content interface{}) *bytes.Buffer {
+// MakeEmailTemplate returns a bytes.Buffer containing a multipart format e-mail
+func MakeEmailTemplate(fileName string, content interface{}) *bytes.Buffer {
 	var doc bytes.Buffer
 
-	mainFile := conf.GetResourceFile("templates", "emailmultipart.txt")
+	mainFile := conf.GetResourceFile("templates", "emaillayout.txt")
 	contentFile := conf.GetResourceFile("templates", fileName)
 	tmpl, err := template.ParseFiles(mainFile, contentFile)
 	if err != nil {
