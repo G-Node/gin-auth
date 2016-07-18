@@ -800,18 +800,21 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 	if pw.Password != pw.PasswordControl {
 		valAccount.FieldErrors["password"] = "Provided password did not match password control"
 		if valAccount.Message == "" {
-			valAccount.Message = "Provided password did not match password control"
+			valAccount.Message = valAccount.FieldErrors["password"]
 		}
 	}
 	if pw.Password == "" || pw.PasswordControl == "" {
 		valAccount.FieldErrors["password"] = "Please enter password and password control"
 		if valAccount.Message == "" {
-			valAccount.Message = "Please enter password and password control"
+			valAccount.Message = valAccount.FieldErrors["password"]
 		}
 	}
 	if len(pw.Password) > 512 || len(pw.PasswordControl) > 512 {
 		valAccount.FieldErrors["password"] =
 			fmt.Sprintf("Entry too long, please shorten to %d characters", 512)
+		if valAccount.Message == "" {
+			valAccount.Message = valAccount.FieldErrors["password"]
+		}
 	}
 
 	if valAccount.Message != "" {
@@ -974,5 +977,112 @@ func ResetInit(w http.ResponseWriter, r *http.Request) {
 	}{head, message}
 
 	tmpl := conf.MakeTemplate("success.html")
+	err = tmpl.ExecuteTemplate(w, "layout", info)
+}
+
+// ResetPage checks whether a password reset code submitted by request URI query exists and is still valid.
+// Display enter password form if valid, an error message otherwise.
+func ResetPage(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		PrintErrorHTML(w, r, "Request was malformed", http.StatusBadRequest)
+		return
+	}
+
+	code := r.Form.Get("reset_code")
+	if code == "" {
+		PrintErrorHTML(w, r, "Request was malformed", http.StatusBadRequest)
+		return
+	}
+
+	_, exists := data.GetAccountByResetPWCode(code)
+	if !exists {
+		PrintErrorHTML(w, r, "Your request is invalid or outdated. Please request a new reset code.",
+			http.StatusNotFound)
+		return
+	}
+
+	hidden := &struct {
+		ResetCode string
+		*util.ValidationError
+	}{code, &util.ValidationError{}}
+
+	tmpl := conf.MakeTemplate("reset.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
+	err = tmpl.ExecuteTemplate(w, "layout", hidden)
+}
+
+// Reset checks whether a submitted password reset code exists and is still valid. It further checks,
+// whether posted password and confirm password are identical and updates the account associated with
+// the password reset code with the new password. This update further removes any existing
+// password reset and account activation codes rendering the account active.
+func Reset(w http.ResponseWriter, r *http.Request) {
+	formData := &struct {
+		ResetCode       string
+		Password        string
+		PasswordControl string
+		*util.ValidationError
+	}{}
+
+	err := util.ReadFormIntoStruct(r, formData, true)
+	if err != nil {
+		panic(err)
+	}
+
+	account, exists := data.GetAccountByResetPWCode(formData.ResetCode)
+	if !exists {
+		PrintErrorHTML(w, r, "Your request is invalid or outdated. Please request a new reset code.",
+			http.StatusNotFound)
+		return
+	}
+
+	formData.ValidationError = &util.ValidationError{FieldErrors: make(map[string]string)}
+	if formData.Password != formData.PasswordControl {
+		formData.FieldErrors["password"] = "Provided password did not match password control"
+		formData.Message = formData.FieldErrors["password"]
+	}
+	if formData.Password == "" || formData.PasswordControl == "" {
+		formData.FieldErrors["password"] = "Please enter password and password control"
+		formData.Message = formData.FieldErrors["password"]
+	}
+	if len(formData.Password) > 512 || len(formData.PasswordControl) > 512 {
+		formData.FieldErrors["password"] =
+			fmt.Sprintf("Entry too long, please shorten to %d characters", 512)
+		formData.Message = formData.FieldErrors["password"]
+	}
+
+	if formData.FieldErrors["password"] != "" {
+		formData.Password = ""
+		formData.PasswordControl = ""
+		tmpl := conf.MakeTemplate("reset.html")
+		w.Header().Add("Cache-Control", "no-store")
+		w.Header().Add("Content-Type", "text/html")
+		w.Header().Add("Warning", formData.Message)
+		err := tmpl.ExecuteTemplate(w, "layout", formData)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
+	account.SetPassword(formData.Password)
+	account.ActivationCode.Valid = false
+	account.ResetPWCode.Valid = false
+	err = account.Update()
+	if err != nil {
+		panic(err)
+	}
+
+	head := "Your password has been reset!"
+	message := "You can now login using your new password."
+	info := struct {
+		Header  string
+		Message string
+	}{head, message}
+
+	tmpl := conf.MakeTemplate("success.html")
+	w.Header().Add("Cache-Control", "no-store")
+	w.Header().Add("Content-Type", "text/html")
 	err = tmpl.ExecuteTemplate(w, "layout", info)
 }
