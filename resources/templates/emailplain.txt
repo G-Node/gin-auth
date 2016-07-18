@@ -1,6 +1,3 @@
-From: {{ .From }}
-To: {{ .To }}
-Subject: {{ .Subject }}
-Content-Type: text/plain
-
+{{ define "content" }}
 {{ .Body }}
+{{ end }}

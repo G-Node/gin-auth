@@ -16,19 +16,21 @@ import (
 	"testing"
 )
 
-func TestMakePlainEmailTemplate(t *testing.T) {
+func TestMakeEmailTemplate_Plain(t *testing.T) {
+	const template = "emailplain.txt"
 	const from = "sender@example.com"
 	const subject = "This is a test message from your conscience!"
 	const message = "Give up your evil ways!"
 	recipient := []string{"recipient1@example.com", "recipient2@example.com"}
 
-	fields := &EmailStandardFields{}
-	fields.From = from
-	fields.To = strings.Join(recipient, ", ")
-	fields.Subject = subject
-	fields.Body = message
+	fields := &struct {
+		From    string
+		To      string
+		Subject string
+		Body    string
+	}{from, strings.Join(recipient, ", "), subject, message}
 
-	content := MakePlainEmailTemplate(fields).String()
+	content := MakeEmailTemplate(template, fields).String()
 	if strings.Contains(content, "<no value>") {
 		t.Errorf("Part of the template was not properly parsed:\n\n%s", content)
 	}
@@ -47,25 +49,23 @@ func TestMakePlainEmailTemplate(t *testing.T) {
 	}
 }
 
-func TestMakeEmailTemplate(t *testing.T) {
+func TestMakeEmailTemplate_Activate(t *testing.T) {
+	const template = "emailactivate.txt"
 	const code = "activation_code"
 	const from = "sender@example.com"
 	const subject = "This is another test message from your conscience!"
-	const url = "/points/to/nowhere"
+	const url = "http://this.net/points/to/nowhere"
 	recipient := []string{"recipient@example.com"}
 
-	basicFields := &EmailStandardFields{}
-	basicFields.From = from
-	basicFields.To = strings.Join(recipient, ", ")
-	basicFields.Subject = subject
-
-	activateFields := &struct {
-		*EmailStandardFields
+	fields := &struct {
+		From    string
+		To      string
+		Subject string
 		Code    string
 		BaseUrl string
-	}{basicFields, code, url}
+	}{from, strings.Join(recipient, ", "), subject, code, url}
 
-	content := MakeEmailTemplate("emailactivate.txt", activateFields).String()
+	content := MakeEmailTemplate(template, fields).String()
 	if strings.Contains(content, "<no value>") {
 		t.Errorf("Part of the template was not properly parsed:\n\n%s", content)
 	}
@@ -82,19 +82,20 @@ func TestMakeEmailTemplate(t *testing.T) {
 }
 
 func TestEmailDispatcher_Send(t *testing.T) {
+	const template = "emailplain.txt"
 	const from = "sender@example.com"
 	const subject = "This is a test message from your conscience!"
 	const message = "Give up your evil ways!"
-
 	recipient := []string{"recipient1@example.com", "recipient2@example.com"}
 
-	fields := &EmailStandardFields{}
-	fields.From = from
-	fields.To = strings.Join(recipient, ", ")
-	fields.Subject = subject
-	fields.Body = message
+	fields := &struct {
+		From    string
+		To      string
+		Subject string
+		Body    string
+	}{from, strings.Join(recipient, ", "), subject, message}
 
-	content := MakePlainEmailTemplate(fields).Bytes()
+	content := MakeEmailTemplate(template, fields).Bytes()
 
 	f := func(addr string, auth smtp.Auth, from string, recipient []string, cont []byte) error {
 		var err error
@@ -115,19 +116,20 @@ func TestEmailDispatcher_Send(t *testing.T) {
 }
 
 func TestNewEmailDispatcher(t *testing.T) {
+	const template = "emailplain.txt"
 	const from = "sender@example.com"
 	const subject = "This is a test message from your conscience!"
 	const message = "Give up your evil ways!"
-
 	recipient := []string{"recipient1@example.com", "recipient2@example.com"}
 
-	fields := &EmailStandardFields{}
-	fields.From = from
-	fields.To = strings.Join(recipient, ", ")
-	fields.Subject = subject
-	fields.Body = message
+	fields := &struct {
+		From    string
+		To      string
+		Subject string
+		Body    string
+	}{from, strings.Join(recipient, ", "), subject, message}
 
-	content := MakePlainEmailTemplate(fields).Bytes()
+	content := MakeEmailTemplate(template, fields).Bytes()
 
 	mail := NewEmailDispatcher()
 	err := mail.Send(recipient, content)

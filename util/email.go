@@ -54,30 +54,9 @@ func NewEmailDispatcher() EmailDispatcher {
 	return &emailDispatcher{conf, send}
 }
 
-// EmailStandardFields specifies all fields required for a standard format e-mail
-type EmailStandardFields struct {
-	From    string
-	To      string
-	Subject string
-	Body    string
-}
-
-// MakePlainEmailTemplate returns a bytes.Buffer containing a standard format e-mail
-func MakePlainEmailTemplate(content *EmailStandardFields) *bytes.Buffer {
-	var doc bytes.Buffer
-
-	tmpl, err := template.ParseFiles(conf.GetResourceFile("templates", "emailplain.txt"))
-	if err != nil {
-		panic("Error parsing e-mail template: " + err.Error())
-	}
-	err = tmpl.Execute(&doc, content)
-	if err != nil {
-		panic("Error executing e-mail template: " + err.Error())
-	}
-	return &doc
-}
-
-// MakeEmailTemplate returns a bytes.Buffer containing a multipart format e-mail
+// MakeEmailTemplate parses a given template into the main email layout template,
+// applies the parsed template to the specified content object and returns
+// the result as a bytes.Buffer.
 func MakeEmailTemplate(fileName string, content interface{}) *bytes.Buffer {
 	var doc bytes.Buffer
 
