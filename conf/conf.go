@@ -73,6 +73,22 @@ type DbConfig struct {
 var dbConfig *DbConfig
 var dbConfigLock = sync.Mutex{}
 
+// SmtpCredentials contains the credentials required to send e-mails
+// via smtp. Mode constitutes a switch whether e-mails should actually be sent or not.
+// Supported values of Mode are: print and skip; print will write the content of
+// any e-mail to the commandline / log, skip will skip over any e-mail sending process.
+// For any other value of "Mode" e-mails will be sent.
+type SmtpCredentials struct {
+	From     string
+	Password string
+	Host     string
+	Port     int
+	Mode     string
+}
+
+var smtpCred *SmtpCredentials
+var smtpCredLock = sync.Mutex{}
+
 // GetServerConfig loads the server configuration from a yaml file when called the first time.
 // Returns a struct with configuration information.
 func GetServerConfig() *ServerConfig {
@@ -177,4 +193,42 @@ func GetClientsConfigFile() string {
 // GetStaticFilesDir returns the path to the static files directory.
 func GetStaticFilesDir() string {
 	return path.Join(resourcesPath, staticFilesDir)
+}
+
+// GetSmtpCredentials loads the smtp access information from a yaml file when called the first time.
+// Returns a struct with the smtp credentials.
+func GetSmtpCredentials() *SmtpCredentials {
+	smtpCredLock.Lock()
+	defer smtpCredLock.Unlock()
+
+	if smtpCred == nil {
+		content, err := ioutil.ReadFile(path.Join(resourcesPath, serverConfigFile))
+		if err != nil {
+			panic(err)
+		}
+
+		credentials := &struct {
+			Smtp struct {
+				From     string `yaml:"From"`
+				Password string `yaml:"Password"`
+				Host     string `yaml:"Host"`
+				Port     int    `yaml:"Port"`
+				Mode     string `yaml:"Mode"`
+			}
+		}{}
+		err = yaml.Unmarshal(content, credentials)
+		if err != nil {
+			panic(err)
+		}
+
+		smtpCred = &SmtpCredentials{
+			From:     credentials.Smtp.From,
+			Password: credentials.Smtp.Password,
+			Host:     credentials.Smtp.Host,
+			Port:     credentials.Smtp.Port,
+			Mode:     credentials.Smtp.Mode,
+		}
+	}
+
+	return smtpCred
 }
