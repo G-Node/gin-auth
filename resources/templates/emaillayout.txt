@@ -1,6 +1,6 @@
 From: {{ .From }}
 To: {{ .To }}
 Subject: {{ .Subject }}
-MIME-Version: 1.0
-Content-Type: multipart/alternative; boundary="{{ .Boundary }}"
+Content-Type: text/plain
+
 {{ template "content" . }}
