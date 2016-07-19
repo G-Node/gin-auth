@@ -26,6 +26,13 @@ const (
 	defaultCleanerInterval  = 15
 )
 
+// Default smtp settings
+const (
+	defaultHost = "mx1.g-node.org"
+	defaultPort = 587
+	defaultFrom = "no-reply@g-node.org"
+)
+
 var (
 	resourcesPath     string
 	serverConfigFile  = path.Join("conf", "server.yml")
@@ -219,6 +226,16 @@ func GetSmtpCredentials() *SmtpCredentials {
 		err = yaml.Unmarshal(content, credentials)
 		if err != nil {
 			panic(err)
+		}
+
+		if credentials.Smtp.From == "" {
+			credentials.Smtp.From = defaultFrom
+		}
+		if credentials.Smtp.Host == "" {
+			credentials.Smtp.Host = defaultHost
+		}
+		if credentials.Smtp.Port == 0 {
+			credentials.Smtp.Port = defaultPort
 		}
 
 		smtpCred = &SmtpCredentials{
