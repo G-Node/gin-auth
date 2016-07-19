@@ -1,0 +1,6 @@
+From: {{ .From }}
+To: {{ .To }}
+Subject: {{ .Subject }}
+Content-Type: text/plain
+
+{{ template "content" . }}

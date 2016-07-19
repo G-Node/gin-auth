@@ -73,6 +73,22 @@ type DbConfig struct {
 var dbConfig *DbConfig
 var dbConfigLock = sync.Mutex{}
 
+// SmtpCredentials contains the credentials required to send e-mails
+// via smtp. Mode constitutes a switch whether e-mails should actually be sent or not.
+// Supported values of Mode are: print and skip; print will write the content of
+// any e-mail to the commandline / log, skip will skip over any e-mail sending process.
+// For any other value of "Mode" e-mails will be sent.
+type SmtpCredentials struct {
+	From     string
+	Password string
+	Host     string
+	Port     int
+	Mode     string
+}
+
+var smtpCred *SmtpCredentials
+var smtpCredLock = sync.Mutex{}
+
 // GetServerConfig loads the server configuration from a yaml file when called the first time.
 // Returns a struct with configuration information.
 func GetServerConfig() *ServerConfig {
@@ -86,13 +102,15 @@ func GetServerConfig() *ServerConfig {
 		}
 
 		config := &struct {
-			Host             string `yaml:"Host"`
-			Port             int    `yaml:"Port"`
-			BaseURL          string `yaml:"BaseURL"`
-			SessionLifeTime  int    `yaml:"SessionLifeTime"`
-			TokenLifeTime    int    `yaml:"TokenLifeTime"`
-			GrantReqLifeTime int    `yaml:"GrantReqLifeTime"`
-			CleanerInterval  int    `yaml:"CleanerInterval"`
+			Http struct {
+				Host             string `yaml:"Host"`
+				Port             int    `yaml:"Port"`
+				BaseURL          string `yaml:"BaseURL"`
+				SessionLifeTime  int    `yaml:"SessionLifeTime"`
+				TokenLifeTime    int    `yaml:"TokenLifeTime"`
+				GrantReqLifeTime int    `yaml:"GrantReqLifeTime"`
+				CleanerInterval  int    `yaml:"CleanerInterval"`
+			}
 		}{}
 		err = yaml.Unmarshal(content, config)
 		if err != nil {
@@ -100,34 +118,34 @@ func GetServerConfig() *ServerConfig {
 		}
 
 		// set defaults
-		if config.BaseURL == "" {
-			if config.Port == 80 {
-				config.BaseURL = fmt.Sprintf("http://%s", config.Host)
+		if config.Http.BaseURL == "" {
+			if config.Http.Port == 80 {
+				config.Http.BaseURL = fmt.Sprintf("http://%s", config.Http.Host)
 			} else {
-				config.BaseURL = fmt.Sprintf("http://%s:%d", config.Host, config.Port)
+				config.Http.BaseURL = fmt.Sprintf("http://%s:%d", config.Http.Host, config.Http.Port)
 			}
 		}
-		if config.SessionLifeTime == 0 {
-			config.SessionLifeTime = defaultSessionLifeTime
+		if config.Http.SessionLifeTime == 0 {
+			config.Http.SessionLifeTime = defaultSessionLifeTime
 		}
-		if config.TokenLifeTime == 0 {
-			config.TokenLifeTime = defaultTokenLifeTime
+		if config.Http.TokenLifeTime == 0 {
+			config.Http.TokenLifeTime = defaultTokenLifeTime
 		}
-		if config.GrantReqLifeTime == 0 {
-			config.GrantReqLifeTime = defaultGrantReqLifeTime
+		if config.Http.GrantReqLifeTime == 0 {
+			config.Http.GrantReqLifeTime = defaultGrantReqLifeTime
 		}
-		if config.CleanerInterval == 0 {
-			config.CleanerInterval = defaultCleanerInterval
+		if config.Http.CleanerInterval == 0 {
+			config.Http.CleanerInterval = defaultCleanerInterval
 		}
 
 		serverConfig = &ServerConfig{
-			Host:             config.Host,
-			Port:             config.Port,
-			BaseURL:          config.BaseURL,
-			SessionLifeTime:  time.Duration(config.SessionLifeTime) * time.Minute,
-			TokenLifeTime:    time.Duration(config.TokenLifeTime) * time.Minute,
-			GrantReqLifeTime: time.Duration(config.GrantReqLifeTime) * time.Minute,
-			CleanerInterval:  time.Duration(config.CleanerInterval) * time.Minute,
+			Host:             config.Http.Host,
+			Port:             config.Http.Port,
+			BaseURL:          config.Http.BaseURL,
+			SessionLifeTime:  time.Duration(config.Http.SessionLifeTime) * time.Minute,
+			TokenLifeTime:    time.Duration(config.Http.TokenLifeTime) * time.Minute,
+			GrantReqLifeTime: time.Duration(config.Http.GrantReqLifeTime) * time.Minute,
+			CleanerInterval:  time.Duration(config.Http.CleanerInterval) * time.Minute,
 		}
 	}
 
@@ -175,4 +193,42 @@ func GetClientsConfigFile() string {
 // GetStaticFilesDir returns the path to the static files directory.
 func GetStaticFilesDir() string {
 	return path.Join(resourcesPath, staticFilesDir)
+}
+
+// GetSmtpCredentials loads the smtp access information from a yaml file when called the first time.
+// Returns a struct with the smtp credentials.
+func GetSmtpCredentials() *SmtpCredentials {
+	smtpCredLock.Lock()
+	defer smtpCredLock.Unlock()
+
+	if smtpCred == nil {
+		content, err := ioutil.ReadFile(path.Join(resourcesPath, serverConfigFile))
+		if err != nil {
+			panic(err)
+		}
+
+		credentials := &struct {
+			Smtp struct {
+				From     string `yaml:"From"`
+				Password string `yaml:"Password"`
+				Host     string `yaml:"Host"`
+				Port     int    `yaml:"Port"`
+				Mode     string `yaml:"Mode"`
+			}
+		}{}
+		err = yaml.Unmarshal(content, credentials)
+		if err != nil {
+			panic(err)
+		}
+
+		smtpCred = &SmtpCredentials{
+			From:     credentials.Smtp.From,
+			Password: credentials.Smtp.Password,
+			Host:     credentials.Smtp.Host,
+			Port:     credentials.Smtp.Port,
+			Mode:     credentials.Smtp.Mode,
+		}
+	}
+
+	return smtpCred
 }

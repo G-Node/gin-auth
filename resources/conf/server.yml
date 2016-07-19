@@ -1,3 +1,13 @@
-Host: localhost
-Port: 8081
-BaseURL: "http://localhost:8081"
+http:
+  Host: localhost
+  Port: 8081
+  BaseURL: "http://localhost:8081"
+smtp:
+  From: no-reply@g-node.org
+  Password:
+  Host: mx1.g-node.org
+  Port: 25
+# Supported values of Mode are: print and skip; in any other case e-mails will be sent.
+#   Print will write the content of any e-mail to the commandline / log
+#   Skip will skip over any e-mail sending process
+  Mode: print

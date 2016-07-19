@@ -31,3 +31,10 @@ func TestGetDbConfig(t *testing.T) {
 		t.Error("Driver expected to be 'postgres'")
 	}
 }
+
+func TestGetSmtpCredentials(t *testing.T) {
+	creds := GetSmtpCredentials()
+	if creds.From != "no-reply@g-node.org" {
+		t.Errorf("From expected to be no-reply@g-node.org but was '%s'", creds.From)
+	}
+}
