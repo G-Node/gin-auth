@@ -838,6 +838,23 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tmplFields := &struct {
+		From    string
+		To      string
+		Subject string
+		BaseUrl string
+		Code    string
+	}{}
+	tmplFields.From = conf.GetSmtpCredentials().From
+	tmplFields.To = account.Email
+	tmplFields.Subject = "GIN account activation"
+	tmplFields.BaseUrl = conf.GetServerConfig().BaseURL
+	tmplFields.Code = account.ActivationCode.String
+
+	content := util.MakeEmailTemplate("emailactivate.txt", tmplFields)
+	disp := util.NewEmailDispatcher()
+	disp.Send([]string{account.Email}, content.Bytes())
+
 	w.Header().Add("Cache-Control", "no-store")
 	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
 }
