@@ -79,6 +79,12 @@ func TestMakeEmailTemplate_Activate(t *testing.T) {
 	if !strings.Contains(content, "Subject: "+subject) {
 		t.Errorf("Subject is malformed or missing:\n\n%s", content)
 	}
+	if !strings.Contains(content, "<"+url) {
+		t.Errorf("BaseUrl is malformed or missing:\n\n%s", content)
+	}
+	if !strings.Contains(content, "activation_code="+code+">") {
+		t.Errorf("ActivationCode is malformed or missing:\n\n%s", content)
+	}
 }
 
 func TestEmailDispatcher_Send(t *testing.T) {
