@@ -87,6 +87,7 @@ var dbConfigLock = sync.Mutex{}
 // For any other value of "Mode" e-mails will be sent.
 type SmtpCredentials struct {
 	From     string
+	Username string
 	Password string
 	Host     string
 	Port     int
@@ -217,6 +218,7 @@ func GetSmtpCredentials() *SmtpCredentials {
 		credentials := &struct {
 			Smtp struct {
 				From     string `yaml:"From"`
+				Username string `yaml:"Username"`
 				Password string `yaml:"Password"`
 				Host     string `yaml:"Host"`
 				Port     int    `yaml:"Port"`
@@ -240,6 +242,7 @@ func GetSmtpCredentials() *SmtpCredentials {
 
 		smtpCred = &SmtpCredentials{
 			From:     credentials.Smtp.From,
+			Username: credentials.Smtp.Username,
 			Password: credentials.Smtp.Password,
 			Host:     credentials.Smtp.Host,
 			Port:     credentials.Smtp.Port,

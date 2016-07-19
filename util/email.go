@@ -30,7 +30,7 @@ type emailDispatcher struct {
 // Send sets up authentication for e-mail dispatch via smtp and invokes the objects send function.
 func (e *emailDispatcher) Send(recipient []string, content []byte) error {
 	addr := e.conf.Host + ":" + strconv.Itoa(e.conf.Port)
-	auth := smtp.PlainAuth("", e.conf.From, e.conf.Password, e.conf.Host)
+	auth := smtp.PlainAuth("", e.conf.Username, e.conf.Password, e.conf.Host)
 	return e.send(addr, auth, e.conf.From, recipient, content)
 }
 
