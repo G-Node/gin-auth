@@ -87,6 +87,44 @@ func TestMakeEmailTemplate_Activate(t *testing.T) {
 	}
 }
 
+func TestMakeEmailTemplate_Reset(t *testing.T) {
+	const template = "emailreset.txt"
+	const code = "reset_pw_code"
+	const from = "sender@example.com"
+	const subject = "This is another test message from your conscience!"
+	const url = "http://this.net/points/to/nowhere"
+	recipient := []string{"recipient@example.com"}
+
+	fields := &struct {
+		From    string
+		To      string
+		Subject string
+		Code    string
+		BaseUrl string
+	}{from, strings.Join(recipient, ", "), subject, code, url}
+
+	content := MakeEmailTemplate(template, fields).String()
+	if strings.Contains(content, "<no value>") {
+		t.Errorf("Part of the template was not properly parsed:\n\n%s", content)
+	}
+
+	if !strings.Contains(content, "From: "+from) {
+		t.Errorf("Sender line is malformed or missing:\n\n%s", content)
+	}
+	if !strings.Contains(content, "To: "+recipient[0]+"\n") {
+		t.Errorf("Recipient line is malformed or missing:\n\n%s", content)
+	}
+	if !strings.Contains(content, "Subject: "+subject) {
+		t.Errorf("Subject is malformed or missing:\n\n%s", content)
+	}
+	if !strings.Contains(content, "<"+url+"/oauth") {
+		t.Errorf("Url is malformed or missing:\n\n%s", content)
+	}
+	if !strings.Contains(content, "reset_page?reset_code="+code+">") {
+		t.Errorf("Reset code is malformed or missing:\n\n%s", content)
+	}
+}
+
 func TestEmailDispatcher_Send(t *testing.T) {
 	const template = "emailplain.txt"
 	const from = "sender@example.com"
