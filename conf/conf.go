@@ -9,11 +9,15 @@
 package conf
 
 import (
+	"crypto/tls"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"net"
+	"net/smtp"
 	"os"
 	"path"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -251,4 +255,44 @@ func GetSmtpCredentials() *SmtpCredentials {
 	}
 
 	return smtpCred
+}
+
+// SmtpCheck tests whether a connection to the specified smtp server can be established
+// with the provided credentials and will panic if it cannot.
+func SmtpCheck() {
+	cred := GetSmtpCredentials()
+	if cred.Mode == "skip" || cred.Mode == "print" {
+		return
+	}
+
+	addr := cred.Host + ":" + strconv.Itoa(cred.Port)
+	auth := smtp.PlainAuth("", cred.Username, cred.Password, cred.Host)
+
+	netCon, err := net.DialTimeout("tcp", addr, time.Second*10)
+	if err != nil {
+		panic(err.Error())
+	}
+	if err = netCon.Close(); err != nil {
+		panic(err.Error())
+	}
+
+	c, err := smtp.Dial(addr)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	if ok, _ := c.Extension("STARTTLS"); ok {
+		config := &tls.Config{ServerName: cred.Host}
+		if err = c.StartTLS(config); err != nil {
+			panic(err.Error())
+		}
+	}
+
+	if err = c.Auth(auth); err != nil {
+		panic(err.Error())
+	}
+
+	if err = c.Quit(); err != nil {
+		panic(err.Error())
+	}
 }
