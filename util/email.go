@@ -12,9 +12,11 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/G-Node/gin-auth/conf"
+	"net"
 	"net/smtp"
 	"strconv"
 	"text/template"
+	"time"
 )
 
 // EmailDispatcher defines an interface for e-mail dispatch.
@@ -31,6 +33,15 @@ type emailDispatcher struct {
 func (e *emailDispatcher) Send(recipient []string, content []byte) error {
 	addr := e.conf.Host + ":" + strconv.Itoa(e.conf.Port)
 	auth := smtp.PlainAuth("", e.conf.Username, e.conf.Password, e.conf.Host)
+	if e.conf.Mode != "print" && e.conf.Mode != "skip" {
+		netCon, err := net.DialTimeout("tcp", addr, time.Second*10)
+		if err != nil {
+			return err
+		}
+		if err = netCon.Close(); err != nil {
+			return err
+		}
+	}
 	return e.send(addr, auth, e.conf.From, recipient, content)
 }
 
