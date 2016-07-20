@@ -79,10 +79,10 @@ func TestMakeEmailTemplate_Activate(t *testing.T) {
 	if !strings.Contains(content, "Subject: "+subject) {
 		t.Errorf("Subject is malformed or missing:\n\n%s", content)
 	}
-	if !strings.Contains(content, "<"+url) {
+	if !strings.Contains(content, url) {
 		t.Errorf("BaseUrl is malformed or missing:\n\n%s", content)
 	}
-	if !strings.Contains(content, "activation_code="+code+">") {
+	if !strings.Contains(content, "activation_code="+code) {
 		t.Errorf("ActivationCode is malformed or missing:\n\n%s", content)
 	}
 }
@@ -117,10 +117,10 @@ func TestMakeEmailTemplate_Reset(t *testing.T) {
 	if !strings.Contains(content, "Subject: "+subject) {
 		t.Errorf("Subject is malformed or missing:\n\n%s", content)
 	}
-	if !strings.Contains(content, "<"+url+"/oauth") {
+	if !strings.Contains(content, url+"/oauth") {
 		t.Errorf("Url is malformed or missing:\n\n%s", content)
 	}
-	if !strings.Contains(content, "reset_page?reset_code="+code+">") {
+	if !strings.Contains(content, "reset_page?reset_code="+code) {
 		t.Errorf("Reset code is malformed or missing:\n\n%s", content)
 	}
 }
