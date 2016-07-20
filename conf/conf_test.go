@@ -34,7 +34,7 @@ func TestGetDbConfig(t *testing.T) {
 
 func TestGetSmtpCredentials(t *testing.T) {
 	creds := GetSmtpCredentials()
-	if creds.From != "no-reply@g-node.org" {
-		t.Errorf("From expected to be no-reply@g-node.org but was '%s'", creds.From)
+	if creds.Port != 587 {
+		t.Errorf("Port expected to be 587 but was '%d'", creds.Port)
 	}
 }

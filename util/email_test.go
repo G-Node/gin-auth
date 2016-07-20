@@ -131,8 +131,16 @@ func TestNewEmailDispatcher(t *testing.T) {
 
 	content := MakeEmailTemplate(template, fields).Bytes()
 
+	conf.GetSmtpCredentials().Mode = "skip"
 	mail := NewEmailDispatcher()
 	err := mail.Send(recipient, content)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	conf.GetSmtpCredentials().Mode = "print"
+	mail = NewEmailDispatcher()
+	err = mail.Send(recipient, content)
 	if err != nil {
 		t.Error(err.Error())
 	}

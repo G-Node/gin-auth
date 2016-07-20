@@ -44,6 +44,8 @@ func main() {
 	}
 
 	srvConf := conf.GetServerConfig()
+	conf.SmtpCheck()
+
 	dbConf := conf.GetDbConfig()
 	data.InitDb(dbConf)
 	data.InitClients(conf.GetClientsConfigFile())
