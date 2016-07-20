@@ -838,6 +838,29 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tmplFields := &struct {
+		From    string
+		To      string
+		Subject string
+		BaseUrl string
+		Code    string
+	}{}
+	tmplFields.From = conf.GetSmtpCredentials().From
+	tmplFields.To = account.Email
+	tmplFields.Subject = "GIN account activation"
+	tmplFields.BaseUrl = conf.GetServerConfig().BaseURL
+	tmplFields.Code = account.ActivationCode.String
+
+	content := util.MakeEmailTemplate("emailactivate.txt", tmplFields)
+	disp := util.NewEmailDispatcher()
+
+	err = disp.Send([]string{account.Email}, content.Bytes())
+	if err != nil {
+		msg := "An error occurred trying to send registration e-mail. Please contact an administrator."
+		PrintErrorHTML(w, r, msg, http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Add("Cache-Control", "no-store")
 	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
 }
@@ -964,8 +987,28 @@ func ResetInit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("Update pw code '%s' of account with login '%s' and email '%s'\n",
-		account.ResetPWCode.String, account.Login, account.Email)
+	tmplFields := &struct {
+		From    string
+		To      string
+		Subject string
+		BaseUrl string
+		Code    string
+	}{}
+	tmplFields.From = conf.GetSmtpCredentials().From
+	tmplFields.To = account.Email
+	tmplFields.Subject = "Your GIN Account Password Reset Request"
+	tmplFields.BaseUrl = conf.GetServerConfig().BaseURL
+	tmplFields.Code = account.ResetPWCode.String
+
+	content := util.MakeEmailTemplate("emailreset.txt", tmplFields)
+	disp := util.NewEmailDispatcher()
+
+	err = disp.Send([]string{account.Email}, content.Bytes())
+	if err != nil {
+		msg := "An error occurred trying to send password reset e-mail. Please try again later."
+		PrintErrorHTML(w, r, msg, http.StatusInternalServerError)
+		return
+	}
 
 	head := "Success!"
 	message := "An e-mail with a password reset token has been sent to your e-mail address. "

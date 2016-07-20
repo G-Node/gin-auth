@@ -1,0 +1,9 @@
+{{ define "content" }}
+We have received your password reset request!
+
+Please click the link below or copy paste it to a browser of your choice to reset your password.
+{{ .BaseUrl }}/oauth/reset_page?reset_code={{ .Code }}
+
+Please note that your account will stay deactivated until your password reset has been completed.
+
+{{ end }}

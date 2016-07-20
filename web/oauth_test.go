@@ -17,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
 	"github.com/gorilla/mux"
 )
@@ -992,6 +993,27 @@ func TestRegistration(t *testing.T) {
 	if redirect.String() != registeredPageURL {
 		t.Errorf("Expected to be redirected to '%s', but was '%s'", registeredPageURL, redirect.String())
 	}
+
+	// Test error when sending e-mail
+	body.Set("Login", "tl2")
+	body.Set("Email", "testemail2@example.com")
+
+	mode := conf.GetSmtpCredentials().Mode
+	host := conf.GetSmtpCredentials().Host
+	conf.GetSmtpCredentials().Mode = ""
+	conf.GetSmtpCredentials().Host = "iDoNotExist.com"
+	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusInternalServerError {
+		t.Errorf("Expected StatusInternatServerError but got '%d'", response.Code)
+	}
+
+	// reset smtp configuration
+	conf.GetSmtpCredentials().Mode = mode
+	conf.GetSmtpCredentials().Host = host
 }
 
 func TestRegisteredPage(t *testing.T) {
@@ -1171,6 +1193,24 @@ func TestResetInit(t *testing.T) {
 	if response.Header().Get("Warning") != "" {
 		t.Errorf("Expected empty warning message but got '%s'", response.Header().Get("Warning"))
 	}
+
+	// Test error when sending e-mail
+	mode := conf.GetSmtpCredentials().Mode
+	host := conf.GetSmtpCredentials().Host
+	conf.GetSmtpCredentials().Mode = ""
+	conf.GetSmtpCredentials().Host = "iDoNotExist.com"
+	request, _ = http.NewRequest("POST", resetInitURL, strings.NewReader(mkBody.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusInternalServerError {
+		t.Errorf("Expected StatusInternalServerError but got '%d'", response.Code)
+	}
+
+	// reset smtp configuration
+	conf.GetSmtpCredentials().Mode = mode
+	conf.GetSmtpCredentials().Host = host
 }
 
 func TestResetPage(t *testing.T) {

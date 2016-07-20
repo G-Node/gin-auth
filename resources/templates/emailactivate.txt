@@ -2,7 +2,7 @@
 Your GIN account is ready for activation!
 
 Please click the link below to activate your GIN account or copy paste it to a browser of your choice.
-<{{ .BaseUrl }}/oauth/activation?activation_code={{ .Code }}>
+{{ .BaseUrl }}/oauth/activation?activation_code={{ .Code }}
 
 Please finish the activation procedure within a week, otherwise your account request will be removed.
 
