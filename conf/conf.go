@@ -32,9 +32,7 @@ const (
 
 // Default smtp settings
 const (
-	defaultHost = "mx1.g-node.org"
 	defaultPort = 587
-	defaultFrom = "no-reply@g-node.org"
 )
 
 var (
@@ -234,12 +232,6 @@ func GetSmtpCredentials() *SmtpCredentials {
 			panic(err)
 		}
 
-		if credentials.Smtp.From == "" {
-			credentials.Smtp.From = defaultFrom
-		}
-		if credentials.Smtp.Host == "" {
-			credentials.Smtp.Host = defaultHost
-		}
 		if credentials.Smtp.Port == 0 {
 			credentials.Smtp.Port = defaultPort
 		}
