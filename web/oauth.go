@@ -763,6 +763,16 @@ type passwordData struct {
 	PasswordControl string
 }
 
+type registration struct {
+	verifyCaptcha func(string, string) bool
+}
+
+// RegistrationHandler provides an http handler for account registration.
+func RegistrationHandler(f func(string, string) bool) http.Handler {
+	rh := &registration{verifyCaptcha: f}
+	return rh
+}
+
 // Registration parses user entries for a new account. It will redirect back to the
 // entry form, if input is invalid. If the input is correct, it will create a new account,
 // send an e-mail with an activation link and redirect to the the registered page.
