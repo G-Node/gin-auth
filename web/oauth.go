@@ -773,10 +773,10 @@ func RegistrationHandler(f func(string, string) bool) http.Handler {
 	return rh
 }
 
-// Registration parses user entries for a new account. It will redirect back to the
+// The http handler of the registration class parses user entries for a new account. It will redirect back to the
 // entry form, if input is invalid. If the input is correct, it will create a new account,
 // send an e-mail with an activation link and redirect to the the registered page.
-func Registration(w http.ResponseWriter, r *http.Request) {
+func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	tmpl := conf.MakeTemplate("registration.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
@@ -831,7 +831,20 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	captchaRes := r.PostForm.Get("captcha_resolve")
+	captchaId := r.PostForm.Get("captcha_id")
+	isCorrectCaptcha := rh.verifyCaptcha(captchaId, captchaRes)
+	fmt.Printf("%s: '%s', %t\n", captchaRes, captchaId, isCorrectCaptcha)
+	if !isCorrectCaptcha {
+		valAccount.FieldErrors["password"] = "Please enter password and password control"
+		valAccount.FieldErrors["captcha"] = "Please resolve captcha"
+		if valAccount.Message == "" {
+			valAccount.Message = valAccount.FieldErrors["captcha"]
+		}
+	}
+
 	if valAccount.Message != "" {
+		valAccount.CaptchaId = captcha.New()
 		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
 		if err != nil {
 			panic(err)
