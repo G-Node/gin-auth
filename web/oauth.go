@@ -21,6 +21,7 @@ import (
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
 	"github.com/G-Node/gin-auth/util"
+	"github.com/dchest/captcha"
 	"github.com/gorilla/mux"
 )
 
@@ -737,6 +738,8 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 type validateAccount struct {
 	*data.Account
 	*util.ValidationError
+	CaptchaId      string
+	CaptchaResolve string
 }
 
 // RegistrationPage displays entry fields required for the creation of a new gin account
@@ -744,6 +747,7 @@ func RegistrationPage(w http.ResponseWriter, r *http.Request) {
 	valAccount := &validateAccount{}
 	valAccount.Account = &data.Account{}
 	valAccount.ValidationError = &util.ValidationError{}
+	valAccount.CaptchaId = captcha.New()
 
 	tmpl := conf.MakeTemplate("registration.html")
 	w.Header().Add("Cache-Control", "no-store")
