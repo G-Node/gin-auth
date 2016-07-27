@@ -11,6 +11,7 @@ package web
 import (
 	"net/http"
 
+	"github.com/dchest/captcha"
 	"github.com/gorilla/mux"
 )
 
@@ -64,4 +65,8 @@ func RegisterRoutes(r *mux.Router) {
 		Methods("GET")
 	api.Handle("/keys/{fingerprint}", OAuthHandler("account-write")(http.HandlerFunc(DeleteKey))).
 		Methods("DELETE")
+
+	// captcha service
+	cpt := r.PathPrefix("/captcha").Subrouter()
+	cpt.Handle("/{id}", captcha.Server(captcha.StdWidth, captcha.StdHeight)).Methods("GET")
 }
