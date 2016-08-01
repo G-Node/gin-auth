@@ -167,4 +167,15 @@
     </div>
 </form>
 
+<script>
+    var xmlHttp = null;
+    function reloadCaptcha() {
+        var id = document.getElementById('reg-captcha-id').value;
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("PUT", "/captcha/reload/"+ id);
+        xmlHttp.send();
+        document.getElementById('reg-image').src = "/captcha/"+ id + ".png?" + new Date().getTime();
+    }
+</script>
+
 {{ end }}
