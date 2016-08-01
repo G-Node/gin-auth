@@ -117,7 +117,7 @@
     <div class="form-group">
         <div class="col-sm-offset-3 col-sm-9 checkbox">
             <label for="reg-affiliation-public">
-                <input type="checkbox" id="reg-affiliation-public" name="is_affiliation_public"  value="true"  {{ if .IsAffiliationPublic }} checked {{ end }}>
+                <input type="checkbox" id="reg-affiliation-public" name="is_affiliation_public"  value="true" {{ if .IsAffiliationPublic }} checked {{ end }}>
                 Make affiliation public
             </label>
         </div>
@@ -144,16 +144,19 @@
 
     <h4>Captcha</h4>
     <hr>
-    <div>
-        <div class="col-sm-offset-3 col-sm-9">
-            <img id="image" src="/captcha/{{ .CaptchaId }}.png" alt="Captcha image">
+    <div class="form-group">
+        <div class="col-sm-offset-3 col-sm-3">
+            <img id="reg-image" src="/captcha/{{ .CaptchaId }}.png" alt="Captcha image">
+        </div>
+        <div class="col-sm-offset-6 col-sm-6">
+            <a href="#" onclick="reloadCaptcha()">Reload Captcha</a>
         </div>
     </div>
     <div class="form-group {{ if .FieldErrors.captcha}}has-error{{ end }}">
         <label for="reg-captcha-resolve" class="col-sm-3 control-label">Please enter captcha *</label>
         <div class="col-sm-9">
-            <input type="hidden" name="captcha_id" value="{{ .CaptchaId }}">
-            <input class="form-control" name="captcha_resolve" id="reg-captcha-resolve" placeholder="captcha resolve">
+            <input type="hidden" name="captcha_id" id="reg-captcha-id" value="{{ .CaptchaId }}">
+            <input class="form-control" name="captcha_resolve" id="reg-captcha-resolve" placeholder="captcha resolution">
             {{ if .FieldErrors.captcha }}
                 <span class="help-block">{{ .FieldErrors.captcha }}</span>
             {{ end }}
