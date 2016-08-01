@@ -836,7 +836,7 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	isCorrectCaptcha := rh.verifyCaptcha(captchaId, captchaRes)
 	if !isCorrectCaptcha {
 		valAccount.FieldErrors["password"] = "Please enter password and password control"
-		valAccount.FieldErrors["captcha"] = "Please resolve captcha"
+		valAccount.FieldErrors["captcha"] = "Please resolve verification"
 		if valAccount.Message == "" {
 			valAccount.Message = valAccount.FieldErrors["captcha"]
 		}
