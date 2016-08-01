@@ -945,8 +945,12 @@ func TestRegistrationPage(t *testing.T) {
 	}
 }
 
-func TestRegistration(t *testing.T) {
-	handler := InitTestHttpHandler(t)
+func TestRegistrationHandler(t *testing.T) {
+	data.InitTestDb(t)
+	f := func(id string, resolve string) bool {
+		return id != "" && id == resolve
+	}
+	handler := RegistrationHandler(f)
 
 	const registrationURL = "/oauth/registration"
 	const registeredPageURL = "/oauth/registered_page"
@@ -967,7 +971,7 @@ func TestRegistration(t *testing.T) {
 	body.Add("Password", "pw")
 	body.Add("PasswordControl", "pw")
 
-	// test that a request without a posted form redirects back to registration page
+	// test that a request without a posted form does not redirect to another page
 	request, _ := http.NewRequest("POST", registrationURL, strings.NewReader(""))
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -980,7 +984,37 @@ func TestRegistration(t *testing.T) {
 		t.Errorf("Expected empty location header, but was '%s'", redirect.String())
 	}
 
+	// test that a request with correct form content but missing captcha stays on the same page
+	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	redirect, err = url.Parse(response.Header().Get("Location"))
+	if err != nil {
+		t.Error(err)
+	}
+	if redirect.String() != "" {
+		t.Errorf("Expected empty location header, but was '%s'", redirect.String())
+	}
+
+	// test that a request with correct form content but incorrect captcha stays on the same page
+	body.Add("captcha_id", "test")
+	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	redirect, err = url.Parse(response.Header().Get("Location"))
+	if err != nil {
+		t.Error(err)
+	}
+	if redirect.String() != "" {
+		t.Errorf("Expected empty location header, but was '%s'", redirect.String())
+	}
+
 	// test that a request with correct form content redirects to registered_page
+	body.Add("captcha_resolve", "test")
 	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()

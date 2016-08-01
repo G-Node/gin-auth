@@ -21,6 +21,7 @@ import (
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
 	"github.com/G-Node/gin-auth/util"
+	"github.com/dchest/captcha"
 	"github.com/gorilla/mux"
 )
 
@@ -737,6 +738,8 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 type validateAccount struct {
 	*data.Account
 	*util.ValidationError
+	CaptchaId      string
+	CaptchaResolve string
 }
 
 // RegistrationPage displays entry fields required for the creation of a new gin account
@@ -744,6 +747,7 @@ func RegistrationPage(w http.ResponseWriter, r *http.Request) {
 	valAccount := &validateAccount{}
 	valAccount.Account = &data.Account{}
 	valAccount.ValidationError = &util.ValidationError{}
+	valAccount.CaptchaId = captcha.New()
 
 	tmpl := conf.MakeTemplate("registration.html")
 	w.Header().Add("Cache-Control", "no-store")
@@ -759,10 +763,20 @@ type passwordData struct {
 	PasswordControl string
 }
 
-// Registration parses user entries for a new account. It will redirect back to the
+type registration struct {
+	verifyCaptcha func(string, string) bool
+}
+
+// RegistrationHandler provides an http handler for account registration.
+func RegistrationHandler(f func(string, string) bool) http.Handler {
+	rh := &registration{verifyCaptcha: f}
+	return rh
+}
+
+// The http handler of the registration class parses user entries for a new account. It will redirect back to the
 // entry form, if input is invalid. If the input is correct, it will create a new account,
 // send an e-mail with an activation link and redirect to the the registered page.
-func Registration(w http.ResponseWriter, r *http.Request) {
+func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	tmpl := conf.MakeTemplate("registration.html")
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
@@ -817,7 +831,19 @@ func Registration(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	captchaRes := r.PostForm.Get("captcha_resolve")
+	captchaId := r.PostForm.Get("captcha_id")
+	isCorrectCaptcha := rh.verifyCaptcha(captchaId, captchaRes)
+	if !isCorrectCaptcha {
+		valAccount.FieldErrors["password"] = "Please enter password and password control"
+		valAccount.FieldErrors["captcha"] = "Please resolve verification"
+		if valAccount.Message == "" {
+			valAccount.Message = valAccount.FieldErrors["captcha"]
+		}
+	}
+
 	if valAccount.Message != "" {
+		valAccount.CaptchaId = captcha.New()
 		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
 		if err != nil {
 			panic(err)

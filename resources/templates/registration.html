@@ -117,7 +117,7 @@
     <div class="form-group">
         <div class="col-sm-offset-3 col-sm-9 checkbox">
             <label for="reg-affiliation-public">
-                <input type="checkbox" id="reg-affiliation-public" name="is_affiliation_public"  value="true"  {{ if .IsAffiliationPublic }} checked {{ end }}>
+                <input type="checkbox" id="reg-affiliation-public" name="is_affiliation_public"  value="true" {{ if .IsAffiliationPublic }} checked {{ end }}>
                 Make affiliation public
             </label>
         </div>
@@ -141,11 +141,44 @@
             {{ end }}
         </div>
     </div>
+
+    <hr>
+    <div class="form-group">
+        <div class="col-sm-offset-3 col-sm-9">Please verify you are a person:</div>
+        <div class="col-sm-offset-3 col-sm-3">
+            <img id="reg-image" src="/captcha/{{ .CaptchaId }}.png" alt="Captcha image">
+        </div>
+        <div class="col-sm-offset-6 col-sm-6">
+            <a href="#" onclick="reloadCaptcha()">Reload image</a>
+        </div>
+    </div>
+    <div class="form-group {{ if .FieldErrors.captcha}}has-error{{ end }}">
+        <label for="reg-captcha-resolve" class="col-sm-3 control-label">Enter displayed characters *</label>
+        <div class="col-sm-9">
+            <input type="hidden" name="captcha_id" id="reg-captcha-id" value="{{ .CaptchaId }}">
+            <input class="form-control" name="captcha_resolve" id="reg-captcha-resolve" placeholder="Enter characters">
+            {{ if .FieldErrors.captcha }}
+                <span class="help-block">{{ .FieldErrors.captcha }}</span>
+            {{ end }}
+        </div>
+    </div>
+
     <div class="form-group">
         <div class="col-sm-9 col-sm-offset-3">
             <button type="submit" class="btn btn-default">Create account</button>
         </div>
     </div>
 </form>
+
+<script>
+    var xmlHttp = null;
+    function reloadCaptcha() {
+        var id = document.getElementById('reg-captcha-id').value;
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", "/captcha/"+ id +".png?reload="+ new Date().getTime());
+        xmlHttp.send();
+        document.getElementById('reg-image').src = "/captcha/"+ id +".png?"+ new Date().getTime();
+    }
+</script>
 
 {{ end }}
