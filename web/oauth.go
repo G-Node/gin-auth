@@ -891,13 +891,6 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
 }
 
-// CaptchaReload changes the captcha target in memory for an existing captcha id
-func CaptchaReload(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	captcha.Reload(id)
-	return
-}
-
 // RegisteredPage displays information about how a newly created gin account can be activated.
 func RegisteredPage(w http.ResponseWriter, r *http.Request) {
 	head := "Account registered"

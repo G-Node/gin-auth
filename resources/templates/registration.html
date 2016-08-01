@@ -175,9 +175,9 @@
     function reloadCaptcha() {
         var id = document.getElementById('reg-captcha-id').value;
         xmlHttp = new XMLHttpRequest();
-        xmlHttp.open("PUT", "/captcha/reload/"+ id);
+        xmlHttp.open("GET", "/captcha/"+ id +".png?reload="+ new Date().getTime());
         xmlHttp.send();
-        document.getElementById('reg-image').src = "/captcha/"+ id + ".png?" + new Date().getTime();
+        document.getElementById('reg-image').src = "/captcha/"+ id +".png?"+ new Date().getTime();
     }
 </script>
 
