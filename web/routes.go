@@ -69,4 +69,5 @@ func RegisterRoutes(r *mux.Router) {
 	// captcha service
 	cpt := r.PathPrefix("/captcha").Subrouter()
 	cpt.Handle("/{id}", captcha.Server(captcha.StdWidth, captcha.StdHeight)).Methods("GET")
+	cpt.HandleFunc("/reload/{id}", CaptchaReload).Methods("PUT")
 }
