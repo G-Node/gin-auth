@@ -230,6 +230,19 @@ func (acc *Account) Update() error {
 	return err
 }
 
+// RemoveActivationCode is the only way to remove an ActivationCode from an Account,
+// since this field should never be set via the Update function by accident.
+func (acc *Account) RemoveActivationCode() error {
+	const q = `UPDATE Accounts
+	           SET activationcode = NULL
+	           WHERE uuid=$1
+	           RETURNING *`
+
+	err := database.Get(acc, q, acc.UUID)
+
+	return err
+}
+
 // Validate the content of an Account.
 // First name, last name, login, email, institute, department, city and country must not be empty;
 // Title, first name, middle name last name, login, email, institute, department, city
