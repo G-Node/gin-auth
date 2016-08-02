@@ -24,10 +24,11 @@ import (
 
 // The unit of all life times and intervals is minute
 const (
-	defaultSessionLifeTime  = 2880
-	defaultTokenLifeTime    = 1440
-	defaultGrantReqLifeTime = 15
-	defaultCleanerInterval  = 15
+	defaultSessionLifeTime       = 2880
+	defaultTokenLifeTime         = 1440
+	defaultGrantReqLifeTime      = 15
+	defaultUnusedAccountLifeTime = 10080
+	defaultCleanerInterval       = 15
 )
 
 // Default smtp settings
@@ -59,13 +60,14 @@ func SetResourcesPath(res string) {
 
 // ServerConfig provides several general configuration parameters for gin-auth
 type ServerConfig struct {
-	Host             string
-	Port             int
-	BaseURL          string
-	SessionLifeTime  time.Duration
-	TokenLifeTime    time.Duration
-	GrantReqLifeTime time.Duration
-	CleanerInterval  time.Duration
+	Host                  string
+	Port                  int
+	BaseURL               string
+	SessionLifeTime       time.Duration
+	TokenLifeTime         time.Duration
+	GrantReqLifeTime      time.Duration
+	UnusedAccountLifeTime time.Duration
+	CleanerInterval       time.Duration
 }
 
 var serverConfig *ServerConfig
@@ -113,13 +115,14 @@ func GetServerConfig() *ServerConfig {
 
 		config := &struct {
 			Http struct {
-				Host             string `yaml:"Host"`
-				Port             int    `yaml:"Port"`
-				BaseURL          string `yaml:"BaseURL"`
-				SessionLifeTime  int    `yaml:"SessionLifeTime"`
-				TokenLifeTime    int    `yaml:"TokenLifeTime"`
-				GrantReqLifeTime int    `yaml:"GrantReqLifeTime"`
-				CleanerInterval  int    `yaml:"CleanerInterval"`
+				Host                  string `yaml:"Host"`
+				Port                  int    `yaml:"Port"`
+				BaseURL               string `yaml:"BaseURL"`
+				SessionLifeTime       int    `yaml:"SessionLifeTime"`
+				TokenLifeTime         int    `yaml:"TokenLifeTime"`
+				GrantReqLifeTime      int    `yaml:"GrantReqLifeTime"`
+				UnusedAccountLifeTime int    `yaml:"UnusedAccountLifeTime"`
+				CleanerInterval       int    `yaml:"CleanerInterval"`
 			}
 		}{}
 		err = yaml.Unmarshal(content, config)
@@ -144,18 +147,22 @@ func GetServerConfig() *ServerConfig {
 		if config.Http.GrantReqLifeTime == 0 {
 			config.Http.GrantReqLifeTime = defaultGrantReqLifeTime
 		}
+		if config.Http.UnusedAccountLifeTime == 0 {
+			config.Http.UnusedAccountLifeTime = defaultUnusedAccountLifeTime
+		}
 		if config.Http.CleanerInterval == 0 {
 			config.Http.CleanerInterval = defaultCleanerInterval
 		}
 
 		serverConfig = &ServerConfig{
-			Host:             config.Http.Host,
-			Port:             config.Http.Port,
-			BaseURL:          config.Http.BaseURL,
-			SessionLifeTime:  time.Duration(config.Http.SessionLifeTime) * time.Minute,
-			TokenLifeTime:    time.Duration(config.Http.TokenLifeTime) * time.Minute,
-			GrantReqLifeTime: time.Duration(config.Http.GrantReqLifeTime) * time.Minute,
-			CleanerInterval:  time.Duration(config.Http.CleanerInterval) * time.Minute,
+			Host:                  config.Http.Host,
+			Port:                  config.Http.Port,
+			BaseURL:               config.Http.BaseURL,
+			SessionLifeTime:       time.Duration(config.Http.SessionLifeTime) * time.Minute,
+			TokenLifeTime:         time.Duration(config.Http.TokenLifeTime) * time.Minute,
+			GrantReqLifeTime:      time.Duration(config.Http.GrantReqLifeTime) * time.Minute,
+			UnusedAccountLifeTime: time.Duration(config.Http.UnusedAccountLifeTime) * time.Minute,
+			CleanerInterval:       time.Duration(config.Http.CleanerInterval) * time.Minute,
 		}
 	}
 
