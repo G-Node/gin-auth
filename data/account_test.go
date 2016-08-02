@@ -287,7 +287,6 @@ func TestAccount_Update(t *testing.T) {
 	newFirstName := "I am actually not Alice"
 	newMiddleName := "and my last name is"
 	newLastName := "Badchild"
-	newActivationCode := "activation code"
 	newResetPWCode := "reset password code"
 
 	acc, ok := GetAccount(uuidAlice)
@@ -333,19 +332,6 @@ func TestAccount_Update(t *testing.T) {
 	}
 	if acc.LastName != newLastName {
 		t.Error("LastName was not updated")
-	}
-
-	acc.ActivationCode = sql.NullString{String: newActivationCode, Valid: true}
-	err = acc.Update()
-	if err != nil {
-		t.Error(err)
-	}
-	acc, ok = GetAccountByActivationCode(newActivationCode)
-	if !ok {
-		t.Error("Activation code update failed")
-	}
-	if acc.ActivationCode.String != newActivationCode {
-		t.Error("Activation code was not updated")
 	}
 
 	acc.ResetPWCode = sql.NullString{String: newResetPWCode, Valid: true}
