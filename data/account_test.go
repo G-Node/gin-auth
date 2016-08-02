@@ -361,6 +361,34 @@ func TestAccount_Update(t *testing.T) {
 	}
 }
 
+func TestAccount_RemoveActivationCode(t *testing.T) {
+	InitTestDb(t)
+
+	const login = "inact_log1"
+	const activationCode = "ac_a"
+
+	acc, ok := GetAccountByLogin(login)
+	if ok {
+		t.Error("Account should not be active")
+	}
+	acc, ok = GetAccountByActivationCode(activationCode)
+	if !ok {
+		t.Error("Account does not exist")
+	}
+
+	err := acc.RemoveActivationCode()
+	if err != nil {
+		t.Errorf("An error occurred trying to remove an activation code: '%s'", err.Error())
+	}
+	acc, ok = GetAccountByLogin(login)
+	if !ok {
+		t.Error("Account should be active")
+	}
+	if acc.ActivationCode.Valid {
+		t.Error("Activation code should be empty")
+	}
+}
+
 func TestValidate(t *testing.T) {
 	InitTestDb(t)
 
