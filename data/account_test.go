@@ -241,6 +241,58 @@ func TestAccount_SetPassword(t *testing.T) {
 	}
 }
 
+func TestAccount_SetEmail(t *testing.T) {
+	InitTestDb(t)
+	const short = "a"
+	const missing = "aaaa"
+	const valid = "testaddress12@nowhere.com"
+
+	acc, ok := GetAccount(uuidAlice)
+	if !ok {
+		t.Error("Account does not exist")
+	}
+
+	err := acc.SetEmail(short)
+	if !strings.Contains(err.Error(), "Please use a valid e-mail address") {
+		t.Errorf("Expected valid e-mail address error but got: '%s'", err.Error())
+	}
+
+	err = acc.SetEmail(missing)
+	if !strings.Contains(err.Error(), "Please use a valid e-mail address") {
+		t.Errorf("Expected valid e-mail address error but got: '%s'", err.Error())
+	}
+
+	// Test maximal length error
+	s := []string{}
+	s = append(s, "@")
+	for i := 0; i < 513; i++ {
+		s = append(s, "s")
+	}
+	js := strings.Join(s, "")
+
+	err = acc.SetEmail(js)
+	if !strings.Contains(err.Error(), "Address too long") {
+		t.Errorf("Expected e-mail address too long error but got: '%s'", err.Error())
+	}
+
+	err = acc.SetEmail(acc.Email)
+	if !strings.Contains(err.Error(), "Please choose a different e-mail address") {
+		t.Errorf("Expected choose different e-mail address error but got: '%s'", err.Error())
+	}
+
+	err = acc.SetEmail(valid)
+	if err != nil {
+		t.Errorf("Encountered unexpected error: '%s'", err.Error())
+	}
+	acc, ok = GetAccount(uuidAlice)
+	if !ok {
+		t.Error("Account does not exist")
+	}
+	if acc.Email != valid {
+		t.Errorf("Expected e-mail address to be '%s', but was '%s'", valid, acc.Email)
+	}
+}
+
 func TestAccount_Create(t *testing.T) {
 	InitTestDb(t)
 
