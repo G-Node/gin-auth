@@ -178,10 +178,10 @@ func (acc *Account) VerifyPassword(plain string) bool {
 	return err == nil
 }
 
-// SetEmail checks validity of a new e-mail address and updates the current account
+// UpdateEmail checks validity of a new e-mail address and updates the current account
 // with a valid new e-mail address.
 // The normal account update does not include the e-mail address for safety reasons.
-func (acc *Account) SetEmail(email string) error {
+func (acc *Account) UpdateEmail(email string) error {
 	if !(len(email) > 2) || !strings.Contains(email, "@") {
 		return errors.New("Please use a valid e-mail address")
 	}

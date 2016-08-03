@@ -214,7 +214,7 @@ func UpdateAccountEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := acc.SetEmail(cred.Email)
+	err := acc.UpdateEmail(cred.Email)
 	if err != nil {
 		PrintErrorJSON(w, r, err, http.StatusBadRequest)
 		return

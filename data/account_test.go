@@ -252,12 +252,12 @@ func TestAccount_SetEmail(t *testing.T) {
 		t.Error("Account does not exist")
 	}
 
-	err := acc.SetEmail(short)
+	err := acc.UpdateEmail(short)
 	if !strings.Contains(err.Error(), "Please use a valid e-mail address") {
 		t.Errorf("Expected valid e-mail address error but got: '%s'", err.Error())
 	}
 
-	err = acc.SetEmail(missing)
+	err = acc.UpdateEmail(missing)
 	if !strings.Contains(err.Error(), "Please use a valid e-mail address") {
 		t.Errorf("Expected valid e-mail address error but got: '%s'", err.Error())
 	}
@@ -270,17 +270,17 @@ func TestAccount_SetEmail(t *testing.T) {
 	}
 	js := strings.Join(s, "")
 
-	err = acc.SetEmail(js)
+	err = acc.UpdateEmail(js)
 	if !strings.Contains(err.Error(), "Address too long") {
 		t.Errorf("Expected e-mail address too long error but got: '%s'", err.Error())
 	}
 
-	err = acc.SetEmail(acc.Email)
+	err = acc.UpdateEmail(acc.Email)
 	if !strings.Contains(err.Error(), "Please choose a different e-mail address") {
 		t.Errorf("Expected choose different e-mail address error but got: '%s'", err.Error())
 	}
 
-	err = acc.SetEmail(valid)
+	err = acc.UpdateEmail(valid)
 	if err != nil {
 		t.Errorf("Encountered unexpected error: '%s'", err.Error())
 	}
