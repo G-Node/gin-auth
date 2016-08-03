@@ -215,8 +215,7 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account.ActivationCode.Valid = false
-	err = account.Update()
+	err = account.RemoveActivationCode()
 	if err != nil {
 		panic(err)
 	}

@@ -41,7 +41,7 @@ CREATE TABLE SSHKeys (
   fingerprint       VARCHAR(128) PRIMARY KEY ,
   key               VARCHAR(1024) NOT NULL UNIQUE ,
   description       VARCHAR(1024) NOT NULL ,
-  accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
+  accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
 );
@@ -67,7 +67,7 @@ CREATE TABLE ClientApprovals (
   uuid              VARCHAR(36) PRIMARY KEY CHECK (char_length(uuid) = 36) ,
   scope             VARCHAR[] NOT NULL ,
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
-  accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
+  accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL ,
   UNIQUE (clientUUID, accountUUID)
@@ -81,7 +81,7 @@ CREATE TABLE GrantRequests (
   scopeRequested    VARCHAR[] NOT NULL ,
   redirectURI       VARCHAR(512) NOT NULL ,
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
-  accountUUID       VARCHAR(36) NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
+  accountUUID       VARCHAR(36) NULL REFERENCES Accounts(uuid) ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
 );
@@ -90,7 +90,7 @@ CREATE TABLE RefreshTokens (
   token             VARCHAR(512) PRIMARY KEY ,
   scope             VARCHAR[] NOT NULL ,
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
-  accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
+  accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
 );
@@ -100,7 +100,7 @@ CREATE TABLE AccessTokens (
   scope             VARCHAR[] NOT NULL ,
   expires           TIMESTAMP NOT NULL ,
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
-  accountUUID       VARCHAR(36) REFERENCES Accounts(uuid) ON DELETE CASCADE ,
+  accountUUID       VARCHAR(36) REFERENCES Accounts(uuid) ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
 );
@@ -110,7 +110,7 @@ CREATE INDEX ON AccessTokens (expires);
 CREATE TABLE Sessions (
   token             VARCHAR(512) PRIMARY KEY ,      -- the session id
   expires           TIMESTAMP NOT NULL ,
-  accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ON DELETE CASCADE ,
+  accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ,
   createdAt         TIMESTAMP NOT NULL ,
   updatedAt         TIMESTAMP NOT NULL
 );

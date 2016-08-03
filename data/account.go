@@ -214,19 +214,34 @@ func (acc *Account) SSHKeys() []SSHKey {
 // Update stores the new values of an Account in the database.
 // New values for Login and CreatedAt are ignored. UpdatedAt will be set
 // automatically to the current date and time.
+// Field ActivationCode is not set via this update function, since this field fulfills a special role.
+// It can only be set to a value once by account create and can only be set to null via its own function.
 func (acc *Account) Update() error {
 	const q = `UPDATE Accounts
-	           SET (pwHash, email, isemailpublic, title, firstName, middleName, lastName, institute, department, city,
-	                country, isaffiliationpublic, activationCode, resetPWCode, isDisabled, updatedAt) =
-	               ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, now())
-	           WHERE uuid=$16
+	           SET (pwHash, email, isemailpublic, title, firstName, middleName, lastName, institute,
+	                department, city, country, isaffiliationpublic, resetPWCode, isDisabled, updatedAt) =
+	               ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now())
+	           WHERE uuid=$15
 	           RETURNING *`
 
 	err := database.Get(acc, q, acc.PWHash, acc.Email, acc.IsEmailPublic, acc.Title, acc.FirstName, acc.MiddleName,
 		acc.LastName, acc.Institute, acc.Department, acc.City, acc.Country, acc.IsAffiliationPublic,
-		acc.ActivationCode, acc.ResetPWCode, acc.IsDisabled, acc.UUID)
+		acc.ResetPWCode, acc.IsDisabled, acc.UUID)
 
 	// TODO There is a lot of room for improvement here concerning errors about constraints for certain fields
+	return err
+}
+
+// RemoveActivationCode is the only way to remove an ActivationCode from an Account,
+// since this field should never be set via the Update function by accident.
+func (acc *Account) RemoveActivationCode() error {
+	const q = `UPDATE Accounts
+	           SET activationcode = NULL
+	           WHERE uuid=$1
+	           RETURNING *`
+
+	err := database.Get(acc, q, acc.UUID)
+
 	return err
 }
 

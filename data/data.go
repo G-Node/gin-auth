@@ -57,8 +57,19 @@ func RemoveExpired() {
 	database.MustExec(q)
 }
 
+// RemoveStaleAccounts removes all accounts that where registered,
+// but never accessed within a defined period of time
+func RemoveStaleAccounts() {
+	const q = `DELETE FROM Accounts WHERE
+	 	   NOT isdisabled AND
+	 	   resetpwcode IS NULL AND
+	 	   activationcode IS NOT NULL AND
+	 	   updatedat < $1`
+	database.MustExec(q, time.Now().Add(-1*conf.GetServerConfig().UnusedAccountLifeTime))
+}
+
 // RunCleaner starts an infinite loop which
-// periodically executes the RemoveExpired function.
+// periodically executes database cleanup functions.
 func RunCleaner() {
 	go func() {
 		// TODO add log entry once logging is implemented
@@ -67,6 +78,7 @@ func RunCleaner() {
 			select {
 			case <-t.C:
 				RemoveExpired()
+				RemoveStaleAccounts()
 			}
 		}
 	}()
