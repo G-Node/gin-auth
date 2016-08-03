@@ -11,10 +11,11 @@ package data
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"strings"
 	"time"
 
-	"fmt"
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
@@ -175,6 +176,39 @@ func (acc *Account) SetPassword(plain string) error {
 func (acc *Account) VerifyPassword(plain string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(acc.PWHash), []byte(plain))
 	return err == nil
+}
+
+// SetEmail checks validity of a new e-mail address and updates the current account
+// with a valid new e-mail address.
+// The normal account update does not include the e-mail address for safety reasons.
+func (acc *Account) SetEmail(email string) error {
+	if !(len(email) > 2) || !strings.Contains(email, "@") {
+		return errors.New("Please use a valid e-mail address")
+	}
+	if len(email) > 512 {
+		return errors.New("Address too long, please shorten to 512 characters")
+	}
+	exists := &struct {
+		Email bool
+	}{}
+
+	const check = `SELECT (SELECT COUNT(*) FROM accounts WHERE email = $1) <> 0 AS email`
+	err := database.Get(exists, check, email)
+	if err != nil {
+		panic(err)
+	}
+	if exists.Email {
+		return errors.New("Please choose a different e-mail address")
+	}
+
+	const q = `UPDATE Accounts SET email=$1 WHERE uuid=$2 RETURNING *`
+	err = database.Get(acc, q, email, acc.UUID)
+	if err != nil {
+		panic(err)
+	}
+
+	acc.Email = email
+	return nil
 }
 
 // Create stores the account as new Account in the database.
