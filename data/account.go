@@ -250,15 +250,16 @@ func (acc *Account) SSHKeys() []SSHKey {
 // automatically to the current date and time.
 // Field ActivationCode is not set via this update function, since this field fulfills a special role.
 // It can only be set to a value once by account create and can only be set to null via its own function.
+// Field email is not set via this update function, since it requires sufficient scope to change.
 func (acc *Account) Update() error {
 	const q = `UPDATE Accounts
-	           SET (pwHash, email, isemailpublic, title, firstName, middleName, lastName, institute,
+	           SET (pwHash, isemailpublic, title, firstName, middleName, lastName, institute,
 	                department, city, country, isaffiliationpublic, resetPWCode, isDisabled, updatedAt) =
-	               ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now())
-	           WHERE uuid=$15
+	               ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now())
+	           WHERE uuid=$14
 	           RETURNING *`
 
-	err := database.Get(acc, q, acc.PWHash, acc.Email, acc.IsEmailPublic, acc.Title, acc.FirstName, acc.MiddleName,
+	err := database.Get(acc, q, acc.PWHash, acc.IsEmailPublic, acc.Title, acc.FirstName, acc.MiddleName,
 		acc.LastName, acc.Institute, acc.Department, acc.City, acc.Country, acc.IsAffiliationPublic,
 		acc.ResetPWCode, acc.IsDisabled, acc.UUID)
 
