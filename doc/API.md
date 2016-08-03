@@ -637,6 +637,31 @@ The token scope must contain 'account-write' to change the own password.
 
 If the password was successfully changed the status code is 200 and the response body is empty.
 
+### Update account email
+
+##### URL
+
+```
+PUT https://<host>/api/accounts/<login>/email
+```
+
+##### Authorization
+
+A bearer token sent with the authorization header is required.
+The token scope must contain 'account-write' to change the own e-mail address.
+
+##### Body
+
+```json
+{
+    "password": "...",
+    "email": "...",
+}
+```
+
+##### Response
+
+If the password was successfully changed the status code is 200 and the response body is empty.
 
 
 SSH-key API
