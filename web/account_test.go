@@ -376,7 +376,7 @@ func TestUpdateAccountEmail(t *testing.T) {
 	if response.Code != http.StatusBadRequest {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
 	}
-	if !strings.Contains(response.Body.String(), "Wrong password") {
+	if !strings.Contains(response.Body.String(), "Invalid password") {
 		t.Errorf("Expected wrong password message but got: \n%s", response.Body.String())
 	}
 

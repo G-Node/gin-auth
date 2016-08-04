@@ -210,7 +210,10 @@ func UpdateAccountEmail(w http.ResponseWriter, r *http.Request) {
 	dec.Decode(cred)
 
 	if !acc.VerifyPassword(cred.Password) {
-		PrintErrorJSON(w, r, "Wrong password", http.StatusBadRequest)
+		valErr := &util.ValidationError{FieldErrors: make(map[string]string)}
+		valErr.Message = "Invalid password"
+		valErr.FieldErrors["password"] = "Invalid password"
+		PrintErrorJSON(w, r, valErr, http.StatusBadRequest)
 		return
 	}
 
