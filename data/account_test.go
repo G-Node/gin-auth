@@ -10,9 +10,11 @@ package data
 
 import (
 	"database/sql"
-	"github.com/G-Node/gin-auth/util"
+	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/G-Node/gin-auth/util"
 )
 
 const (
@@ -241,7 +243,7 @@ func TestAccount_SetPassword(t *testing.T) {
 	}
 }
 
-func TestAccount_SetEmail(t *testing.T) {
+func TestAccount_UpdateEmail(t *testing.T) {
 	InitTestDb(t)
 	const short = "a"
 	const missing = "aaaa"
@@ -253,12 +255,20 @@ func TestAccount_SetEmail(t *testing.T) {
 	}
 
 	err := acc.UpdateEmail(short)
-	if !strings.Contains(err.Error(), "Please use a valid e-mail address") {
+	if reflect.TypeOf(err).String() != "*util.ValidationError" {
+		t.Errorf("Expected valid e-mail address error but got: '%s', '%s'",
+			reflect.TypeOf(err).String(), err.Error())
+	}
+	if !strings.Contains(err.(*util.ValidationError).FieldErrors["email"], "Please use a valid e-mail address") {
 		t.Errorf("Expected valid e-mail address error but got: '%s'", err.Error())
 	}
 
 	err = acc.UpdateEmail(missing)
-	if !strings.Contains(err.Error(), "Please use a valid e-mail address") {
+	if reflect.TypeOf(err).String() != "*util.ValidationError" {
+		t.Errorf("Expected valid e-mail address error but got: '%s', '%s'",
+			reflect.TypeOf(err).String(), err.Error())
+	}
+	if !strings.Contains(err.(*util.ValidationError).FieldErrors["email"], "Please use a valid e-mail address") {
 		t.Errorf("Expected valid e-mail address error but got: '%s'", err.Error())
 	}
 
@@ -271,12 +281,21 @@ func TestAccount_SetEmail(t *testing.T) {
 	js := strings.Join(s, "")
 
 	err = acc.UpdateEmail(js)
-	if !strings.Contains(err.Error(), "Address too long") {
+	if reflect.TypeOf(err).String() != "*util.ValidationError" {
+		t.Errorf("Expected e-mail address too long error but got: '%s', '%s'",
+			reflect.TypeOf(err).String(), err.Error())
+	}
+	if !strings.Contains(err.(*util.ValidationError).FieldErrors["email"], "Address too long") {
 		t.Errorf("Expected e-mail address too long error but got: '%s'", err.Error())
 	}
 
 	err = acc.UpdateEmail(acc.Email)
-	if !strings.Contains(err.Error(), "Please choose a different e-mail address") {
+	if reflect.TypeOf(err).String() != "*util.ValidationError" {
+		t.Errorf("Expected choose different e-mail address error but got: '%s', '%s'",
+			reflect.TypeOf(err).String(), err.Error())
+	}
+	if !strings.Contains(err.(*util.ValidationError).FieldErrors["email"],
+		"Please choose a different e-mail address") {
 		t.Errorf("Expected choose different e-mail address error but got: '%s'", err.Error())
 	}
 

@@ -11,7 +11,6 @@ package data
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -182,11 +181,16 @@ func (acc *Account) VerifyPassword(plain string) bool {
 // with a valid new e-mail address.
 // The normal account update does not include the e-mail address for safety reasons.
 func (acc *Account) UpdateEmail(email string) error {
+	valErr := &util.ValidationError{FieldErrors: make(map[string]string)}
 	if !(len(email) > 2) || !strings.Contains(email, "@") {
-		return errors.New("Please use a valid e-mail address")
+		valErr.Message = "Invalid e-mail address"
+		valErr.FieldErrors["email"] = "Please use a valid e-mail address"
+		return valErr
 	}
 	if len(email) > 512 {
-		return errors.New("Address too long, please shorten to 512 characters")
+		valErr.Message = "Invalid e-mail address"
+		valErr.FieldErrors["email"] = "Address too long, please shorten to 512 characters"
+		return valErr
 	}
 	exists := &struct {
 		Email bool
@@ -198,7 +202,9 @@ func (acc *Account) UpdateEmail(email string) error {
 		panic(err)
 	}
 	if exists.Email {
-		return errors.New("Please choose a different e-mail address")
+		valErr.Message = "E-Mail address already exists"
+		valErr.FieldErrors["email"] = "Please choose a different e-mail address"
+		return valErr
 	}
 
 	const q = `UPDATE Accounts SET email=$1 WHERE uuid=$2 RETURNING *`
