@@ -243,6 +243,38 @@ func TestAccount_SetPassword(t *testing.T) {
 	}
 }
 
+func TestAccount_UpdatePassword(t *testing.T) {
+	InitTestDb(t)
+	const pw = "supersecret"
+
+	acc, ok := GetAccount(uuidAlice)
+	if !ok {
+		t.Error("Account does not exist")
+	}
+	err := acc.UpdatePassword(pw)
+	if err != nil {
+		t.Errorf("Error updating password: '%s'", err.Error())
+	}
+
+	if acc.PWHash == pw {
+		t.Error("PWHash equals plain text password")
+	}
+	if len(acc.PWHash) < 60 {
+		t.Error("PWHash is too short")
+	}
+	if !acc.VerifyPassword(pw) {
+		t.Error("Unable to verify password")
+	}
+
+	checkDb, ok := GetAccount(uuidAlice)
+	if !ok {
+		t.Error("Account does not exist")
+	}
+	if !checkDb.VerifyPassword(pw) {
+		t.Error("Password update failed")
+	}
+}
+
 func TestAccount_UpdateEmail(t *testing.T) {
 	InitTestDb(t)
 	const short = "a"

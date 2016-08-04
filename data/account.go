@@ -177,6 +177,22 @@ func (acc *Account) VerifyPassword(plain string) bool {
 	return err == nil
 }
 
+// UpdatePassword hashes a plain text password
+// and updates the database entry of the corresponding account.
+func (acc *Account) UpdatePassword(plain string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	const q = `UPDATE Accounts SET pwhash=$1 WHERE uuid=$2 RETURNING *`
+	err = database.Get(acc, q, string(hash), acc.UUID)
+	if err == nil {
+		acc.PWHash = string(hash)
+	}
+	return err
+}
+
 // UpdateEmail checks validity of a new e-mail address and updates the current account
 // with a valid new e-mail address.
 // The normal account update does not include the e-mail address for safety reasons.
