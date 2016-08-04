@@ -171,9 +171,7 @@ func UpdateAccountPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account.SetPassword(pwData.PasswordNew)
-	err := account.Update()
-
+	err := account.UpdatePassword(pwData.PasswordNew)
 	if err != nil {
 		PrintErrorJSON(w, r, err, http.StatusInternalServerError)
 		return
