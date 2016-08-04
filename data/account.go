@@ -197,16 +197,15 @@ func (acc *Account) UpdatePassword(plain string) error {
 // with a valid new e-mail address.
 // The normal account update does not include the e-mail address for safety reasons.
 func (acc *Account) UpdateEmail(email string) error {
-	valErr := &util.ValidationError{FieldErrors: make(map[string]string)}
 	if !(len(email) > 2) || !strings.Contains(email, "@") {
-		valErr.Message = "Invalid e-mail address"
-		valErr.FieldErrors["email"] = "Please use a valid e-mail address"
-		return valErr
+		return &util.ValidationError{
+			Message:     "Invalid e-mail address",
+			FieldErrors: map[string]string{"email": "Please use a valid e-mail address"}}
 	}
 	if len(email) > 512 {
-		valErr.Message = "Invalid e-mail address"
-		valErr.FieldErrors["email"] = "Address too long, please shorten to 512 characters"
-		return valErr
+		return &util.ValidationError{
+			Message:     "Invalid e-mail address",
+			FieldErrors: map[string]string{"email": "Address too long, please shorten to 512 characters"}}
 	}
 	exists := &struct {
 		Email bool
@@ -218,9 +217,9 @@ func (acc *Account) UpdateEmail(email string) error {
 		panic(err)
 	}
 	if exists.Email {
-		valErr.Message = "E-Mail address already exists"
-		valErr.FieldErrors["email"] = "Please choose a different e-mail address"
-		return valErr
+		return &util.ValidationError{
+			Message:     "E-Mail address already exists",
+			FieldErrors: map[string]string{"email": "Please choose a different e-mail address"}}
 	}
 
 	const q = `UPDATE Accounts SET email=$1 WHERE uuid=$2 RETURNING *`
