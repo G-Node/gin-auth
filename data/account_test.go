@@ -413,8 +413,8 @@ func TestAccount_Update(t *testing.T) {
 		t.Error("Account does not exist")
 	}
 
-	if !acc.VerifyPassword(newPw) {
-		t.Error("PWHash was not updated")
+	if acc.VerifyPassword(newPw) {
+		t.Error("PWHash was updated though this should not have happened via update")
 	}
 	if acc.Login == newLogin {
 		t.Error("Login was updated although this should never happen")
