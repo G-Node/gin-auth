@@ -197,12 +197,17 @@ func Reset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account.SetPassword(formData.Password)
+	err = account.UpdatePassword(formData.Password)
+	if err != nil {
+		panic(err)
+	}
+
 	account.ResetPWCode.Valid = false
 	err = account.Update()
 	if err != nil {
 		panic(err)
 	}
+
 	err = account.RemoveActivationCode()
 	if err != nil {
 		panic(err)

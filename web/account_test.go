@@ -12,8 +12,6 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"github.com/G-Node/gin-auth/conf"
-	"github.com/G-Node/gin-auth/data"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -21,6 +19,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/G-Node/gin-auth/conf"
+	"github.com/G-Node/gin-auth/data"
 )
 
 const (
@@ -311,6 +312,95 @@ func TestUpdateAccountPassword(t *testing.T) {
 	acc, _ := data.GetAccountByLogin("alice")
 	if !acc.VerifyPassword("TestTest") {
 		t.Error("Unable to verify password")
+	}
+}
+
+func TestUpdateAccountEmail(t *testing.T) {
+	const uriInvalid = "/api/accounts/idonotexist/email"
+	const uriAlice = "/api/accounts/alice/email"
+	const uriBob = "/api/accounts/bob/email"
+	const tokenInsufficient = "KDEW57D4"
+
+	jsonBody := func(pw string, email string) io.Reader {
+		cont := &struct {
+			Password string `json:"password"`
+			Email    string `json:"email"`
+		}{pw, email}
+		b, err := json.Marshal(cont)
+		if err != nil {
+			t.Error("Error marshalling content")
+		}
+		return bytes.NewReader(b)
+	}
+
+	handler := InitTestHttpHandler(t)
+
+	// missing authorization header
+	request, _ := http.NewRequest("PUT", uriAlice, strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+
+	// invalid login
+	request, _ = http.NewRequest("PUT", uriInvalid, strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// insufficient scope
+	request, _ = http.NewRequest("PUT", uriBob, strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+tokenInsufficient)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
+	}
+	if !strings.Contains(response.Body.String(), "Insufficient scope") {
+		t.Errorf("Expected insufficient scope but got: \n%s", response.Body.String())
+	}
+
+	// empty Body
+	request, _ = http.NewRequest("PUT", uriAlice, strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+	if !strings.Contains(response.Body.String(), "Invalid password") {
+		t.Errorf("Expected wrong password message but got: \n%s", response.Body.String())
+	}
+
+	// invalid e-mail address
+	request, _ = http.NewRequest("PUT", uriAlice, jsonBody("testtest", "a"))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+	if !strings.Contains(response.Body.String(), "valid e-mail address") {
+		t.Errorf("Expected invalid e-mail message but got: \n%s", response.Body.String())
+	}
+
+	// valid e-mail address
+	request, _ = http.NewRequest("PUT", uriAlice, jsonBody("testtest", "testemail@noone.com"))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 }
 

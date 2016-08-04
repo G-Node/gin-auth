@@ -10,9 +10,11 @@ package data
 
 import (
 	"database/sql"
-	"github.com/G-Node/gin-auth/util"
+	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/G-Node/gin-auth/util"
 )
 
 const (
@@ -241,6 +243,107 @@ func TestAccount_SetPassword(t *testing.T) {
 	}
 }
 
+func TestAccount_UpdatePassword(t *testing.T) {
+	InitTestDb(t)
+	const pw = "supersecret"
+
+	acc, ok := GetAccount(uuidAlice)
+	if !ok {
+		t.Error("Account does not exist")
+	}
+	err := acc.UpdatePassword(pw)
+	if err != nil {
+		t.Errorf("Error updating password: '%s'", err.Error())
+	}
+
+	if acc.PWHash == pw {
+		t.Error("PWHash equals plain text password")
+	}
+	if len(acc.PWHash) < 60 {
+		t.Error("PWHash is too short")
+	}
+	if !acc.VerifyPassword(pw) {
+		t.Error("Unable to verify password")
+	}
+
+	checkDb, ok := GetAccount(uuidAlice)
+	if !ok {
+		t.Error("Account does not exist")
+	}
+	if !checkDb.VerifyPassword(pw) {
+		t.Error("Password update failed")
+	}
+}
+
+func TestAccount_UpdateEmail(t *testing.T) {
+	InitTestDb(t)
+	const short = "a"
+	const missing = "aaaa"
+	const valid = "testaddress12@nowhere.com"
+
+	acc, ok := GetAccount(uuidAlice)
+	if !ok {
+		t.Error("Account does not exist")
+	}
+
+	err := acc.UpdateEmail(short)
+	if reflect.TypeOf(err).String() != "*util.ValidationError" {
+		t.Errorf("Expected valid e-mail address error but got: '%s', '%s'",
+			reflect.TypeOf(err).String(), err.Error())
+	}
+	if !strings.Contains(err.(*util.ValidationError).FieldErrors["email"], "Please use a valid e-mail address") {
+		t.Errorf("Expected valid e-mail address error but got: '%s'", err.Error())
+	}
+
+	err = acc.UpdateEmail(missing)
+	if reflect.TypeOf(err).String() != "*util.ValidationError" {
+		t.Errorf("Expected valid e-mail address error but got: '%s', '%s'",
+			reflect.TypeOf(err).String(), err.Error())
+	}
+	if !strings.Contains(err.(*util.ValidationError).FieldErrors["email"], "Please use a valid e-mail address") {
+		t.Errorf("Expected valid e-mail address error but got: '%s'", err.Error())
+	}
+
+	// Test maximal length error
+	s := []string{}
+	s = append(s, "@")
+	for i := 0; i < 513; i++ {
+		s = append(s, "s")
+	}
+	js := strings.Join(s, "")
+
+	err = acc.UpdateEmail(js)
+	if reflect.TypeOf(err).String() != "*util.ValidationError" {
+		t.Errorf("Expected e-mail address too long error but got: '%s', '%s'",
+			reflect.TypeOf(err).String(), err.Error())
+	}
+	if !strings.Contains(err.(*util.ValidationError).FieldErrors["email"], "Address too long") {
+		t.Errorf("Expected e-mail address too long error but got: '%s'", err.Error())
+	}
+
+	err = acc.UpdateEmail(acc.Email)
+	if reflect.TypeOf(err).String() != "*util.ValidationError" {
+		t.Errorf("Expected choose different e-mail address error but got: '%s', '%s'",
+			reflect.TypeOf(err).String(), err.Error())
+	}
+	if !strings.Contains(err.(*util.ValidationError).FieldErrors["email"],
+		"Please choose a different e-mail address") {
+		t.Errorf("Expected choose different e-mail address error but got: '%s'", err.Error())
+	}
+
+	err = acc.UpdateEmail(valid)
+	if err != nil {
+		t.Errorf("Encountered unexpected error: '%s'", err.Error())
+	}
+	acc, ok = GetAccount(uuidAlice)
+	if !ok {
+		t.Error("Account does not exist")
+	}
+	if acc.Email != valid {
+		t.Errorf("Expected e-mail address to be '%s', but was '%s'", valid, acc.Email)
+	}
+}
+
 func TestAccount_Create(t *testing.T) {
 	InitTestDb(t)
 
@@ -281,7 +384,6 @@ func TestAccount_Update(t *testing.T) {
 	InitTestDb(t)
 
 	newLogin := "alice_in_wonderland"
-	newEmail := "alice_in_wonderland@example.com"
 	newPw := "secret"
 	newTitle := "Dr."
 	newFirstName := "I am actually not Alice"
@@ -296,7 +398,6 @@ func TestAccount_Update(t *testing.T) {
 
 	acc.SetPassword(newPw)
 	acc.Login = newLogin
-	acc.Email = newEmail
 	acc.Title = sql.NullString{String: newTitle, Valid: true}
 	acc.FirstName = newFirstName
 	acc.MiddleName = sql.NullString{String: newMiddleName, Valid: true}
@@ -312,14 +413,11 @@ func TestAccount_Update(t *testing.T) {
 		t.Error("Account does not exist")
 	}
 
-	if !acc.VerifyPassword(newPw) {
-		t.Error("PWHash was not updated")
+	if acc.VerifyPassword(newPw) {
+		t.Error("PWHash was updated though this should not have happened via update")
 	}
 	if acc.Login == newLogin {
 		t.Error("Login was updated although this should never happen")
-	}
-	if acc.Email != newEmail {
-		t.Error("Email was not updated")
 	}
 	if acc.Title.String != newTitle {
 		t.Error("Title was not updated")

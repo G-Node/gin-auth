@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
 	"github.com/G-Node/gin-auth/util"
 	"github.com/gorilla/mux"
@@ -170,11 +171,74 @@ func UpdateAccountPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	account.SetPassword(pwData.PasswordNew)
-	err := account.Update()
-
+	err := account.UpdatePassword(pwData.PasswordNew)
 	if err != nil {
 		PrintErrorJSON(w, r, err, http.StatusInternalServerError)
+		return
+	}
+}
+
+// UpdateAccountEmail parses an e-mail address and the account password
+// from a JSON request body and updates the e-mail address of the authorized account.
+func UpdateAccountEmail(w http.ResponseWriter, r *http.Request) {
+
+	login := mux.Vars(r)["login"]
+	oauth, ok := OAuthToken(r)
+	if !ok {
+		panic("Missing OAuth token")
+	}
+
+	acc, ok := data.GetAccountByLogin(login)
+	if !ok {
+		PrintErrorJSON(w, r, "The requested account does not exist", http.StatusNotFound)
+		return
+	}
+
+	if oauth.Token.AccountUUID.String != acc.UUID || !oauth.Match.Contains("account-write") {
+		PrintErrorJSON(w, r, "Unauthorized account access", http.StatusUnauthorized)
+		return
+	}
+
+	cred := &struct {
+		Password string `json:"password"`
+		Email    string `json:"email"`
+	}{}
+
+	dec := json.NewDecoder(r.Body)
+	dec.Decode(cred)
+
+	if !acc.VerifyPassword(cred.Password) {
+		valErr := &util.ValidationError{
+			Message:     "Invalid password",
+			FieldErrors: map[string]string{"password": "Invalid password"}}
+		PrintErrorJSON(w, r, valErr, http.StatusBadRequest)
+		return
+	}
+
+	err := acc.UpdateEmail(cred.Email)
+	if err != nil {
+		PrintErrorJSON(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	tmplFields := &struct {
+		From    string
+		To      string
+		Subject string
+		Body    string
+	}{}
+	tmplFields.From = conf.GetSmtpCredentials().From
+	tmplFields.To = cred.Email
+	tmplFields.Subject = "GIN account confirmation"
+	tmplFields.Body = "The e-mail address of your GIN account has been successfully changed."
+
+	content := util.MakeEmailTemplate("emailplain.txt", tmplFields)
+	disp := util.NewEmailDispatcher()
+
+	err = disp.Send([]string{cred.Email}, content.Bytes())
+	if err != nil {
+		msg := "An error occurred trying to send change e-mail address confirmation."
+		PrintErrorJSON(w, r, msg, http.StatusInternalServerError)
 		return
 	}
 }

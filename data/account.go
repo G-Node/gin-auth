@@ -11,10 +11,10 @@ package data
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
-	"fmt"
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/util"
 	"github.com/pborman/uuid"
@@ -177,6 +177,61 @@ func (acc *Account) VerifyPassword(plain string) bool {
 	return err == nil
 }
 
+// UpdatePassword hashes a plain text password
+// and updates the database entry of the corresponding account.
+func (acc *Account) UpdatePassword(plain string) error {
+	hash, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	const q = `UPDATE Accounts SET pwhash=$1 WHERE uuid=$2 RETURNING *`
+	err = database.Get(acc, q, string(hash), acc.UUID)
+	if err == nil {
+		acc.PWHash = string(hash)
+	}
+	return err
+}
+
+// UpdateEmail checks validity of a new e-mail address and updates the current account
+// with a valid new e-mail address.
+// The normal account update does not include the e-mail address for safety reasons.
+func (acc *Account) UpdateEmail(email string) error {
+	if !(len(email) > 2) || !strings.Contains(email, "@") {
+		return &util.ValidationError{
+			Message:     "Invalid e-mail address",
+			FieldErrors: map[string]string{"email": "Please use a valid e-mail address"}}
+	}
+	if len(email) > 512 {
+		return &util.ValidationError{
+			Message:     "Invalid e-mail address",
+			FieldErrors: map[string]string{"email": "Address too long, please shorten to 512 characters"}}
+	}
+	exists := &struct {
+		Email bool
+	}{}
+
+	const check = `SELECT (SELECT COUNT(*) FROM accounts WHERE email = $1) <> 0 AS email`
+	err := database.Get(exists, check, email)
+	if err != nil {
+		panic(err)
+	}
+	if exists.Email {
+		return &util.ValidationError{
+			Message:     "E-Mail address already exists",
+			FieldErrors: map[string]string{"email": "Please choose a different e-mail address"}}
+	}
+
+	const q = `UPDATE Accounts SET email=$1 WHERE uuid=$2 RETURNING *`
+	err = database.Get(acc, q, email, acc.UUID)
+	if err != nil {
+		panic(err)
+	}
+
+	acc.Email = email
+	return nil
+}
+
 // Create stores the account as new Account in the database.
 // If the UUID string is empty a new UUID will be generated.
 func (acc *Account) Create() error {
@@ -216,15 +271,16 @@ func (acc *Account) SSHKeys() []SSHKey {
 // automatically to the current date and time.
 // Field ActivationCode is not set via this update function, since this field fulfills a special role.
 // It can only be set to a value once by account create and can only be set to null via its own function.
+// Fields password and email are not set via this update function, since they require sufficient scope to change.
 func (acc *Account) Update() error {
 	const q = `UPDATE Accounts
-	           SET (pwHash, email, isemailpublic, title, firstName, middleName, lastName, institute,
+	           SET (isemailpublic, title, firstName, middleName, lastName, institute,
 	                department, city, country, isaffiliationpublic, resetPWCode, isDisabled, updatedAt) =
-	               ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, now())
-	           WHERE uuid=$15
+	               ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, now())
+	           WHERE uuid=$13
 	           RETURNING *`
 
-	err := database.Get(acc, q, acc.PWHash, acc.Email, acc.IsEmailPublic, acc.Title, acc.FirstName, acc.MiddleName,
+	err := database.Get(acc, q, acc.IsEmailPublic, acc.Title, acc.FirstName, acc.MiddleName,
 		acc.LastName, acc.Institute, acc.Department, acc.City, acc.Country, acc.IsAffiliationPublic,
 		acc.ResetPWCode, acc.IsDisabled, acc.UUID)
 

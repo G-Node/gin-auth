@@ -345,6 +345,9 @@ func TestReset(t *testing.T) {
 	if account.PWHash == pwHash {
 		t.Errorf("Password of Account with id '%s' has not been updated", id)
 	}
+	if !account.VerifyPassword("pw") {
+		t.Error("Password has not been properly updated")
+	}
 	if account.ResetPWCode.String != "" {
 		t.Errorf("Password reset code of Account with id '%s' has not been removed", id)
 	}
