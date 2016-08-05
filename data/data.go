@@ -105,3 +105,17 @@ func EmailDispatch() {
 		}
 	}
 }
+
+// RunEmailDispatch starts an infinite loop which periodically
+// runs e-mail queue functions.
+func RunEmailDispatch() {
+	go func() {
+		t := time.NewTicker(conf.GetServerConfig().MailQueueInterval)
+		for {
+			select {
+			case <-t.C:
+				EmailDispatch()
+			}
+		}
+	}()
+}
