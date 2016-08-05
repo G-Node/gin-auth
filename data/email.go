@@ -10,10 +10,14 @@ package data
 
 import (
 	"database/sql"
+	"fmt"
+	"net"
+	"net/smtp"
+	"strconv"
 	"time"
 
-	"github.com/G-Node/gin-auth/util"
 	"github.com/G-Node/gin-auth/conf"
+	"github.com/G-Node/gin-auth/util"
 )
 
 // Email data as stored in the database
@@ -57,4 +61,31 @@ func (e *Email) Delete() error {
 	const q = `DELETE FROM EmailQueue WHERE id=$1`
 	_, err := database.Exec(q, e.Id)
 	return err
+}
+
+// Send checks the smtp Mode setting and if appropriate
+// sets up authentication for e-mail dispatch via smtp and sends the e-mail.
+func (e *Email) Send() error {
+	switch e.Mode.String {
+	case "skip":
+		fmt.Printf("Skip sending e-mail to '%s'\n", e.Recipient.Strings()[0])
+	case "print":
+		fmt.Printf("%s\n", string(e.Content))
+	default:
+		config := conf.GetSmtpCredentials()
+		addr := config.Host + ":" + strconv.Itoa(config.Port)
+		netCon, err := net.DialTimeout("tcp", addr, time.Second*10)
+		if err != nil {
+			return err
+		}
+		if err = netCon.Close(); err != nil {
+			return err
+		}
+		auth := smtp.PlainAuth("", config.Username, config.Password, config.Host)
+		err = smtp.SendMail(addr, auth, e.Sender, e.Recipient.Strings(), e.Content)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
