@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/G-Node/gin-auth/util"
+	"github.com/G-Node/gin-auth/conf"
 )
 
 // Email data as stored in the database
@@ -34,4 +35,19 @@ func GetQueuedEmails() ([]Email, error) {
 	err := database.Select(&emails, q)
 
 	return emails, err
+}
+
+// Create adds a new entry to table EmailQueue
+func (e *Email) Create(to util.StringSet, content []byte) error {
+
+	const q = `INSERT INTO EmailQueue(mode, sender, recipient, content, createdat)
+	           VALUES ($1, $2, $3, $4, now())
+	           RETURNING *`
+
+	config := conf.GetSmtpCredentials()
+	mode := sql.NullString{}
+	mode.Scan(config.Mode)
+	err := database.Get(e, q, mode, config.From, to, content)
+
+	return err
 }
