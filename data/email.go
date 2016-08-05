@@ -24,3 +24,14 @@ type Email struct {
 	Content   []byte
 	CreatedAt time.Time
 }
+
+// GetQueuedEmails selects all unsent e-mails from the email queue
+// database table and returns the result as a slice of Emails.
+func GetQueuedEmails() ([]Email, error) {
+	const q = `SELECT * FROM EmailQueue order by createdat`
+
+	emails := make([]Email, 0)
+	err := database.Select(&emails, q)
+
+	return emails, err
+}
