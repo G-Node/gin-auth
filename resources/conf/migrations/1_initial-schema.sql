@@ -117,11 +117,21 @@ CREATE TABLE Sessions (
 
 CREATE INDEX ON Sessions (expires);
 
+CREATE TABLE EmailQueue (
+  id        SERIAL PRIMARY KEY ,
+  mode      VARCHAR(32) ,
+  sender    VARCHAR(512) NOT NULL ,
+  recipient VARCHAR[] NOT NULL ,
+  content   VARCHAR(4096) NOT NULL ,
+  createdAt TIMESTAMP NOT NULL
+);
+
 -- +goose Down
 -- SQL section 'Down' is executed when this migration is rolled back
 
 DROP VIEW IF EXISTS ActiveAccounts;
 
+DROP TABLE IF EXISTS EmailQueue CASCADE;
 DROP TABLE IF EXISTS Sessions CASCADE;
 DROP TABLE IF EXISTS AccessTokens CASCADE;
 DROP TABLE IF EXISTS RefreshTokens CASCADE;
