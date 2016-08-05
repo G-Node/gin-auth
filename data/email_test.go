@@ -58,3 +58,29 @@ func TestEmail_Create(t *testing.T) {
 		email.Id, email.Mode.String, email.Sender, email.Recipient.Strings()[0],
 		string(email.Content), email.Content, email.CreatedAt.String())
 }
+
+func TestEmail_Delete(t *testing.T) {
+	InitTestDb(t)
+
+	emails, err := GetQueuedEmails()
+	if err != nil {
+		t.Errorf("Error fetching queued e-mails: '%s'\n", err.Error())
+	}
+	if len(emails) < 1 {
+		t.Error("Expected queued e-mails, but result was empty")
+	}
+	num := len(emails)
+
+	err = emails[0].Delete()
+	if err != nil {
+		t.Errorf("Error trying to delete e-mail (Id %d, mode '%s'): %s",
+			emails[0].Id, emails[0].Mode.String, err.Error())
+	}
+	emails, err = GetQueuedEmails()
+	if err != nil {
+		t.Errorf("Error fetching queued e-mails: '%s'\n", err.Error())
+	}
+	if len(emails) != num-1 {
+		t.Errorf("Number of e-mail entries should be '%d', but was '%d'", num-1, len(emails))
+	}
+}
