@@ -29,6 +29,7 @@ const (
 	defaultGrantReqLifeTime      = 15
 	defaultUnusedAccountLifeTime = 10080
 	defaultCleanerInterval       = 15
+	defaultMailQueueInterval     = 1
 )
 
 // Default smtp settings
@@ -68,6 +69,7 @@ type ServerConfig struct {
 	GrantReqLifeTime      time.Duration
 	UnusedAccountLifeTime time.Duration
 	CleanerInterval       time.Duration
+	MailQueueInterval     time.Duration
 }
 
 var serverConfig *ServerConfig
@@ -123,6 +125,7 @@ func GetServerConfig() *ServerConfig {
 				GrantReqLifeTime      int    `yaml:"GrantReqLifeTime"`
 				UnusedAccountLifeTime int    `yaml:"UnusedAccountLifeTime"`
 				CleanerInterval       int    `yaml:"CleanerInterval"`
+				MailQueueInterval     int    `yaml:"MailQueueInterval"`
 			}
 		}{}
 		err = yaml.Unmarshal(content, config)
@@ -153,6 +156,9 @@ func GetServerConfig() *ServerConfig {
 		if config.Http.CleanerInterval == 0 {
 			config.Http.CleanerInterval = defaultCleanerInterval
 		}
+		if config.Http.MailQueueInterval == 0 {
+			config.Http.MailQueueInterval = defaultMailQueueInterval
+		}
 
 		serverConfig = &ServerConfig{
 			Host:                  config.Http.Host,
@@ -163,6 +169,7 @@ func GetServerConfig() *ServerConfig {
 			GrantReqLifeTime:      time.Duration(config.Http.GrantReqLifeTime) * time.Minute,
 			UnusedAccountLifeTime: time.Duration(config.Http.UnusedAccountLifeTime) * time.Minute,
 			CleanerInterval:       time.Duration(config.Http.CleanerInterval) * time.Minute,
+			MailQueueInterval:     time.Duration(config.Http.MailQueueInterval) * time.Minute,
 		}
 	}
 
