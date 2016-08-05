@@ -10,8 +10,10 @@ package data
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
+	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/util"
 )
 
@@ -82,5 +84,52 @@ func TestEmail_Delete(t *testing.T) {
 	}
 	if len(emails) != num-1 {
 		t.Errorf("Number of e-mail entries should be '%d', but was '%d'", num-1, len(emails))
+	}
+}
+
+func TestEmail_Send(t *testing.T) {
+	InitTestDb(t)
+
+	emails, err := GetQueuedEmails()
+	if err != nil {
+		t.Errorf("Error fetching queued e-mails: '%s'\n", err.Error())
+	}
+	if len(emails) < 3 {
+		t.Error("Expected queued e-mails, but result did not match")
+	}
+
+	// test send e-mail, check bad username error
+	if emails[0].Mode.Valid {
+		t.Error("Expected e-mail mode to be empty")
+	}
+
+	username := conf.GetSmtpCredentials().Username
+	conf.GetSmtpCredentials().Username = "iDoNotExist"
+	err = emails[0].Send()
+	if err == nil {
+		t.Error("Expected error")
+	}
+	if !strings.Contains(err.Error(), "Bad username or password") {
+		t.Errorf("Expected Bad username error but got: '%s'", err.Error())
+	}
+	// reset username
+	conf.GetSmtpCredentials().Username = username
+
+	// test print option
+	if emails[1].Mode.String != "print" {
+		t.Error("Expected e-mail mode to be print")
+	}
+	err = emails[1].Send()
+	if err != nil {
+		t.Errorf("Unexpected error when printing e-mail: '%s'", err.Error())
+	}
+
+	// test skip option
+	if emails[2].Mode.String != "skip" {
+		t.Error("Expected e-mail mode to be skip")
+	}
+	err = emails[2].Send()
+	if err != nil {
+		t.Errorf("Unexpected error when skipping e-mail: '%s'", err.Error())
 	}
 }
