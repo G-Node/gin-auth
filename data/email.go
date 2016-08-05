@@ -51,3 +51,10 @@ func (e *Email) Create(to util.StringSet, content []byte) error {
 
 	return err
 }
+
+// Delete removes the current e-mail from table EmailQueue
+func (e *Email) Delete() error {
+	const q = `DELETE FROM EmailQueue WHERE id=$1`
+	_, err := database.Exec(q, e.Id)
+	return err
+}
