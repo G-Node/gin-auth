@@ -64,6 +64,7 @@ func main() {
 	)(handler)
 
 	data.RunCleaner()
+	data.RunEmailDispatch()
 
 	server := http.Server{
 		Addr:    fmt.Sprintf("%s:%d", srvConf.Host, srvConf.Port),
