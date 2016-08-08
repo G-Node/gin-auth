@@ -381,6 +381,8 @@ func TestUpdateAccountEmail(t *testing.T) {
 	}
 
 	// invalid e-mail address
+	emails, _ := data.GetQueuedEmails()
+	num := len(emails)
 	request, _ = http.NewRequest("PUT", uriAlice, jsonBody("testtest", "a"))
 	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
 	response = httptest.NewRecorder()
@@ -392,8 +394,13 @@ func TestUpdateAccountEmail(t *testing.T) {
 	if !strings.Contains(response.Body.String(), "valid e-mail address") {
 		t.Errorf("Expected invalid e-mail message but got: \n%s", response.Body.String())
 	}
+	emails, _ = data.GetQueuedEmails()
+	if len(emails) != num {
+		t.Errorf("Expected e-mail queue to contain '%d' entries but had '%d'", num, len(emails))
+	}
 
 	// valid e-mail address
+	num = len(emails)
 	request, _ = http.NewRequest("PUT", uriAlice, jsonBody("testtest", "testemail@noone.com"))
 	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
 	response = httptest.NewRecorder()
@@ -401,6 +408,10 @@ func TestUpdateAccountEmail(t *testing.T) {
 
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+	emails, _ = data.GetQueuedEmails()
+	if len(emails) <= num {
+		t.Errorf("Expected e-mail queue to contain '%d' entries but had '%d'", num, len(emails))
 	}
 }
 

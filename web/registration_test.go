@@ -15,7 +15,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
 )
 
@@ -56,6 +55,8 @@ func TestRegistrationHandler(t *testing.T) {
 	body.Add("Password", "pw")
 	body.Add("PasswordControl", "pw")
 
+	emails, _ := data.GetQueuedEmails()
+	num := len(emails)
 	// test that a request without a posted form does not redirect to another page
 	request, _ := http.NewRequest("POST", registrationURL, strings.NewReader(""))
 	response := httptest.NewRecorder()
@@ -98,6 +99,11 @@ func TestRegistrationHandler(t *testing.T) {
 		t.Errorf("Expected empty location header, but was '%s'", redirect.String())
 	}
 
+	emails, _ = data.GetQueuedEmails()
+	if len(emails) != num {
+		t.Errorf("Expected e-mail queue to contain '%d' entries but had '%d'", num, len(emails))
+	}
+
 	// test that a request with correct form content redirects to registered_page
 	body.Add("captcha_resolve", "test")
 	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
@@ -112,27 +118,10 @@ func TestRegistrationHandler(t *testing.T) {
 	if redirect.String() != registeredPageURL {
 		t.Errorf("Expected to be redirected to '%s', but was '%s'", registeredPageURL, redirect.String())
 	}
-
-	// Test error when sending e-mail
-	body.Set("Login", "tl2")
-	body.Set("Email", "testemail2@example.com")
-
-	mode := conf.GetSmtpCredentials().Mode
-	host := conf.GetSmtpCredentials().Host
-	conf.GetSmtpCredentials().Mode = ""
-	conf.GetSmtpCredentials().Host = "iDoNotExist.com"
-	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
-	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusInternalServerError {
-		t.Errorf("Expected StatusInternatServerError but got '%d'", response.Code)
+	emails, _ = data.GetQueuedEmails()
+	if len(emails) == num {
+		t.Error("E-Mail entry was not created")
 	}
-
-	// reset smtp configuration
-	conf.GetSmtpCredentials().Mode = mode
-	conf.GetSmtpCredentials().Host = host
 }
 
 func TestRegisteredPage(t *testing.T) {
