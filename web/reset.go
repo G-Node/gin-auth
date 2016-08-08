@@ -89,9 +89,8 @@ func ResetInit(w http.ResponseWriter, r *http.Request) {
 	tmplFields.Code = account.ResetPWCode.String
 
 	content := util.MakeEmailTemplate("emailreset.txt", tmplFields)
-	disp := util.NewEmailDispatcher()
-
-	err = disp.Send([]string{account.Email}, content.Bytes())
+	email := &data.Email{}
+	err = email.Create(util.NewStringSet(account.Email), content.Bytes())
 	if err != nil {
 		msg := "An error occurred trying to send password reset e-mail. Please try again later."
 		PrintErrorHTML(w, r, msg, http.StatusInternalServerError)

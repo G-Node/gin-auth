@@ -233,11 +233,10 @@ func UpdateAccountEmail(w http.ResponseWriter, r *http.Request) {
 	tmplFields.Body = "The e-mail address of your GIN account has been successfully changed."
 
 	content := util.MakeEmailTemplate("emailplain.txt", tmplFields)
-	disp := util.NewEmailDispatcher()
-
-	err = disp.Send([]string{cred.Email}, content.Bytes())
+	email := &data.Email{}
+	err = email.Create(util.NewStringSet(cred.Email), content.Bytes())
 	if err != nil {
-		msg := "An error occurred trying to send change e-mail address confirmation."
+		msg := "An error occurred trying to create change e-mail address confirmation."
 		PrintErrorJSON(w, r, msg, http.StatusInternalServerError)
 		return
 	}
