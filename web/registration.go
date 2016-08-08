@@ -162,9 +162,8 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	tmplFields.Code = account.ActivationCode.String
 
 	content := util.MakeEmailTemplate("emailactivate.txt", tmplFields)
-	disp := util.NewEmailDispatcher()
-
-	err = disp.Send([]string{account.Email}, content.Bytes())
+	email := &data.Email{}
+	err = email.Create(util.NewStringSet(account.Email), content.Bytes())
 	if err != nil {
 		msg := "An error occurred trying to send registration e-mail. Please contact an administrator."
 		PrintErrorHTML(w, r, msg, http.StatusInternalServerError)

@@ -1,4 +1,5 @@
 -- Test fixtures to be used in tests
+DELETE FROM EmailQueue;
 DELETE FROM RefreshTokens;
 DELETE FROM AccessTokens;
 DELETE FROM Sessions;
@@ -63,3 +64,8 @@ INSERT INTO AccessTokens (token, expires, scope, clientUUID, accountUUID, create
 INSERT INTO RefreshTokens (token, scope, clientUUID, accountUUID, createdAt, updatedAt) VALUES
   ('YYPTDSVZ', '{"repo-read","repo-write"}', '8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'bf431618-f696-4dca-a95d-882618ce4ef9', now(), now()),
   ('4FKJVX3K', '{"repo-read","repo-write"}', '8b14d6bb-cae7-4163-bbd1-f3be46e43e31', '51f5ac36-d332-4889-8023-6e033fcd8e17', 'yesterday', 'yesterday');
+
+INSERT INTO EmailQueue (mode, sender, recipient, content, createdat) VALUES
+  (NULL, 'no-reply@g-node.org', '{"a@b.com"}', 'content1', now()),
+  ('print', 'no-reply@g-node.org', '{"a@b.com"}', 'content2', now()),
+  ('skip', 'no-reply@g-node.org', '{"a@b.com"}', 'content3', now());

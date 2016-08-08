@@ -15,7 +15,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
 )
 
@@ -39,6 +38,9 @@ func TestResetInit(t *testing.T) {
 	const disabledLogin = "inact_log4"
 	const disabledEmail = "email4@example.com"
 	const enabledLogin = "inact_log1"
+
+	emails, _ := data.GetQueuedEmails()
+	num := len(emails)
 
 	// Test post empty body
 	request, _ := http.NewRequest("POST", resetInitURL, strings.NewReader(""))
@@ -100,6 +102,11 @@ func TestResetInit(t *testing.T) {
 		t.Errorf("Expected invalid login message but got '%s'", response.Header().Get("Warning"))
 	}
 
+	emails, _ = data.GetQueuedEmails()
+	if len(emails) != num {
+		t.Errorf("Expected e-mail queue to contain '%d' entries but had '%d'", num, len(emails))
+	}
+
 	// Test valid update using login
 	mkBody = &url.Values{}
 	mkBody.Add("Credential", enabledLogin)
@@ -116,23 +123,10 @@ func TestResetInit(t *testing.T) {
 		t.Errorf("Expected empty warning message but got '%s'", response.Header().Get("Warning"))
 	}
 
-	// Test error when sending e-mail
-	mode := conf.GetSmtpCredentials().Mode
-	host := conf.GetSmtpCredentials().Host
-	conf.GetSmtpCredentials().Mode = ""
-	conf.GetSmtpCredentials().Host = "iDoNotExist.com"
-	request, _ = http.NewRequest("POST", resetInitURL, strings.NewReader(mkBody.Encode()))
-	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusInternalServerError {
-		t.Errorf("Expected StatusInternalServerError but got '%d'", response.Code)
+	emails, _ = data.GetQueuedEmails()
+	if len(emails) == num {
+		t.Error("E-Mail entry was not created")
 	}
-
-	// reset smtp configuration
-	conf.GetSmtpCredentials().Mode = mode
-	conf.GetSmtpCredentials().Host = host
 }
 
 func TestResetPage(t *testing.T) {

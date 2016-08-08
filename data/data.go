@@ -9,6 +9,7 @@
 package data
 
 import (
+	"fmt"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -79,6 +80,41 @@ func RunCleaner() {
 			case <-t.C:
 				RemoveExpired()
 				RemoveStaleAccounts()
+			}
+		}
+	}()
+}
+
+// EmailDispatch checks e-mail queue database entries, handles the entries
+// according to the smtp mode setting and removes the entries after they successful handling.
+func EmailDispatch() {
+	emails, err := GetQueuedEmails()
+	if err != nil {
+		panic(err)
+	}
+	for _, email := range emails {
+		err = email.Send()
+		if err != nil {
+			// TODO log if an error occurs trying to send an e-mail, but continue
+			fmt.Printf("Error trying to send e-mail (Id %d): %s\n", email.Id, err.Error())
+		} else {
+			err = email.Delete()
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+}
+
+// RunEmailDispatch starts an infinite loop which periodically
+// runs e-mail queue functions.
+func RunEmailDispatch() {
+	go func() {
+		t := time.NewTicker(conf.GetServerConfig().MailQueueInterval)
+		for {
+			select {
+			case <-t.C:
+				EmailDispatch()
 			}
 		}
 	}()
