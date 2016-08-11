@@ -18,8 +18,8 @@ import (
 
 var logEnv *LogEnv
 
-// Logging environment with error and access log and a function to
-// defer closing any associated files.
+// LogEnv provides the logging environment with error and access log
+// and a function to defer closing any associated files.
 type LogEnv struct {
 	Err    *logrus.Logger
 	Access *logrus.Logger
@@ -33,8 +33,8 @@ type LogEnv struct {
 // Log files are opened using a logrotate compatible library.
 func InitLogEnv() {
 
-	accFile := "gin-auth.access.log"
-	errFile := "gin-auth.err.log"
+	accFile := GetLogLocation().Access
+	errFile := GetLogLocation().Error
 
 	logEnv = &LogEnv{
 		Access: logrus.New(),
