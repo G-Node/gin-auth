@@ -30,8 +30,5 @@ _testmain.go
 # Logfile
 gin-auth*.log*
 
-# My playground
-playground.go
-
 # Temp
 *~
