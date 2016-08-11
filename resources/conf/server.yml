@@ -12,3 +12,6 @@ smtp:
 #   Print will write the content of any e-mail to the commandline / log
 #   Skip will skip over any e-mail sending process
   Mode: print
+log:
+  Access: gin-auth.access.log
+  Error: gin-auth.error.log
