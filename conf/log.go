@@ -7,3 +7,17 @@
 // LICENSE file in the root of the Project.
 
 package conf
+
+import (
+	"github.com/Sirupsen/logrus"
+)
+
+var logEnv *LogEnv
+
+// Logging environment with error and access log and a function to
+// defer closing any associated files.
+type LogEnv struct {
+	Err    *logrus.Logger
+	Access *logrus.Logger
+	Close  func()
+}
