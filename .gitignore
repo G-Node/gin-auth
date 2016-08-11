@@ -27,6 +27,9 @@ _testmain.go
 *.iml
 .idea
 
+# Logfile
+gin-auth*.log*
+
 # My playground
 playground.go
 
