@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
@@ -43,6 +42,10 @@ func main() {
 		conf.SetResourcesPath(res.(string))
 	}
 
+	// Initialize logging and make sure log files will be closed.
+	logEnv := conf.GetLogEnv()
+	defer logEnv.Close()
+
 	srvConf := conf.GetServerConfig()
 	conf.SmtpCheck()
 
@@ -56,7 +59,7 @@ func main() {
 	web.RegisterRoutes(router)
 
 	handler := handlers.RecoveryHandler(handlers.PrintRecoveryStack(true))(router)
-	handler = handlers.LoggingHandler(os.Stdout, handler)
+	handler = handlers.LoggingHandler(logEnv.Access.Out, handler)
 	handler = handlers.CORS(
 		handlers.AllowedHeaders([]string{"Accept", "Content-Type", "Authorization"}),
 		handlers.AllowedOrigins([]string{"*"}),
