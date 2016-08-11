@@ -72,3 +72,10 @@ func InitLogEnv() {
 	logEnv.Err.Error("Error logging started")
 }
 
+// GetLogEnv initializes the global logger if required and returns it.
+func GetLogEnv() *LogEnv {
+	if logEnv == nil {
+		InitLogEnv()
+	}
+	return logEnv
+}
