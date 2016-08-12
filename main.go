@@ -6,6 +6,7 @@ import (
 
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
+	"github.com/G-Node/gin-auth/util"
 	"github.com/G-Node/gin-auth/web"
 	"github.com/docopt/docopt-go"
 	"github.com/gorilla/handlers"
@@ -58,7 +59,7 @@ func main() {
 
 	web.RegisterRoutes(router)
 
-	handler := handlers.RecoveryHandler(handlers.PrintRecoveryStack(true))(router)
+	handler := util.RecoveryHandler(router, logEnv.Err, true)
 	handler = handlers.LoggingHandler(logEnv.Access.Out, handler)
 	handler = handlers.CORS(
 		handlers.AllowedHeaders([]string{"Accept", "Content-Type", "Authorization"}),
