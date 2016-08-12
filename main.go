@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
+	"github.com/G-Node/gin-auth/util"
 	"github.com/G-Node/gin-auth/web"
 	"github.com/docopt/docopt-go"
 	"github.com/gorilla/handlers"
@@ -43,6 +43,10 @@ func main() {
 		conf.SetResourcesPath(res.(string))
 	}
 
+	// Initialize logging and make sure log files will be closed.
+	logEnv := conf.GetLogEnv()
+	defer logEnv.Close()
+
 	srvConf := conf.GetServerConfig()
 	conf.SmtpCheck()
 
@@ -55,8 +59,8 @@ func main() {
 
 	web.RegisterRoutes(router)
 
-	handler := handlers.RecoveryHandler(handlers.PrintRecoveryStack(true))(router)
-	handler = handlers.LoggingHandler(os.Stdout, handler)
+	handler := util.RecoveryHandler(router, logEnv.Err, true)
+	handler = handlers.LoggingHandler(logEnv.Access.Out, handler)
 	handler = handlers.CORS(
 		handlers.AllowedHeaders([]string{"Accept", "Content-Type", "Authorization"}),
 		handlers.AllowedOrigins([]string{"*"}),

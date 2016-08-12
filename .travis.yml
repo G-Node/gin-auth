@@ -24,6 +24,8 @@ install:
  - go get github.com/gorilla/handlers
  - go get github.com/docopt/docopt-go
  - go get github.com/dchest/captcha
+ - go get github.com/NYTimes/logrotate
+ - go get github.com/Sirupsen/logrus
 
 before_script:
  - psql -c "CREATE ROLE test WITH LOGIN PASSWORD 'test';" -U postgres

@@ -103,6 +103,15 @@ type SmtpCredentials struct {
 var smtpCred *SmtpCredentials
 var smtpCredLock = sync.Mutex{}
 
+// LogLocations contains paths to the Access and Error log files.
+type LogLocations struct {
+	Access string
+	Error  string
+}
+
+var logLoc *LogLocations
+var logLocLock = sync.Mutex{}
+
 // GetServerConfig loads the server configuration from a yaml file when called the first time.
 // Returns a struct with configuration information.
 func GetServerConfig() *ServerConfig {
@@ -301,4 +310,35 @@ func SmtpCheck() {
 	if err = c.Quit(); err != nil {
 		panic(err.Error())
 	}
+}
+
+// GetLogLocation loads log file locations from a yaml file when called the first time.
+// Returns a struct with the log file locations.
+func GetLogLocation() *LogLocations {
+	logLocLock.Lock()
+	defer logLocLock.Unlock()
+
+	if logLoc == nil {
+		fc, err := ioutil.ReadFile(path.Join(resourcesPath, serverConfigFile))
+		if err != nil {
+			panic(err)
+		}
+
+		cont := &struct {
+			Log struct {
+				Access string `yaml:"Access"`
+				Error  string `yaml:"Error"`
+			}
+		}{}
+		err = yaml.Unmarshal(fc, cont)
+		if err != nil {
+			panic(err)
+		}
+		logLoc = &LogLocations{
+			Access: cont.Log.Access,
+			Error:  cont.Log.Error,
+		}
+	}
+
+	return logLoc
 }

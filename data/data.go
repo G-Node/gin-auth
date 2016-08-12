@@ -9,7 +9,6 @@
 package data
 
 import (
-	"fmt"
 	"io/ioutil"
 	"testing"
 	"time"
@@ -73,7 +72,6 @@ func RemoveStaleAccounts() {
 // periodically executes database cleanup functions.
 func RunCleaner() {
 	go func() {
-		// TODO add log entry once logging is implemented
 		t := time.NewTicker(conf.GetServerConfig().CleanerInterval)
 		for {
 			select {
@@ -95,8 +93,8 @@ func EmailDispatch() {
 	for _, email := range emails {
 		err = email.Send()
 		if err != nil {
-			// TODO log if an error occurs trying to send an e-mail, but continue
-			fmt.Printf("Error trying to send e-mail (Id %d): %s\n", email.Id, err.Error())
+			conf.GetLogEnv().Err.
+				Errorf("Error trying to send e-mail (Id %d): %s\n", email.Id, err.Error())
 		} else {
 			err = email.Delete()
 			if err != nil {
