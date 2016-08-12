@@ -9,18 +9,28 @@
 package util
 
 import (
+	"log"
 	"net/http"
+	"os"
+	"runtime/debug"
+
+	"github.com/Sirupsen/logrus"
 )
 
 type recoveryHandler struct {
-	handler http.Handler
+	handler    http.Handler
+	logger     interface{}
+	printStack bool
 }
 
 // RecoveryHandler recovers from a panic, writes an HTTP InternalServerError,
-// and continues to the next handler.
-func RecoveryHandler(h http.Handler) http.Handler {
+// logs the panic message to the defined logging mechanism and continues
+// to the next handler.
+func RecoveryHandler(h http.Handler, l interface{}, ps bool) http.Handler {
 	return &recoveryHandler{
-		handler: h,
+		handler:    h,
+		logger:     l,
+		printStack: ps,
 	}
 }
 
@@ -28,8 +38,25 @@ func (h recoveryHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer func() {
 		if err := recover(); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			h.log(err)
 		}
 	}()
 
 	h.handler.ServeHTTP(w, req)
+}
+
+func (h recoveryHandler) log(msg interface{}) {
+	if h.logger != nil {
+		switch h.logger.(type) {
+		default:
+			l := log.New(os.Stderr, "", log.LstdFlags)
+			l.Println(msg)
+		case *logrus.Logger:
+			h.logger.(*logrus.Logger).Error(msg)
+		}
+	}
+
+	if h.printStack {
+		debug.PrintStack()
+	}
 }
