@@ -7,3 +7,29 @@
 // LICENSE file in the root of the Project.
 
 package util
+
+import (
+	"net/http"
+)
+
+type recoveryHandler struct {
+	handler http.Handler
+}
+
+// RecoveryHandler recovers from a panic, writes an HTTP InternalServerError,
+// and continues to the next handler.
+func RecoveryHandler(h http.Handler) http.Handler {
+	return &recoveryHandler{
+		handler: h,
+	}
+}
+
+func (h recoveryHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	defer func() {
+		if err := recover(); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}()
+
+	h.handler.ServeHTTP(w, req)
+}
