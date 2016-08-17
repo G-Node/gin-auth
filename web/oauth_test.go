@@ -552,10 +552,10 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	responseBody := &tokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
-		t.Error("No access token recieved")
+		t.Error("No access token received")
 	}
 	if responseBody.RefreshToken == nil {
-		t.Error("No refresh token recieved")
+		t.Error("No refresh token received")
 	}
 	if responseBody.TokenType != "Bearer" {
 		t.Error("Token type is supposed to be 'Bearer'")
@@ -588,10 +588,10 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	responseBody = &tokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
-		t.Error("No access token recieved")
+		t.Error("No access token received")
 	}
 	if responseBody.RefreshToken == nil {
-		t.Error("No refresh token recieved")
+		t.Error("No refresh token received")
 	}
 	if responseBody.TokenType != "Bearer" {
 		t.Error("Token type is supposed to be 'Bearer'")
@@ -657,7 +657,7 @@ func TestTokenRefreshToken(t *testing.T) {
 	responseBody := &tokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
-		t.Error("No access token recieved")
+		t.Error("No access token received")
 	}
 	if responseBody.TokenType != "Bearer" {
 		t.Error("Token type is supposed to be 'Bearer'")
@@ -678,7 +678,7 @@ func TestTokenRefreshToken(t *testing.T) {
 	responseBody = &tokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
-		t.Error("No access token recieved")
+		t.Error("No access token received")
 	}
 	if responseBody.TokenType != "Bearer" {
 		t.Error("Token type is supposed to be 'Bearer'")
@@ -765,7 +765,7 @@ func TestTokenPassword(t *testing.T) {
 	responseBody := &tokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
-		t.Error("No access token recieved")
+		t.Error("No access token received")
 	}
 	if responseBody.TokenType != "Bearer" {
 		t.Error("Token type is supposed to be 'Bearer'")
@@ -785,7 +785,7 @@ func TestTokenPassword(t *testing.T) {
 	responseBody = &tokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
-		t.Error("No access token recieved")
+		t.Error("No access token received")
 	}
 	if responseBody.TokenType != "Bearer" {
 		t.Error("Token type is supposed to be 'Bearer'")
@@ -848,7 +848,7 @@ func TestTokenClientCredentials(t *testing.T) {
 	responseBody := &tokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
-		t.Error("No access token recieved")
+		t.Error("No access token received")
 	}
 	if responseBody.TokenType != "Bearer" {
 		t.Error("Token type is supposed to be 'Bearer'")
@@ -868,7 +868,7 @@ func TestTokenClientCredentials(t *testing.T) {
 	responseBody = &tokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
-		t.Error("No access token recieved")
+		t.Error("No access token received")
 	}
 	if responseBody.TokenType != "Bearer" {
 		t.Error("Token type is supposed to be 'Bearer'")
