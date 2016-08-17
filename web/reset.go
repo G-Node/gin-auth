@@ -108,6 +108,9 @@ func ResetInit(w http.ResponseWriter, r *http.Request) {
 
 	tmpl := conf.MakeTemplate("success.html")
 	err = tmpl.ExecuteTemplate(w, "layout", info)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // ResetPage checks whether a password reset code submitted by request URI query exists and is still valid.
@@ -141,6 +144,9 @@ func ResetPage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
 	err = tmpl.ExecuteTemplate(w, "layout", hidden)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Reset checks whether a submitted password reset code exists and is still valid. It further checks,
@@ -223,4 +229,7 @@ func Reset(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
 	err = tmpl.ExecuteTemplate(w, "layout", info)
+	if err != nil {
+		panic(err)
+	}
 }
