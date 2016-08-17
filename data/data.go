@@ -73,12 +73,10 @@ func RemoveStaleAccounts() {
 func RunCleaner() {
 	go func() {
 		t := time.NewTicker(conf.GetServerConfig().CleanerInterval)
-		for {
-			select {
-			case <-t.C:
-				RemoveExpired()
-				RemoveStaleAccounts()
-			}
+		defer t.Stop()
+		for range t.C {
+			RemoveExpired()
+			RemoveStaleAccounts()
 		}
 	}()
 }
@@ -109,11 +107,9 @@ func EmailDispatch() {
 func RunEmailDispatch() {
 	go func() {
 		t := time.NewTicker(conf.GetServerConfig().MailQueueInterval)
-		for {
-			select {
-			case <-t.C:
-				EmailDispatch()
-			}
+		defer t.Stop()
+		for range t.C {
+			EmailDispatch()
 		}
 	}()
 }
