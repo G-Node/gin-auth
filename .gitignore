@@ -32,3 +32,6 @@ gin-auth*.log*
 
 # Temp
 *~
+
+# Vim swap files
+*.swp
