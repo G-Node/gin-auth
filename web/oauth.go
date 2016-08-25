@@ -704,21 +704,13 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	scope := strings.Join(token.Scope.Strings(), " ")
-	response := &struct {
-		URL        string    `json:"url"`
-		JTI        string    `json:"jti"`
-		EXP        time.Time `json:"exp"`
-		ISS        string    `json:"iss"`
-		Login      *string   `json:"login"`
-		AccountURL *string   `json:"account_url"`
-		Scope      string    `json:"scope"`
-	}{
+	response := &proto.TokenInfo{
 		URL:        conf.MakeUrl("/oauth/validate/%s", token.Token),
 		JTI:        token.Token,
 		EXP:        token.Expires,
 		ISS:        "gin-auth",
-		Login:      login,
-		AccountURL: accountUrl,
+		Login:      *login,
+		AccountURL: *accountUrl,
 		Scope:      scope,
 	}
 
