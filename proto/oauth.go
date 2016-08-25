@@ -2,7 +2,7 @@ package proto
 
 import "time"
 
-// TokenResponse Token request response struct
+// TokenResponse Token request response json struct
 type TokenResponse struct {
 	TokenType    string  `json:"token_type"`
 	Scope        string  `json:"scope"`
@@ -10,7 +10,7 @@ type TokenResponse struct {
 	RefreshToken *string `json:"refresh_token"`
 }
 
-// TokenInfo Token information struct
+// TokenInfo Token information json struct
 type TokenInfo struct {
 	URL        string    `json:"url"`
 	JTI        string    `json:"jti"`
