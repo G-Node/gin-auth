@@ -20,6 +20,7 @@ import (
 
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
+	"github.com/G-Node/gin-auth/proto"
 	"github.com/G-Node/gin-auth/util"
 	"github.com/gorilla/mux"
 )
@@ -513,13 +514,6 @@ func Approve(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type tokenResponse struct {
-	TokenType    string  `json:"token_type"`
-	Scope        string  `json:"scope"`
-	AccessToken  string  `json:"access_token"`
-	RefreshToken *string `json:"refresh_token"`
-}
-
 // Token exchanges a grant code for an access and refresh token
 func Token(w http.ResponseWriter, r *http.Request) {
 	// Read authorization header
@@ -560,7 +554,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Prepare a response depending on the grant type
-	var response *tokenResponse
+	var response *proto.TokenResponse
 	switch body.GrantType {
 
 	case "authorization_code":
@@ -581,7 +575,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response = &tokenResponse{
+		response = &proto.TokenResponse{
 			TokenType:    "Bearer",
 			Scope:        strings.Join(request.ScopeRequested.Strings(), " "),
 			AccessToken:  access,
@@ -612,7 +606,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response = &tokenResponse{
+		response = &proto.TokenResponse{
 			TokenType:   "Bearer",
 			Scope:       strings.Join(refresh.Scope.Strings(), " "),
 			AccessToken: access.Token,
@@ -647,7 +641,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response = &tokenResponse{
+		response = &proto.TokenResponse{
 			TokenType:   "Bearer",
 			Scope:       strings.Join(scope.Strings(), " "),
 			AccessToken: access.Token,
@@ -671,7 +665,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response = &tokenResponse{
+		response = &proto.TokenResponse{
 			TokenType:   "Bearer",
 			Scope:       strings.Join(scope.Strings(), " "),
 			AccessToken: access.Token,

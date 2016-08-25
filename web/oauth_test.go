@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/G-Node/gin-auth/data"
+	"github.com/G-Node/gin-auth/proto"
 	"github.com/gorilla/mux"
 )
 
@@ -549,7 +550,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	responseBody := &tokenResponse{}
+	responseBody := &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -585,7 +586,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	responseBody = &tokenResponse{}
+	responseBody = &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -654,7 +655,7 @@ func TestTokenRefreshToken(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	responseBody := &tokenResponse{}
+	responseBody := &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -675,7 +676,7 @@ func TestTokenRefreshToken(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	responseBody = &tokenResponse{}
+	responseBody = &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -762,7 +763,7 @@ func TestTokenPassword(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-	responseBody := &tokenResponse{}
+	responseBody := &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -782,7 +783,7 @@ func TestTokenPassword(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-	responseBody = &tokenResponse{}
+	responseBody = &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -845,7 +846,7 @@ func TestTokenClientCredentials(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-	responseBody := &tokenResponse{}
+	responseBody := &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -865,7 +866,7 @@ func TestTokenClientCredentials(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-	responseBody = &tokenResponse{}
+	responseBody = &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
