@@ -7,12 +7,12 @@ type Account struct {
 	URL         string       `json:"url"`
 	UUID        string       `json:"uuid"`
 	Login       string       `json:"login"`
-	Email       *Email       `json:"email"`
+	Email       *Email       `json:"email,omitempty"`
 	Title       *string      `json:"title"`
 	FirstName   string       `json:"first_name"`
 	MiddleName  *string      `json:"middle_name"`
 	LastName    string       `json:"last_name"`
-	Affiliation *Affiliation `json:"affiliation"`
+	Affiliation *Affiliation `json:"affiliation,omitempty"`
 	CreatedAt   time.Time    `json:"created_at"`
 	UpdatedAt   time.Time    `json:"updated_at"`
 }

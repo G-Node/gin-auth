@@ -18,10 +18,10 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
+	"github.com/G-Node/gin-auth/proto"
 )
 
 const (
@@ -30,18 +30,6 @@ const (
 	keyPrintAlice         = "A3tkBXFQWkjU6rzhkofY55G7tPR_Lmna4B-WEGVFXOQ"
 	keyPrintAliceNew      = "WHHqtkitF7o-EyTWFgdFKCYhU1PElLnK3U0luzyc0ko"
 )
-
-type jsonAccount struct {
-	URL        string    `json:"url"`
-	UUID       string    `json:"uuid"`
-	Login      string    `json:"login"`
-	Title      *string   `json:"title"`
-	FirstName  string    `json:"first_name"`
-	MiddleName *string   `json:"middle_name"`
-	LastName   string    `json:"last_name"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
-}
 
 func TestGetAccount(t *testing.T) {
 	handler := InitTestHttpHandler(t)
@@ -415,17 +403,6 @@ func TestUpdateAccountEmail(t *testing.T) {
 	}
 }
 
-type jsonKey struct {
-	URL         string    `json:"url"`
-	Fingerprint string    `json:"fingerprint"`
-	Key         string    `json:"key"`
-	Description string    `json:"description"`
-	Login       string    `json:"login"`
-	AccountURL  string    `json:"account_url"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-}
-
 func TestListAccountKeys(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 
@@ -468,7 +445,7 @@ func TestListAccountKeys(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	keys := []jsonKey{}
+	keys := []proto.SSHKey{}
 	dec := json.NewDecoder(response.Body)
 	err := dec.Decode(&keys)
 	if err != nil {
@@ -528,7 +505,7 @@ func TestGetKey(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	key := jsonKey{}
+	key := proto.SSHKey{}
 	dec := json.NewDecoder(response.Body)
 	err := dec.Decode(&key)
 	if err != nil {
@@ -594,7 +571,7 @@ func TestCreateKey(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-	key := jsonKey{}
+	key := proto.SSHKey{}
 	dec := json.NewDecoder(response.Body)
 	err := dec.Decode(&key)
 	if err != nil {
