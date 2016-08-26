@@ -13,10 +13,12 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"time"
+
 	"github.com/G-Node/gin-auth/conf"
+	"github.com/G-Node/gin-auth/proto"
 	"github.com/G-Node/gin-auth/util"
 	"golang.org/x/crypto/ssh"
-	"time"
 )
 
 // SSHKey object stored in the database.
@@ -82,16 +84,7 @@ type SSHKeyMarshaler struct {
 
 // MarshalJSON implements Marshaler for SSHKeyMarshaler
 func (keyMarshaler *SSHKeyMarshaler) MarshalJSON() ([]byte, error) {
-	jsonData := struct {
-		URL         string    `json:"url"`
-		Fingerprint string    `json:"fingerprint"`
-		Key         string    `json:"key"`
-		Description string    `json:"description"`
-		Login       string    `json:"login"`
-		AccountURL  string    `json:"account_url"`
-		CreatedAt   time.Time `json:"created_at"`
-		UpdatedAt   time.Time `json:"updated_at"`
-	}{
+	jsonData := proto.SSHKey{
 		URL:         conf.MakeUrl("/api/keys/%s", keyMarshaler.SSHKey.Fingerprint),
 		Fingerprint: keyMarshaler.SSHKey.Fingerprint,
 		Key:         keyMarshaler.SSHKey.Key,

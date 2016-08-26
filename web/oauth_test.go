@@ -15,9 +15,9 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/G-Node/gin-auth/data"
+	"github.com/G-Node/gin-auth/proto"
 	"github.com/gorilla/mux"
 )
 
@@ -549,7 +549,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	responseBody := &tokenResponse{}
+	responseBody := &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -585,7 +585,7 @@ func TestTokenAuthorizationCode(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	responseBody = &tokenResponse{}
+	responseBody = &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -654,7 +654,7 @@ func TestTokenRefreshToken(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	responseBody := &tokenResponse{}
+	responseBody := &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -675,7 +675,7 @@ func TestTokenRefreshToken(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	responseBody = &tokenResponse{}
+	responseBody = &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -762,7 +762,7 @@ func TestTokenPassword(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-	responseBody := &tokenResponse{}
+	responseBody := &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -782,7 +782,7 @@ func TestTokenPassword(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-	responseBody = &tokenResponse{}
+	responseBody = &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -845,7 +845,7 @@ func TestTokenClientCredentials(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-	responseBody := &tokenResponse{}
+	responseBody := &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -865,7 +865,7 @@ func TestTokenClientCredentials(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-	responseBody = &tokenResponse{}
+	responseBody = &proto.TokenResponse{}
 	json.Unmarshal(response.Body.Bytes(), responseBody)
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
@@ -873,16 +873,6 @@ func TestTokenClientCredentials(t *testing.T) {
 	if responseBody.TokenType != "Bearer" {
 		t.Error("Token type is supposed to be 'Bearer'")
 	}
-}
-
-type testValidateResponse struct {
-	URL        string    `json:"url"`
-	JTI        string    `json:"jti"`
-	EXP        time.Time `json:"exp"`
-	ISS        string    `json:"iss"`
-	Login      string    `json:"login"`
-	AccountURL string    `json:"account_url"`
-	Scope      []string  `json:"scope"`
 }
 
 func TestValidate(t *testing.T) {
@@ -912,15 +902,7 @@ func TestValidate(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	result := &struct {
-		URL        string    `json:"url"`
-		JTI        string    `json:"jti"`
-		EXP        time.Time `json:"exp"`
-		ISS        string    `json:"iss"`
-		Login      string    `json:"login"`
-		AccountURL string    `json:"account_url"`
-		Scope      []string  `json:"scope"`
-	}{}
+	result := &proto.TokenInfo{}
 	json.Unmarshal(response.Body.Bytes(), result)
 	if result.JTI != "3N7MP7M7" {
 		t.Errorf("JTI expected to be '3N7MP7M7' but was '%s'", result.JTI)
