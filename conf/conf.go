@@ -274,10 +274,10 @@ func GetSmtpCredentials() *SmtpCredentials {
 
 // SmtpCheck tests whether a connection to the specified smtp server can be established
 // with the provided credentials and will panic if it cannot.
-func SmtpCheck() {
+func SmtpCheck() error {
 	cred := GetSmtpCredentials()
 	if cred.Mode == "skip" || cred.Mode == "print" {
-		return
+		return nil
 	}
 
 	addr := cred.Host + ":" + strconv.Itoa(cred.Port)
@@ -285,31 +285,32 @@ func SmtpCheck() {
 
 	netCon, err := net.DialTimeout("tcp", addr, time.Second*10)
 	if err != nil {
-		panic(err.Error())
+		return err
 	}
 	if err = netCon.Close(); err != nil {
-		panic(err.Error())
+		return err
 	}
 
 	c, err := smtp.Dial(addr)
 	if err != nil {
-		panic(err.Error())
+		return err
 	}
 
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		config := &tls.Config{ServerName: cred.Host}
 		if err = c.StartTLS(config); err != nil {
-			panic(err.Error())
+			return err
 		}
 	}
 
 	if err = c.Auth(auth); err != nil {
-		panic(err.Error())
+		return err
 	}
 
 	if err = c.Quit(); err != nil {
-		panic(err.Error())
+		return err
 	}
+	return nil
 }
 
 // GetLogLocation loads log file locations from a yaml file when called the first time.
