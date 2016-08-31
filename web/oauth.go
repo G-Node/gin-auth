@@ -130,7 +130,7 @@ func Authorize(w http.ResponseWriter, r *http.Request) {
 
 	err := util.ReadQueryIntoStruct(r, param, false)
 	if err != nil {
-		PrintErrorHTML(w, r, err, 400)
+		PrintErrorHTML(w, r, err, http.StatusBadRequest)
 		return
 	}
 
@@ -532,7 +532,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 	}{}
 	err := util.ReadFormIntoStruct(r, body, true)
 	if err != nil {
-		PrintErrorJSON(w, r, err, 400)
+		PrintErrorJSON(w, r, err, http.StatusBadRequest)
 		return
 	}
 
