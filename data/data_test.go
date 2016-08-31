@@ -12,10 +12,22 @@ import (
 	"testing"
 
 	"github.com/G-Node/gin-auth/conf"
+	"github.com/G-Node/gin-auth/util"
 )
 
 func TestEmailDispatch(t *testing.T) {
 	InitTestDb(t)
+
+	// create test e-mail with mode send
+	conf.GetSmtpCredentials().Mode = ""
+
+	e := &Email{}
+	err := e.Create(util.NewStringSet("a@b.com"), []byte("content1"))
+	if err != nil {
+		t.Errorf("Error creating test e-mail: %s\n", err.Error())
+	}
+	// make sure test e-mail with mode send is removed from database
+	defer e.Delete()
 
 	emails, err := GetQueuedEmails()
 	if err != nil {
@@ -29,16 +41,15 @@ func TestEmailDispatch(t *testing.T) {
 	// Print and skip should result in the entries being deleted, the
 	// empty mode should result in a bad username error and
 	// should therefore not be deleted.
-	username := conf.GetSmtpCredentials().Username
+	conf.GetSmtpCredentials().Host = "localhost"
 	conf.GetSmtpCredentials().Username = "iDoNotExist"
 	EmailDispatch()
-	conf.GetSmtpCredentials().Username = username
 
 	emails, err = GetQueuedEmails()
 	if err != nil {
 		t.Errorf("Error fetching queued e-mails: '%s'\n", err.Error())
 	}
 	if len(emails) != 1 {
-		t.Error("Number of db entries do not match expected result")
+		t.Errorf("Number of db entries do not match expected result: %d\n", len(emails))
 	}
 }
