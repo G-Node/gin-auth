@@ -38,3 +38,32 @@ func TestGetSmtpCredentials(t *testing.T) {
 		t.Errorf("Port expected to be 587 but was '%d'", creds.Port)
 	}
 }
+
+func TestSmtpCheck(t *testing.T) {
+	creds := GetSmtpCredentials()
+	creds.Mode = "print"
+
+	err := SmtpCheck()
+	if err != nil {
+		t.Errorf("Smtp check error on print: %s\n", err.Error())
+	}
+
+	creds.Mode = "skip"
+	err = SmtpCheck()
+	if err != nil {
+		t.Errorf("Smtp check error on skip: %s\n", err.Error())
+	}
+
+	creds.Host = "nowhere"
+	creds.Mode = "somethingElse"
+	err = SmtpCheck()
+	if err == nil {
+		t.Error("Expected smtp connection error")
+	}
+
+	creds.Mode = ""
+	err = SmtpCheck()
+	if err == nil {
+		t.Error("Expected smtp connection error")
+	}
+}
