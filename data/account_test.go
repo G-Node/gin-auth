@@ -279,7 +279,7 @@ func TestAccount_UpdateEmail(t *testing.T) {
 	InitTestDb(t)
 	const short = "a"
 	const missing = "aaaa"
-	const valid = "testaddress12@nowhere.com"
+	const valid = "testaddress12@example.com"
 
 	acc, ok := GetAccount(uuidAlice)
 	if !ok {
@@ -347,7 +347,7 @@ func TestAccount_UpdateEmail(t *testing.T) {
 func TestAccount_Create(t *testing.T) {
 	InitTestDb(t)
 
-	fresh := &Account{Login: "theo", Email: "theo@foo.com", FirstName: "Theo", LastName: "Test"}
+	fresh := &Account{Login: "theo", Email: "theo@example.com", FirstName: "Theo", LastName: "Test"}
 	fresh.SetPassword("testtest")
 	err := fresh.Create()
 	if err != nil {
@@ -547,7 +547,7 @@ func TestValidate(t *testing.T) {
 	}
 
 	// Test missing first name
-	account.Email = "noone@nowhere.com"
+	account.Email = "noone@example.com"
 	account.FirstName = ""
 	valErr = account.Validate()
 	if valErr.FieldErrors["first_name"] != "Please add first name" {

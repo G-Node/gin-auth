@@ -153,7 +153,7 @@ func TestUpdateAccount(t *testing.T) {
 			Title:         sql.NullString{String: "Dr", Valid: true},
 			FirstName:     "Alix",
 			LastName:      "Bonenfant",
-			Email:         "alix.b@foo.com",
+			Email:         "alix.b@example.com",
 			IsEmailPublic: true,
 		}
 		b, _ := json.Marshal(&data.AccountMarshaler{Account: acc})
@@ -389,7 +389,7 @@ func TestUpdateAccountEmail(t *testing.T) {
 
 	// valid e-mail address
 	num = len(emails)
-	request, _ = http.NewRequest("PUT", uriAlice, jsonBody("testtest", "testemail@noone.com"))
+	request, _ = http.NewRequest("PUT", uriAlice, jsonBody("testtest", "testemail@example.com"))
 	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)

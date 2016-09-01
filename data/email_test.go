@@ -31,7 +31,7 @@ func TestGetQueuedEmails(t *testing.T) {
 func TestEmail_Create(t *testing.T) {
 	InitTestDb(t)
 
-	const recipient = "recipient@nowhere.com"
+	const recipient = "recipient@example.com"
 	const content = "content"
 
 	emails, err := GetQueuedEmails()
@@ -90,7 +90,7 @@ func TestEmail_Delete(t *testing.T) {
 func TestEmail_Send(t *testing.T) {
 	InitTestDb(t)
 
-	const recipient = "recipient@nowhere.com"
+	const recipient = "recipient@example.com"
 	const content = "content"
 
 	// create test e-mail with mode send

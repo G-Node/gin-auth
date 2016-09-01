@@ -22,7 +22,7 @@ func TestEmailDispatch(t *testing.T) {
 	conf.GetSmtpCredentials().Mode = ""
 
 	e := &Email{}
-	err := e.Create(util.NewStringSet("a@b.com"), []byte("content1"))
+	err := e.Create(util.NewStringSet("a@example.com"), []byte("content1"))
 	if err != nil {
 		t.Errorf("Error creating test e-mail: %s\n", err.Error())
 	}
