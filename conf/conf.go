@@ -16,7 +16,7 @@ import (
 	"net"
 	"net/smtp"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
@@ -39,16 +39,16 @@ const (
 
 var (
 	resourcesPath     string
-	serverConfigFile  = path.Join("conf", "server.yml")
-	dbConfigFile      = path.Join("conf", "dbconf.yml")
-	clientsConfigFile = path.Join("conf", "clients.yml")
-	staticFilesDir    = path.Join("static")
+	serverConfigFile  = filepath.Join("conf", "server.yml")
+	dbConfigFile      = filepath.Join("conf", "dbconf.yml")
+	clientsConfigFile = filepath.Join("conf", "clients.yml")
+	staticFilesDir    = filepath.Join("static")
 )
 
 func init() {
 	basePath := os.Getenv("GOPATH")
 	if basePath != "" {
-		resourcesPath = path.Join(basePath, "src", "github.com", "G-Node", "gin-auth", "resources")
+		resourcesPath = filepath.Join(basePath, "src", "github.com", "G-Node", "gin-auth", "resources")
 	}
 }
 
@@ -119,7 +119,7 @@ func GetServerConfig() *ServerConfig {
 	defer serverConfigLock.Unlock()
 
 	if serverConfig == nil {
-		content, err := ioutil.ReadFile(path.Join(resourcesPath, serverConfigFile))
+		content, err := ioutil.ReadFile(filepath.Join(resourcesPath, serverConfigFile))
 		if err != nil {
 			panic(err)
 		}
@@ -192,7 +192,7 @@ func GetDbConfig() *DbConfig {
 	defer dbConfigLock.Unlock()
 
 	if dbConfig == nil {
-		content, err := ioutil.ReadFile(path.Join(resourcesPath, dbConfigFile))
+		content, err := ioutil.ReadFile(filepath.Join(resourcesPath, dbConfigFile))
 		if err != nil {
 			panic(err)
 		}
@@ -215,17 +215,17 @@ func GetResourceFile(p ...string) string {
 	tmp := make([]string, 1, len(p)+1)
 	tmp[0] = resourcesPath
 	tmp = append(tmp, p...)
-	return path.Join(tmp...)
+	return filepath.Join(tmp...)
 }
 
 // GetClientsConfigFile returns the path to the clients configuration file.
 func GetClientsConfigFile() string {
-	return path.Join(resourcesPath, clientsConfigFile)
+	return filepath.Join(resourcesPath, clientsConfigFile)
 }
 
 // GetStaticFilesDir returns the path to the static files directory.
 func GetStaticFilesDir() string {
-	return path.Join(resourcesPath, staticFilesDir)
+	return filepath.Join(resourcesPath, staticFilesDir)
 }
 
 // GetSmtpCredentials loads the smtp access information from a yaml file when called the first time.
@@ -235,7 +235,7 @@ func GetSmtpCredentials() *SmtpCredentials {
 	defer smtpCredLock.Unlock()
 
 	if smtpCred == nil {
-		content, err := ioutil.ReadFile(path.Join(resourcesPath, serverConfigFile))
+		content, err := ioutil.ReadFile(filepath.Join(resourcesPath, serverConfigFile))
 		if err != nil {
 			panic(err)
 		}
@@ -274,10 +274,10 @@ func GetSmtpCredentials() *SmtpCredentials {
 
 // SmtpCheck tests whether a connection to the specified smtp server can be established
 // with the provided credentials and will panic if it cannot.
-func SmtpCheck() {
+func SmtpCheck() error {
 	cred := GetSmtpCredentials()
 	if cred.Mode == "skip" || cred.Mode == "print" {
-		return
+		return nil
 	}
 
 	addr := cred.Host + ":" + strconv.Itoa(cred.Port)
@@ -285,31 +285,32 @@ func SmtpCheck() {
 
 	netCon, err := net.DialTimeout("tcp", addr, time.Second*10)
 	if err != nil {
-		panic(err.Error())
+		return err
 	}
 	if err = netCon.Close(); err != nil {
-		panic(err.Error())
+		return err
 	}
 
 	c, err := smtp.Dial(addr)
 	if err != nil {
-		panic(err.Error())
+		return err
 	}
 
 	if ok, _ := c.Extension("STARTTLS"); ok {
 		config := &tls.Config{ServerName: cred.Host}
 		if err = c.StartTLS(config); err != nil {
-			panic(err.Error())
+			return err
 		}
 	}
 
 	if err = c.Auth(auth); err != nil {
-		panic(err.Error())
+		return err
 	}
 
 	if err = c.Quit(); err != nil {
-		panic(err.Error())
+		return err
 	}
+	return nil
 }
 
 // GetLogLocation loads log file locations from a yaml file when called the first time.
@@ -319,7 +320,7 @@ func GetLogLocation() *LogLocations {
 	defer logLocLock.Unlock()
 
 	if logLoc == nil {
-		fc, err := ioutil.ReadFile(path.Join(resourcesPath, serverConfigFile))
+		fc, err := ioutil.ReadFile(filepath.Join(resourcesPath, serverConfigFile))
 		if err != nil {
 			panic(err)
 		}

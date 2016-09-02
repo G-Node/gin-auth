@@ -31,7 +31,7 @@ func TestGetQueuedEmails(t *testing.T) {
 func TestEmail_Create(t *testing.T) {
 	InitTestDb(t)
 
-	const recipient = "recipient@nowhere.com"
+	const recipient = "recipient@example.com"
 	const content = "content"
 
 	emails, err := GetQueuedEmails()
@@ -90,6 +90,22 @@ func TestEmail_Delete(t *testing.T) {
 func TestEmail_Send(t *testing.T) {
 	InitTestDb(t)
 
+	const recipient = "recipient@example.com"
+	const content = "content"
+
+	// create test e-mail with mode send
+	mode := conf.GetSmtpCredentials().Mode
+	conf.GetSmtpCredentials().Mode = ""
+
+	e := &Email{}
+	err := e.Create(util.NewStringSet(recipient), []byte(content))
+	if err != nil {
+		t.Errorf("Error creating test e-mail: %s\n", err.Error())
+	}
+	conf.GetSmtpCredentials().Mode = mode
+	// make sure test e-mail with mode send is removed from database
+	//defer e.Delete()
+
 	emails, err := GetQueuedEmails()
 	if err != nil {
 		t.Errorf("Error fetching queued e-mails: '%s'\n", err.Error())
@@ -98,38 +114,36 @@ func TestEmail_Send(t *testing.T) {
 		t.Error("Expected queued e-mails, but result did not match")
 	}
 
-	// test send e-mail, check bad username error
-	if emails[0].Mode.Valid {
-		t.Error("Expected e-mail mode to be empty")
-	}
-
-	username := conf.GetSmtpCredentials().Username
-	conf.GetSmtpCredentials().Username = "iDoNotExist"
-	err = emails[0].Send()
-	if err == nil {
-		t.Error("Expected error")
-	}
-	if !strings.Contains(err.Error(), "Bad username or password") {
-		t.Errorf("Expected Bad username error but got: '%s'", err.Error())
-	}
-	// reset username
-	conf.GetSmtpCredentials().Username = username
-
 	// test print option
-	if emails[1].Mode.String != "print" {
+	if emails[0].Mode.String != "print" {
 		t.Error("Expected e-mail mode to be print")
 	}
-	err = emails[1].Send()
+	err = emails[0].Send()
 	if err != nil {
 		t.Errorf("Unexpected error when printing e-mail: '%s'", err.Error())
 	}
 
 	// test skip option
-	if emails[2].Mode.String != "skip" {
+	if emails[1].Mode.String != "skip" {
 		t.Error("Expected e-mail mode to be skip")
 	}
-	err = emails[2].Send()
+	err = emails[1].Send()
 	if err != nil {
 		t.Errorf("Unexpected error when skipping e-mail: '%s'", err.Error())
+	}
+
+	// test send e-mail, check connection refused error
+	conf.GetSmtpCredentials().Host = "localhost"
+	conf.GetSmtpCredentials().Username = "iDoNotExist"
+
+	if emails[2].Mode.Valid && emails[2].Mode.String != "" {
+		t.Error("Expected e-mail mode to be empty")
+	}
+	err = emails[2].Send()
+	if err == nil {
+		t.Error("Expected error")
+	}
+	if !strings.Contains(err.Error(), "connection refused") {
+		t.Errorf("Expected connection refused error but got: '%s'", err.Error())
 	}
 }

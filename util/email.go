@@ -11,12 +11,13 @@ package util
 import (
 	"bytes"
 	"fmt"
-	"github.com/G-Node/gin-auth/conf"
 	"net"
 	"net/smtp"
 	"strconv"
 	"text/template"
 	"time"
+
+	"github.com/G-Node/gin-auth/conf"
 )
 
 // EmailDispatcher defines an interface for e-mail dispatch.
@@ -50,19 +51,19 @@ func (e *emailDispatcher) Send(recipient []string, content []byte) error {
 // print the e-mail content to the commandline (value "print"), do nothing (value "skip")
 // or by default send an e-mail via smtp.SendMail.
 func NewEmailDispatcher() EmailDispatcher {
-	conf := conf.GetSmtpCredentials()
+	config := conf.GetSmtpCredentials()
 	send := smtp.SendMail
-	if conf.Mode == "print" {
+	if config.Mode == "print" {
 		send = func(addr string, auth smtp.Auth, from string, recipient []string, cont []byte) error {
 			fmt.Printf("E-Mail content:\n---\n%s---\n", string(cont))
 			return nil
 		}
-	} else if conf.Mode == "skip" {
+	} else if config.Mode == "skip" {
 		send = func(addr string, auth smtp.Auth, from string, recipient []string, cont []byte) error {
 			return nil
 		}
 	}
-	return &emailDispatcher{conf, send}
+	return &emailDispatcher{config, send}
 }
 
 // MakeEmailTemplate parses a given template into the main email layout template,

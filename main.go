@@ -48,7 +48,10 @@ func main() {
 	defer logEnv.Close()
 
 	srvConf := conf.GetServerConfig()
-	conf.SmtpCheck()
+	err := conf.SmtpCheck()
+	if err != nil {
+		panic(err.Error())
+	}
 
 	dbConf := conf.GetDbConfig()
 	data.InitDb(dbConf)
@@ -74,7 +77,7 @@ func main() {
 		Addr:    fmt.Sprintf("%s:%d", srvConf.Host, srvConf.Port),
 		Handler: handler,
 	}
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		panic(err)
 	}
