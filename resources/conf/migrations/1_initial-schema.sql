@@ -29,7 +29,7 @@ CREATE TABLE Accounts (
   resetPWCode         VARCHAR(512) UNIQUE,
   isDisabled          BOOLEAN NOT NULL DEFAULT FALSE,
   createdAt           TIMESTAMP NOT NULL ,
-  updatedAt           TIMESTAMP NOT NULL
+  updatedAt           TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE VIEW ActiveAccounts AS
@@ -42,8 +42,8 @@ CREATE TABLE SSHKeys (
   key               VARCHAR(1024) NOT NULL UNIQUE ,
   description       VARCHAR(1024) NOT NULL ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ,
-  createdAt         TIMESTAMP NOT NULL ,
-  updatedAt         TIMESTAMP NOT NULL
+  createdAt         TIMESTAMP WITH TIME ZONE NOT NULL ,
+  updatedAt         TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE TABLE Clients (
@@ -53,8 +53,8 @@ CREATE TABLE Clients (
   scopeWhitelist    VARCHAR[] NOT NULL ,
   scopeBlacklist    VARCHAR[] NOT NULL ,
   redirectURIs      VARCHAR[] NOT NULL ,
-  createdAt         TIMESTAMP NOT NULL ,
-  updatedAt         TIMESTAMP NOT NULL
+  createdAt         TIMESTAMP WITH TIME ZONE NOT NULL ,
+  updatedAt         TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE TABLE ClientScopeProvided (
@@ -68,8 +68,8 @@ CREATE TABLE ClientApprovals (
   scope             VARCHAR[] NOT NULL ,
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ,
-  createdAt         TIMESTAMP NOT NULL ,
-  updatedAt         TIMESTAMP NOT NULL ,
+  createdAt         TIMESTAMP WITH TIME ZONE NOT NULL ,
+  updatedAt         TIMESTAMP WITH TIME ZONE NOT NULL ,
   UNIQUE (clientUUID, accountUUID)
 );
 
@@ -82,8 +82,8 @@ CREATE TABLE GrantRequests (
   redirectURI       VARCHAR(512) NOT NULL ,
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NULL REFERENCES Accounts(uuid) ,
-  createdAt         TIMESTAMP NOT NULL ,
-  updatedAt         TIMESTAMP NOT NULL
+  createdAt         TIMESTAMP WITH TIME ZONE NOT NULL ,
+  updatedAt         TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE TABLE RefreshTokens (
@@ -91,28 +91,28 @@ CREATE TABLE RefreshTokens (
   scope             VARCHAR[] NOT NULL ,
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ,
-  createdAt         TIMESTAMP NOT NULL ,
-  updatedAt         TIMESTAMP NOT NULL
+  createdAt         TIMESTAMP WITH TIME ZONE NOT NULL ,
+  updatedAt         TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE TABLE AccessTokens (
   token             VARCHAR(512) PRIMARY KEY ,
   scope             VARCHAR[] NOT NULL ,
-  expires           TIMESTAMP NOT NULL ,
+  expires           TIMESTAMP WITH TIME ZONE NOT NULL ,
   clientUUID        VARCHAR(36) NOT NULL REFERENCES Clients(uuid) ON DELETE CASCADE ,
   accountUUID       VARCHAR(36) REFERENCES Accounts(uuid) ,
-  createdAt         TIMESTAMP NOT NULL ,
-  updatedAt         TIMESTAMP NOT NULL
+  createdAt         TIMESTAMP WITH TIME ZONE NOT NULL ,
+  updatedAt         TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE INDEX ON AccessTokens (expires);
 
 CREATE TABLE Sessions (
   token             VARCHAR(512) PRIMARY KEY ,      -- the session id
-  expires           TIMESTAMP NOT NULL ,
+  expires           TIMESTAMP WITH TIME ZONE NOT NULL ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ,
-  createdAt         TIMESTAMP NOT NULL ,
-  updatedAt         TIMESTAMP NOT NULL
+  createdAt         TIMESTAMP WITH TIME ZONE NOT NULL ,
+  updatedAt         TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE INDEX ON Sessions (expires);
@@ -123,7 +123,7 @@ CREATE TABLE EmailQueue (
   sender    VARCHAR(512) NOT NULL ,
   recipient VARCHAR[] NOT NULL ,
   content   VARCHAR(4096) NOT NULL ,
-  createdAt TIMESTAMP NOT NULL
+  createdAt TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 -- +goose Down
