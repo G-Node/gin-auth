@@ -466,29 +466,10 @@ func TestListAccountKeys(t *testing.T) {
 func TestGetKey(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 
-	// no authorization header
-	request, _ := http.NewRequest("GET", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
-	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
-	}
-
-	// wrong token
-	request, _ = http.NewRequest("GET", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
-	request.Header.Set("Authorization", "Bearer doesnotexist")
-	response = httptest.NewRecorder()
-	handler.ServeHTTP(response, request)
-
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusUnauthorized, response.Code)
-	}
-
 	// not existing key
-	request, _ = http.NewRequest("GET", "/api/keys/doesnotexist", strings.NewReader(""))
+	request, _ := http.NewRequest("GET", "/api/keys/doesnotexist", strings.NewReader(""))
 	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
-	response = httptest.NewRecorder()
+	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
 	if response.Code != http.StatusNotFound {

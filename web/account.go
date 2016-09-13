@@ -277,19 +277,9 @@ func ListAccountKeys(w http.ResponseWriter, r *http.Request) {
 // GetKey returns a single ssh key identified by its fingerprint as JSON.
 func GetKey(w http.ResponseWriter, r *http.Request) {
 	fingerprint := mux.Vars(r)["fingerprint"]
-	oauth, ok := OAuthToken(r)
-	if !ok {
-		panic("Request was authorized but no OAuth token is available!") // this should never happen
-	}
-
 	key, ok := data.GetSSHKey(fingerprint)
 	if !ok {
 		PrintErrorJSON(w, r, "The requested key does not exist", http.StatusNotFound)
-		return
-	}
-
-	if oauth.Token.AccountUUID.String != key.AccountUUID || !oauth.Match.Contains("account-read") && !oauth.Match.Contains("account-admin") {
-		PrintErrorJSON(w, r, "Access to requested key forbidden", http.StatusUnauthorized)
 		return
 	}
 
