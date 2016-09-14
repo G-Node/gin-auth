@@ -468,7 +468,6 @@ func TestGetKey(t *testing.T) {
 
 	// not existing key
 	request, _ := http.NewRequest("GET", "/api/keys/doesnotexist", strings.NewReader(""))
-	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
@@ -478,7 +477,6 @@ func TestGetKey(t *testing.T) {
 
 	// all ok
 	request, _ = http.NewRequest("GET", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
-	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
