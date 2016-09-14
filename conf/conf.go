@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -276,7 +277,7 @@ func GetSmtpCredentials() *SmtpCredentials {
 // with the provided credentials and will panic if it cannot.
 func SmtpCheck() error {
 	cred := GetSmtpCredentials()
-	if cred.Mode == "skip" || cred.Mode == "print" {
+	if strings.ToLower(cred.Mode) == "skip" || strings.ToLower(cred.Mode) == "print" {
 		return nil
 	}
 
