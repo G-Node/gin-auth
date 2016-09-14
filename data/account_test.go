@@ -390,6 +390,12 @@ func TestAccount_Update(t *testing.T) {
 	newMiddleName := "and my last name is"
 	newLastName := "Badchild"
 	newResetPWCode := "reset password code"
+	newInstitute := "institute"
+	newDepartment := "department"
+	newCity := "Kierling"
+	newCountry := "Iceland"
+	newEmailPublic := true
+	newAffiliationPublic := true
 
 	acc, ok := GetAccount(uuidAlice)
 	if !ok {
@@ -402,6 +408,12 @@ func TestAccount_Update(t *testing.T) {
 	acc.FirstName = newFirstName
 	acc.MiddleName = sql.NullString{String: newMiddleName, Valid: true}
 	acc.LastName = newLastName
+	acc.Institute = newInstitute
+	acc.Department = newDepartment
+	acc.City = newCity
+	acc.Country = newCountry
+	acc.IsEmailPublic = newEmailPublic
+	acc.IsAffiliationPublic = newAffiliationPublic
 
 	err := acc.Update()
 	if err != nil {
@@ -430,6 +442,24 @@ func TestAccount_Update(t *testing.T) {
 	}
 	if acc.LastName != newLastName {
 		t.Error("LastName was not updated")
+	}
+	if acc.Institute != newInstitute {
+		t.Error("Institute was not updated")
+	}
+	if acc.Department != newDepartment {
+		t.Error("Department was not updated")
+	}
+	if acc.City != newCity {
+		t.Error("City was not updated")
+	}
+	if acc.Country != newCountry {
+		t.Error("Country was not updated")
+	}
+	if acc.IsEmailPublic != newEmailPublic {
+		t.Error("IsEmailPublic was not updated")
+	}
+	if acc.IsAffiliationPublic != newAffiliationPublic {
+		t.Error("IsAffiliationPublic was not updated")
 	}
 
 	acc.ResetPWCode = sql.NullString{String: newResetPWCode, Valid: true}
