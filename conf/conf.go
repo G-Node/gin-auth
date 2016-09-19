@@ -295,30 +295,31 @@ func SmtpCheck() error {
 	}
 
 	addr := cred.Host + ":" + strconv.Itoa(cred.Port)
-	auth := smtp.PlainAuth("", cred.Username, cred.Password, cred.Host)
-
 	netCon, err := net.DialTimeout("tcp", addr, time.Second*10)
 	if err != nil {
 		return err
 	}
-	if err = netCon.Close(); err != nil {
-		return err
-	}
+	defer netCon.Close()
 
-	c, err := smtp.Dial(addr)
+	c, err := smtp.NewClient(netCon, cred.Host)
 	if err != nil {
 		return err
 	}
 
-	if ok, _ := c.Extension("STARTTLS"); ok {
-		config := &tls.Config{ServerName: cred.Host}
-		if err = c.StartTLS(config); err != nil {
+	var auth smtp.Auth
+	if cred.Username == "" && cred.Password == "" {
+		auth = &NoAuth{}
+	} else {
+		auth = smtp.PlainAuth("", cred.Username, cred.Password, cred.Host)
+		if ok, _ := c.Extension("STARTTLS"); ok {
+			config := &tls.Config{ServerName: cred.Host}
+			if err = c.StartTLS(config); err != nil {
+				return err
+			}
+		}
+		if err = c.Auth(auth); err != nil {
 			return err
 		}
-	}
-
-	if err = c.Auth(auth); err != nil {
-		return err
 	}
 
 	if err = c.Quit(); err != nil {
