@@ -45,6 +45,10 @@ func main() {
 		conf.SetResourcesPath(res.(string))
 	}
 
+	if config, ok := args["--conf"]; ok && config != nil {
+		conf.SetConfigPath(config.(string))
+	}
+
 	// Initialize logging and make sure log files will be closed.
 	logEnv := conf.GetLogEnv()
 	defer logEnv.Close()
