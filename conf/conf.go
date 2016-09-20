@@ -40,15 +40,17 @@ const (
 
 var (
 	resourcesPath     string
-	serverConfigFile  = filepath.Join("conf", "server.yml")
-	dbConfigFile      = filepath.Join("conf", "dbconf.yml")
-	clientsConfigFile = filepath.Join("conf", "clients.yml")
+	configPath        string
+	serverConfigFile  = "server.yml"
+	dbConfigFile      = "dbconf.yml"
+	clientsConfigFile = "clients.yml"
 )
 
 func init() {
 	basePath := os.Getenv("GOPATH")
 	if basePath != "" {
 		resourcesPath = filepath.Join(basePath, "src", "github.com", "G-Node", "gin-auth", "resources")
+		configPath = filepath.Join(resourcesPath, "conf")
 	}
 }
 
@@ -57,6 +59,11 @@ func init() {
 // package are used.
 func SetResourcesPath(res string) {
 	resourcesPath = res
+}
+
+// SetConfigPath sets the resource path to the specified location.
+func SetConfigPath(config string) {
+	configPath = config
 }
 
 // ServerConfig provides several general configuration parameters for gin-auth
@@ -119,7 +126,7 @@ func GetServerConfig() *ServerConfig {
 	defer serverConfigLock.Unlock()
 
 	if serverConfig == nil {
-		content, err := ioutil.ReadFile(filepath.Join(resourcesPath, serverConfigFile))
+		content, err := ioutil.ReadFile(filepath.Join(configPath, serverConfigFile))
 		if err != nil {
 			panic(err)
 		}
@@ -192,7 +199,7 @@ func GetDbConfig() *DbConfig {
 	defer dbConfigLock.Unlock()
 
 	if dbConfig == nil {
-		content, err := ioutil.ReadFile(filepath.Join(resourcesPath, dbConfigFile))
+		content, err := ioutil.ReadFile(filepath.Join(configPath, dbConfigFile))
 		if err != nil {
 			panic(err)
 		}
@@ -220,7 +227,7 @@ func GetResourceFile(p ...string) string {
 
 // GetClientsConfigFile returns the path to the clients configuration file.
 func GetClientsConfigFile() string {
-	return filepath.Join(resourcesPath, clientsConfigFile)
+	return filepath.Join(configPath, clientsConfigFile)
 }
 
 // GetSmtpCredentials loads the smtp access information from a yaml file when called the first time.
@@ -230,7 +237,7 @@ func GetSmtpCredentials() *SmtpCredentials {
 	defer smtpCredLock.Unlock()
 
 	if smtpCred == nil {
-		content, err := ioutil.ReadFile(filepath.Join(resourcesPath, serverConfigFile))
+		content, err := ioutil.ReadFile(filepath.Join(configPath, serverConfigFile))
 		if err != nil {
 			panic(err)
 		}
@@ -329,7 +336,7 @@ func GetLogLocation() *LogLocations {
 	defer logLocLock.Unlock()
 
 	if logLoc == nil {
-		fc, err := ioutil.ReadFile(filepath.Join(resourcesPath, serverConfigFile))
+		fc, err := ioutil.ReadFile(filepath.Join(configPath, serverConfigFile))
 		if err != nil {
 			panic(err)
 		}
