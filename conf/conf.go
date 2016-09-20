@@ -43,7 +43,6 @@ var (
 	serverConfigFile  = filepath.Join("conf", "server.yml")
 	dbConfigFile      = filepath.Join("conf", "dbconf.yml")
 	clientsConfigFile = filepath.Join("conf", "clients.yml")
-	staticFilesDir    = filepath.Join("static")
 )
 
 func init() {
@@ -222,11 +221,6 @@ func GetResourceFile(p ...string) string {
 // GetClientsConfigFile returns the path to the clients configuration file.
 func GetClientsConfigFile() string {
 	return filepath.Join(resourcesPath, clientsConfigFile)
-}
-
-// GetStaticFilesDir returns the path to the static files directory.
-func GetStaticFilesDir() string {
-	return filepath.Join(resourcesPath, staticFilesDir)
 }
 
 // GetSmtpCredentials loads the smtp access information from a yaml file when called the first time.
