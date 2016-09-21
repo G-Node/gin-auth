@@ -469,7 +469,7 @@ Return a json error (404 / Not Found) if the token does not exist or was expired
 
 Returns information about the token encoded as JSON.
 
-```javascript
+```json
 {
   "url": "https://<host>/oauth/validate/<token>",
   "jti": "<token>",        // token identifier
@@ -655,7 +655,7 @@ The token scope must contain 'account-write' to change the own e-mail address.
 ```json
 {
     "password": "...",
-    "email": "...",
+    "email": "..."
 }
 ```
 
