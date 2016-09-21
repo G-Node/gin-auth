@@ -11,6 +11,7 @@ package web
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
@@ -277,6 +278,9 @@ func ListAccountKeys(w http.ResponseWriter, r *http.Request) {
 // GetKey returns a single ssh key identified by its fingerprint as JSON.
 func GetKey(w http.ResponseWriter, r *http.Request) {
 	fingerprint := r.URL.Query().Get("fingerprint")
+	if strings.HasPrefix(fingerprint, "SHA256:") {
+		fingerprint = fingerprint[7:]
+	}
 
 	key, ok := data.GetSSHKey(fingerprint)
 	if !ok {
@@ -335,6 +339,9 @@ func CreateKey(w http.ResponseWriter, r *http.Request) {
 // the deleted key as JSON.
 func DeleteKey(w http.ResponseWriter, r *http.Request) {
 	fingerprint := r.URL.Query().Get("fingerprint")
+	if strings.HasPrefix(fingerprint, "SHA256:") {
+		fingerprint = fingerprint[7:]
+	}
 
 	oauth, ok := OAuthToken(r)
 	if !ok {

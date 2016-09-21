@@ -85,7 +85,7 @@ type SSHKeyMarshaler struct {
 // MarshalJSON implements Marshaler for SSHKeyMarshaler
 func (keyMarshaler *SSHKeyMarshaler) MarshalJSON() ([]byte, error) {
 	jsonData := gin.SSHKey{
-		URL:         conf.MakeUrl("/api/keys/%s", keyMarshaler.SSHKey.Fingerprint),
+		URL:         conf.MakeUrl("/api/keys?fingerprint=%s", keyMarshaler.SSHKey.Fingerprint),
 		Fingerprint: keyMarshaler.SSHKey.Fingerprint,
 		Key:         keyMarshaler.SSHKey.Key,
 		Description: keyMarshaler.SSHKey.Description,
