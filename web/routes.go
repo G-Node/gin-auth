@@ -63,9 +63,9 @@ func RegisterRoutes(r *mux.Router) {
 		Methods("GET")
 	api.Handle("/accounts/{login}/keys", OAuthHandler("account-write")(http.HandlerFunc(CreateKey))).
 		Methods("POST")
-	api.Handle("/keys/{fingerprint}", http.HandlerFunc(GetKey)).
+	api.Handle("/keys", http.HandlerFunc(GetKey)).
 		Methods("GET")
-	api.Handle("/keys/{fingerprint}", OAuthHandler("account-write")(http.HandlerFunc(DeleteKey))).
+	api.Handle("/keys", OAuthHandler("account-write")(http.HandlerFunc(DeleteKey))).
 		Methods("DELETE")
 
 	// captcha service

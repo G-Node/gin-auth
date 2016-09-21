@@ -276,7 +276,8 @@ func ListAccountKeys(w http.ResponseWriter, r *http.Request) {
 
 // GetKey returns a single ssh key identified by its fingerprint as JSON.
 func GetKey(w http.ResponseWriter, r *http.Request) {
-	fingerprint := mux.Vars(r)["fingerprint"]
+	fingerprint := r.URL.Query().Get("fingerprint")
+
 	key, ok := data.GetSSHKey(fingerprint)
 	if !ok {
 		PrintErrorJSON(w, r, "The requested key does not exist", http.StatusNotFound)
@@ -333,7 +334,8 @@ func CreateKey(w http.ResponseWriter, r *http.Request) {
 // DeleteKey removes a single ssh key identified by its fingerprint and returns
 // the deleted key as JSON.
 func DeleteKey(w http.ResponseWriter, r *http.Request) {
-	fingerprint := mux.Vars(r)["fingerprint"]
+	fingerprint := r.URL.Query().Get("fingerprint")
+
 	oauth, ok := OAuthToken(r)
 	if !ok {
 		panic("Request was authorized but no OAuth token is available!") // this should never happen
