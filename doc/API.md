@@ -687,7 +687,7 @@ Returns a list of ssh key objects as JSON:
 ```json
 [
     {
-        "url": "https://<host>/api/keys/<fingerprint>",
+        "url": "https://<host>/api/keys?fingerprint=<fingerprint>",
         "fingerprint": "<fingerprint>",
         "key": "...",
         "description": "...",
@@ -704,13 +704,12 @@ Returns a list of ssh key objects as JSON:
 ##### URL
 
 ```
-GET https://<host>/api/keys/<fingerprint>
+GET https://<host>/api/keys?fingerprint=<fingerprint>
 ```
 
 ##### Authorization
 
-A bearer token sent with the authorization header is required.
-The token scope must contain 'account-read' to access own keys or 'account-admin'.
+No authentication is required.
 
 ##### Response
 
@@ -718,7 +717,7 @@ Returns an ssh key object as JSON:
 
 ```json
 {
-    "url": "https://<host>/api/keys/<fingerprint>",
+    "url": "https://<host>/api/keys?fingerprint=<fingerprint>",
     "fingerprint": "<fingerprint>",
     "key": "...",
     "description": "...",
@@ -734,7 +733,7 @@ Returns an ssh key object as JSON:
 ##### URL
 
 ```
-DELETE https://<host>/api/keys/<fingerprint>
+DELETE https://<host>/api/keys?fingerprint=<fingerprint>
 ```
 
 ##### Authorization
@@ -748,7 +747,7 @@ Returns the deleted ssh key object as JSON:
 
 ```json
 {
-    "url": "https://<host>/api/keys/<fingerprint>",
+    "url": "https://<host>/api/keys?fingerprint=<fingerprint>",
     "fingerprint": "<fingerprint>",
     "key": "...",
     "description": "...",
