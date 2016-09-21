@@ -123,10 +123,13 @@ func (key *SSHKey) UnmarshalJSON(bytes []byte) error {
 	if err != nil {
 		panic(err)
 	}
-	fingerprint := base64.RawURLEncoding.EncodeToString(sha.Sum(nil))
+	fingerprint := base64.StdEncoding.EncodeToString(sha.Sum(nil))
 
 	key.Key = jsonData.Key
-	key.Fingerprint = fingerprint
+
+	// This is a hack; the fingerprint is for whichever reason
+	// always returned with an additional "=" at the end.
+	key.Fingerprint = fingerprint[:43]
 	if jsonData.Description != "" {
 		key.Description = jsonData.Description
 	} else {
