@@ -9,12 +9,13 @@
 package data
 
 import (
-	"github.com/G-Node/gin-auth/util"
 	"testing"
+
+	"github.com/G-Node/gin-auth/util"
 )
 
 const (
-	keyPrintAlice = "A3tkBXFQWkjU6rzhkofY55G7tPR_Lmna4B-WEGVFXOQ"
+	keyPrintAlice = "A3tkBXFQWkjU6rzhkofY55G7tPR/Lmna4B+WEGVFXOQ"
 )
 
 func TestListSSHKeys(t *testing.T) {
@@ -22,8 +23,8 @@ func TestListSSHKeys(t *testing.T) {
 	InitTestDb(t)
 
 	keys := ListSSHKeys()
-	if len(keys) != 2 {
-		t.Error("Two SSH keys expected in list")
+	if len(keys) != 3 {
+		t.Error("Three SSH keys expected in list")
 	}
 }
 
