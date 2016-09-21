@@ -371,8 +371,8 @@ func TestAccount_SSHKeys(t *testing.T) {
 	}
 
 	keys := acc.SSHKeys()
-	if len(keys) != 1 {
-		t.Error("List should contain one single key")
+	if len(keys) != 2 {
+		t.Error("List should contain two single keys")
 	}
 	key := keys[0]
 	if key.AccountUUID != acc.UUID {
