@@ -11,7 +11,6 @@ package data
 import (
 	"database/sql"
 	"fmt"
-	"net"
 	"net/smtp"
 	"strconv"
 	"time"
@@ -73,16 +72,16 @@ func (e *Email) Send() error {
 		fmt.Printf("%s\n", string(e.Content))
 	default:
 		config := conf.GetSmtpCredentials()
+
+		var auth smtp.Auth
+		if config.Username == "" && config.Password == "" {
+			auth = &conf.NoAuth{}
+		} else {
+			auth = smtp.PlainAuth("", config.Username, config.Password, config.Host)
+		}
+
 		addr := config.Host + ":" + strconv.Itoa(config.Port)
-		netCon, err := net.DialTimeout("tcp", addr, time.Second*10)
-		if err != nil {
-			return err
-		}
-		if err = netCon.Close(); err != nil {
-			return err
-		}
-		auth := smtp.PlainAuth("", config.Username, config.Password, config.Host)
-		err = smtp.SendMail(addr, auth, e.Sender, e.Recipient.Strings(), e.Content)
+		err := smtp.SendMail(addr, auth, e.Sender, e.Recipient.Strings(), e.Content)
 		if err != nil {
 			return err
 		}

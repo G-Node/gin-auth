@@ -6,8 +6,8 @@ smtp:
   From: no-reply@g-node.org
   Username:
   Password:
-  Host: mx1.g-node.org
-  Port: 587
+  Host: localhost
+  Port: 25
 # Supported values of Mode are: print and skip; in any other case e-mails will be sent.
 #   Print will write the content of any e-mail to the commandline / log
 #   Skip will skip over any e-mail sending process

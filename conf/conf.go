@@ -273,6 +273,19 @@ func GetSmtpCredentials() *SmtpCredentials {
 	return smtpCred
 }
 
+// NoAuth is a minimal implementation of the smtp.Auth interface.
+type NoAuth struct{}
+
+// Start always returns proto = "" to indicate, that the authentication can be skipped.
+func (a *NoAuth) Start(server *smtp.ServerInfo) (proto string, toServer []byte, err error) {
+	return "", nil, nil
+}
+
+// Next always returns toServer = nil to indicate, that the authentication can be skipped.
+func (a *NoAuth) Next(fromServer []byte, more bool) (toServer []byte, err error) {
+	return nil, nil
+}
+
 // SmtpCheck tests whether a connection to the specified smtp server can be established
 // with the provided credentials and will panic if it cannot.
 func SmtpCheck() error {
@@ -282,30 +295,31 @@ func SmtpCheck() error {
 	}
 
 	addr := cred.Host + ":" + strconv.Itoa(cred.Port)
-	auth := smtp.PlainAuth("", cred.Username, cred.Password, cred.Host)
-
 	netCon, err := net.DialTimeout("tcp", addr, time.Second*10)
 	if err != nil {
 		return err
 	}
-	if err = netCon.Close(); err != nil {
-		return err
-	}
+	defer netCon.Close()
 
-	c, err := smtp.Dial(addr)
+	c, err := smtp.NewClient(netCon, cred.Host)
 	if err != nil {
 		return err
 	}
 
-	if ok, _ := c.Extension("STARTTLS"); ok {
-		config := &tls.Config{ServerName: cred.Host}
-		if err = c.StartTLS(config); err != nil {
+	var auth smtp.Auth
+	if cred.Username == "" && cred.Password == "" {
+		auth = &NoAuth{}
+	} else {
+		auth = smtp.PlainAuth("", cred.Username, cred.Password, cred.Host)
+		if ok, _ := c.Extension("STARTTLS"); ok {
+			config := &tls.Config{ServerName: cred.Host}
+			if err = c.StartTLS(config); err != nil {
+				return err
+			}
+		}
+		if err = c.Auth(auth); err != nil {
 			return err
 		}
-	}
-
-	if err = c.Auth(auth); err != nil {
-		return err
 	}
 
 	if err = c.Quit(); err != nil {

@@ -12,13 +12,18 @@ import (
 	"testing"
 )
 
+const httpHost = "localhost"
+const httpPort = 8081
+const smtpHost = "localhost"
+const smtpPort = 25
+
 func TestGetServerConfig(t *testing.T) {
 	config := GetServerConfig()
-	if config.Host != "localhost" {
-		t.Error("Host expected to be 'localhost'")
+	if config.Host != httpHost {
+		t.Errorf("Host expected to be '%s'\n", httpHost)
 	}
-	if config.Port != 8081 {
-		t.Error("Port expected to be '8081'")
+	if config.Port != httpPort {
+		t.Errorf("Port expected to be '%d'\n", httpPort)
 	}
 	if config.BaseURL != "http://localhost:8081" {
 		t.Error("BaseURL expected to be 'http://localhost:8081'")
@@ -34,8 +39,11 @@ func TestGetDbConfig(t *testing.T) {
 
 func TestGetSmtpCredentials(t *testing.T) {
 	creds := GetSmtpCredentials()
-	if creds.Port != 587 {
-		t.Errorf("Port expected to be 587 but was '%d'", creds.Port)
+	if creds.Host != smtpHost {
+		t.Errorf("Host expected to be '%s'\n", smtpHost)
+	}
+	if creds.Port != smtpPort {
+		t.Errorf("Port expected to be '%d' but was '%d'\n", smtpPort, creds.Port)
 	}
 }
 
