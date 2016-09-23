@@ -12,6 +12,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -313,6 +314,11 @@ func (acc *Account) Validate() *util.ValidationError {
 	if acc.Login == "" {
 		valErr.FieldErrors["login"] = "Please add login"
 	}
+	re := regexp.MustCompile("^[a-zA-Z0-9-_]*$")
+	if !re.MatchString(acc.Login) {
+		valErr.FieldErrors["login"] = "Please use only the following characters: 'a-zA-Z0-9-_'"
+	}
+
 	if !(len(acc.Email) > 2) || !strings.Contains(acc.Email, "@") {
 		valErr.FieldErrors["email"] = "Please add a valid e-mail address"
 	}
