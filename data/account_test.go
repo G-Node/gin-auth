@@ -543,7 +543,22 @@ func TestValidate(t *testing.T) {
 		t.Errorf("Expected existing login error, but got: '%s'", valErr.FieldErrors["login"])
 	}
 
+	// Test missing login
+	account.Login = ""
+	valErr = account.Validate()
+	if valErr.FieldErrors["login"] != "Please add login" {
+		t.Errorf("Expected missing login error, but got: '%s'", valErr.FieldErrors["login"])
+	}
+
+	// Test login with invalid characters
+	account.Login = "alice/"
+	valErr = account.Validate()
+	if !strings.Contains(valErr.FieldErrors["login"], "Please use only the following characters: ") {
+		t.Errorf("Expected invalid characters error, but got: '%s'\n", valErr.FieldErrors["login"])
+	}
+
 	// Test existing email
+	account.Login = "no-one_1234567890_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	valErr = account.Validate()
 	if valErr.FieldErrors["email"] != "Please choose a different email address" {
 		t.Errorf("Expected existing email error, but got: '%s'", valErr.FieldErrors["email"])
@@ -561,15 +576,7 @@ func TestValidate(t *testing.T) {
 		t.Errorf("Expected invalid email error, but got: '%s'", valErr.FieldErrors["email"])
 	}
 
-	// Test missing login
-	account.Login = ""
-	valErr = account.Validate()
-	if valErr.FieldErrors["login"] != "Please add login" {
-		t.Errorf("Expected missing login error, but got: '%s'", valErr.FieldErrors["login"])
-	}
-
 	// Test missing email
-	account.Login = "noone"
 	account.Email = ""
 	valErr = account.Validate()
 	if valErr.FieldErrors["email"] != "Please add a valid e-mail address" {
