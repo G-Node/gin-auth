@@ -10,6 +10,7 @@ package data
 
 import (
 	"io/ioutil"
+	"strings"
 	"testing"
 	"time"
 
@@ -37,6 +38,9 @@ func InitDb(config *conf.DbConfig) {
 // InitTestDb initializes a database for testing purpose.
 func InitTestDb(t *testing.T) {
 	config := conf.GetDbConfig()
+	if !strings.Contains(config.Open, "user=test") {
+		t.Fatal("Prohibit running tests outside a test environment.")
+	}
 	InitDb(config)
 
 	fixtures, err := ioutil.ReadFile(conf.GetResourceFile("fixtures", "testdb.sql"))
