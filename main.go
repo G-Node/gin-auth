@@ -26,14 +26,16 @@ func versionString() string {
 const doc = `G-Node Infrastructure Authentication Provider
 
 Usage:
-  gin-auth [--res <dir>]
+  gin-auth [--res <dir>] [--conf <dir>]
   gin-auth -h | --help
   gin-auth --version
 
 Options:
-  --res <dir>     Path to the resources directory where configuration files,
-                  templates and static files are located. By default gin-auth
+  --res <dir>     Path to the resources directory where templates
+                  and static files are located. By default gin-auth
                   will use GOPATH to find the directory.
+  --conf <dir>    Path to the configuration files directory. By default
+                  gin-auth will use the resources/conf directory.
   -h --help       Show this screen.
   --version       Print gin-auth version`
 
@@ -41,6 +43,10 @@ func main() {
 	args, _ := docopt.Parse(doc, nil, true, versionString(), false)
 	if res, ok := args["--res"]; ok && res != nil {
 		conf.SetResourcesPath(res.(string))
+	}
+
+	if config, ok := args["--conf"]; ok && config != nil {
+		conf.SetConfigPath(config.(string))
 	}
 
 	// Initialize logging and make sure log files will be closed.
