@@ -15,6 +15,7 @@ install:
  - go get github.com/mattn/goveralls
  - go get golang.org/x/tools/cmd/cover
  # dependencies
+ - go get -d github.com/G-Node/gin-core/...
  - go get github.com/jmoiron/sqlx
  - go get github.com/lib/pq
  - go get gopkg.in/yaml.v2

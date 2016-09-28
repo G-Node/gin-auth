@@ -17,8 +17,8 @@ import (
 	"time"
 
 	"github.com/G-Node/gin-auth/conf"
-	"github.com/G-Node/gin-auth/proto"
 	"github.com/G-Node/gin-auth/util"
+	"github.com/G-Node/gin-core/gin"
 	"github.com/pborman/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -415,7 +415,7 @@ type AccountMarshaler struct {
 
 // MarshalJSON implements Marshaler for AccountMarshaler
 func (am *AccountMarshaler) MarshalJSON() ([]byte, error) {
-	jsonData := &proto.Account{
+	jsonData := &gin.Account{
 		URL:       conf.MakeUrl("/api/accounts/%s", am.Account.Login),
 		UUID:      am.Account.UUID,
 		Login:     am.Account.Login,
@@ -431,13 +431,13 @@ func (am *AccountMarshaler) MarshalJSON() ([]byte, error) {
 		jsonData.MiddleName = &am.Account.MiddleName.String
 	}
 	if am.WithMail {
-		jsonData.Email = &proto.Email{
+		jsonData.Email = &gin.Email{
 			Email:    am.Account.Email,
 			IsPublic: am.Account.IsEmailPublic,
 		}
 	}
 	if am.WithAffiliation {
-		jsonData.Affiliation = &proto.Affiliation{
+		jsonData.Affiliation = &gin.Affiliation{
 			Institute:  am.Account.Institute,
 			Department: am.Account.Department,
 			City:       am.Account.City,
@@ -451,7 +451,7 @@ func (am *AccountMarshaler) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements Unmarshaler for AccountMarshaler.
 // Only parses updatable fields: Title, FirstName, MiddleName and LastName
 func (am *AccountMarshaler) UnmarshalJSON(bytes []byte) error {
-	jsonData := &proto.Account{}
+	jsonData := &gin.Account{}
 	err := json.Unmarshal(bytes, jsonData)
 	if err != nil {
 		return err

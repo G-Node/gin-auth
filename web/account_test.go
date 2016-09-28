@@ -21,7 +21,7 @@ import (
 
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
-	"github.com/G-Node/gin-auth/proto"
+	"github.com/G-Node/gin-core/gin"
 )
 
 const (
@@ -445,7 +445,7 @@ func TestListAccountKeys(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	keys := []proto.SSHKey{}
+	keys := []gin.SSHKey{}
 	dec := json.NewDecoder(response.Body)
 	err := dec.Decode(&keys)
 	if err != nil {
@@ -484,7 +484,7 @@ func TestGetKey(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
-	key := proto.SSHKey{}
+	key := gin.SSHKey{}
 	dec := json.NewDecoder(response.Body)
 	err := dec.Decode(&key)
 	if err != nil {
@@ -550,7 +550,7 @@ func TestCreateKey(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-	key := proto.SSHKey{}
+	key := gin.SSHKey{}
 	dec := json.NewDecoder(response.Body)
 	err := dec.Decode(&key)
 	if err != nil {

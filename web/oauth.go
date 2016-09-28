@@ -20,8 +20,8 @@ import (
 
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
-	"github.com/G-Node/gin-auth/proto"
 	"github.com/G-Node/gin-auth/util"
+	"github.com/G-Node/gin-core/gin"
 	"github.com/gorilla/mux"
 )
 
@@ -554,7 +554,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Prepare a response depending on the grant type
-	var response *proto.TokenResponse
+	var response *gin.TokenResponse
 	switch body.GrantType {
 
 	case "authorization_code":
@@ -575,7 +575,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response = &proto.TokenResponse{
+		response = &gin.TokenResponse{
 			TokenType:    "Bearer",
 			Scope:        strings.Join(request.ScopeRequested.Strings(), " "),
 			AccessToken:  access,
@@ -606,7 +606,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response = &proto.TokenResponse{
+		response = &gin.TokenResponse{
 			TokenType:   "Bearer",
 			Scope:       strings.Join(refresh.Scope.Strings(), " "),
 			AccessToken: access.Token,
@@ -641,7 +641,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response = &proto.TokenResponse{
+		response = &gin.TokenResponse{
 			TokenType:   "Bearer",
 			Scope:       strings.Join(scope.Strings(), " "),
 			AccessToken: access.Token,
@@ -665,7 +665,7 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response = &proto.TokenResponse{
+		response = &gin.TokenResponse{
 			TokenType:   "Bearer",
 			Scope:       strings.Join(scope.Strings(), " "),
 			AccessToken: access.Token,
@@ -704,7 +704,7 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	scope := strings.Join(token.Scope.Strings(), " ")
-	response := &proto.TokenInfo{
+	response := &gin.TokenInfo{
 		URL:        conf.MakeUrl("/oauth/validate/%s", token.Token),
 		JTI:        token.Token,
 		EXP:        token.Expires,
