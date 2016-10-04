@@ -13,6 +13,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/G-Node/gin-auth/conf"
@@ -127,9 +128,8 @@ func (key *SSHKey) UnmarshalJSON(bytes []byte) error {
 
 	key.Key = jsonData.Key
 
-	// This is a hack; the fingerprint is for whichever reason
-	// always returned with an additional "=" at the end.
-	key.Fingerprint = fingerprint[:43]
+	// Remove any base64 "=" padding characters
+	key.Fingerprint = strings.TrimRight(fingerprint, "=")
 	if jsonData.Description != "" {
 		key.Description = jsonData.Description
 	} else {
