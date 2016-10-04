@@ -31,6 +31,7 @@ const (
 	keyPrintAlice         = "A3tkBXFQWkjU6rzhkofY55G7tPR/Lmna4B+WEGVFXOQ"
 	keyPrintAliceNew      = "WHHqtkitF7o+EyTWFgdFKCYhU1PElLnK3U0luzyc0ko"
 	fingerPrintAlice      = "SpWwZAvumrAEqWQIUakTix/R2YR9aB795Px7vMKCqmw"
+	fingerPrintAliceSHA1  = "SHA1:7886a27368d61332064412e1f863b8109fc9fcc4"
 )
 
 func TestGetAccount(t *testing.T) {
@@ -492,6 +493,26 @@ func TestGetKey(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 
+	// invalid fingerprint encoding
+	q.Set("fingerprint", fingerPrintAliceSHA1)
+	request, _ = http.NewRequest("GET", uri, strings.NewReader(""))
+	request.URL.RawQuery = q.Encode()
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+	errData := &errorData{}
+	dec := json.NewDecoder(response.Body)
+	err := dec.Decode(errData)
+	if err != nil {
+		t.Error("Error while parsing response")
+	}
+	if !strings.Contains(errData.Message, "Only SHA256 fingerprints are supported") {
+		t.Errorf("Expected invalid fingerprint encoding error but got '%s'\n", errData.Message)
+	}
+
 	// all ok
 	q.Set("fingerprint", keyPrintAlice)
 
@@ -517,8 +538,8 @@ func TestGetKey(t *testing.T) {
 	}
 
 	key := gin.SSHKey{}
-	dec := json.NewDecoder(response.Body)
-	err := dec.Decode(&key)
+	dec = json.NewDecoder(response.Body)
+	err = dec.Decode(&key)
 	if err != nil {
 		t.Error(err)
 	}
@@ -645,6 +666,27 @@ func TestDeleteKey(t *testing.T) {
 
 	if response.Code != http.StatusNotFound {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// invalid fingerprint encoding
+	q.Set("fingerprint", fingerPrintAliceSHA1)
+	request, _ = http.NewRequest("DELETE", uri, strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	request.URL.RawQuery = q.Encode()
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+	errData := &errorData{}
+	dec := json.NewDecoder(response.Body)
+	err := dec.Decode(errData)
+	if err != nil {
+		t.Error("Error while parsing response")
+	}
+	if !strings.Contains(errData.Message, "Only SHA256 fingerprints are supported") {
+		t.Errorf("Expected invalid fingerprint encoding error but got '%s'\n", errData.Message)
 	}
 
 	// all ok
