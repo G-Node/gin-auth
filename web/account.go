@@ -281,6 +281,10 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 	if strings.HasPrefix(fingerprint, "SHA256:") {
 		fingerprint = fingerprint[7:]
 	}
+	if strings.Contains(fingerprint, ":") {
+		PrintErrorJSON(w, r, "Only SHA256 fingerprints are supported at the moment.", http.StatusBadRequest)
+		return
+	}
 
 	key, ok := data.GetSSHKey(fingerprint)
 	if !ok {
@@ -341,6 +345,10 @@ func DeleteKey(w http.ResponseWriter, r *http.Request) {
 	fingerprint := r.URL.Query().Get("fingerprint")
 	if strings.HasPrefix(fingerprint, "SHA256:") {
 		fingerprint = fingerprint[7:]
+	}
+	if strings.Contains(fingerprint, ":") {
+		PrintErrorJSON(w, r, "Only SHA256 fingerprints are supported at the moment.", http.StatusBadRequest)
+		return
 	}
 
 	oauth, ok := OAuthToken(r)
