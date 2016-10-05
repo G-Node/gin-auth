@@ -13,6 +13,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/G-Node/gin-auth/conf"
@@ -85,7 +86,7 @@ type SSHKeyMarshaler struct {
 // MarshalJSON implements Marshaler for SSHKeyMarshaler
 func (keyMarshaler *SSHKeyMarshaler) MarshalJSON() ([]byte, error) {
 	jsonData := gin.SSHKey{
-		URL:         conf.MakeUrl("/api/keys/%s", keyMarshaler.SSHKey.Fingerprint),
+		URL:         conf.MakeUrl("/api/keys?fingerprint=%s", keyMarshaler.SSHKey.Fingerprint),
 		Fingerprint: keyMarshaler.SSHKey.Fingerprint,
 		Key:         keyMarshaler.SSHKey.Key,
 		Description: keyMarshaler.SSHKey.Description,
@@ -123,10 +124,12 @@ func (key *SSHKey) UnmarshalJSON(bytes []byte) error {
 	if err != nil {
 		panic(err)
 	}
-	fingerprint := base64.RawURLEncoding.EncodeToString(sha.Sum(nil))
+	fingerprint := base64.StdEncoding.EncodeToString(sha.Sum(nil))
 
 	key.Key = jsonData.Key
-	key.Fingerprint = fingerprint
+
+	// Remove any base64 "=" padding characters
+	key.Fingerprint = strings.TrimRight(fingerprint, "=")
 	if jsonData.Description != "" {
 		key.Description = jsonData.Description
 	} else {

@@ -16,6 +16,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -27,8 +28,10 @@ import (
 const (
 	accessTokenAlice      = "3N7MP7M7"
 	accessTokenAliceAdmin = "KDEW57D4" // has scope 'account-admin'
-	keyPrintAlice         = "A3tkBXFQWkjU6rzhkofY55G7tPR_Lmna4B-WEGVFXOQ"
-	keyPrintAliceNew      = "WHHqtkitF7o-EyTWFgdFKCYhU1PElLnK3U0luzyc0ko"
+	keyPrintAlice         = "A3tkBXFQWkjU6rzhkofY55G7tPR/Lmna4B+WEGVFXOQ"
+	keyPrintAliceNew      = "WHHqtkitF7o+EyTWFgdFKCYhU1PElLnK3U0luzyc0ko"
+	fingerPrintAlice      = "SpWwZAvumrAEqWQIUakTix/R2YR9aB795Px7vMKCqmw"
+	fingerPrintAliceSHA1  = "SHA1:7886a27368d61332064412e1f863b8109fc9fcc4"
 )
 
 func TestGetAccount(t *testing.T) {
@@ -451,8 +454,8 @@ func TestListAccountKeys(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if len(keys) != 1 {
-		t.Error("Expected list with one key")
+	if len(keys) != 2 {
+		t.Errorf("Expected list with two keys, but got '%d'", len(keys))
 	}
 	key := keys[0]
 	if key.Login != "alice" {
@@ -465,9 +468,14 @@ func TestListAccountKeys(t *testing.T) {
 
 func TestGetKey(t *testing.T) {
 	handler := InitTestHttpHandler(t)
+	const uri = "/api/keys"
 
 	// not existing key
-	request, _ := http.NewRequest("GET", "/api/keys/doesnotexist", strings.NewReader(""))
+	q := &url.Values{}
+	q.Add("fingerprint", "doesnoteexist")
+
+	request, _ := http.NewRequest("GET", uri, strings.NewReader(""))
+	request.URL.RawQuery = q.Encode()
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
@@ -475,8 +483,53 @@ func TestGetKey(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
 	}
 
+	// unecoded query
+	request, _ = http.NewRequest("GET", uri, strings.NewReader(""))
+	request.URL.RawQuery = "?fingerprint=" + keyPrintAlice
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	// invalid fingerprint encoding
+	q.Set("fingerprint", fingerPrintAliceSHA1)
+	request, _ = http.NewRequest("GET", uri, strings.NewReader(""))
+	request.URL.RawQuery = q.Encode()
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+	errData := &errorData{}
+	dec := json.NewDecoder(response.Body)
+	err := dec.Decode(errData)
+	if err != nil {
+		t.Error("Error while parsing response")
+	}
+	if !strings.Contains(errData.Message, "Only SHA256 fingerprints are supported") {
+		t.Errorf("Expected invalid fingerprint encoding error but got '%s'\n", errData.Message)
+	}
+
 	// all ok
-	request, _ = http.NewRequest("GET", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
+	q.Set("fingerprint", keyPrintAlice)
+
+	request, _ = http.NewRequest("GET", uri, strings.NewReader(""))
+	request.URL.RawQuery = q.Encode()
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	// all ok including SHA256: prefix
+	q.Set("fingerprint", "SHA256:"+keyPrintAlice)
+
+	request, _ = http.NewRequest("GET", uri, strings.NewReader(""))
+	request.URL.RawQuery = q.Encode()
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
@@ -485,8 +538,8 @@ func TestGetKey(t *testing.T) {
 	}
 
 	key := gin.SSHKey{}
-	dec := json.NewDecoder(response.Body)
-	err := dec.Decode(&key)
+	dec = json.NewDecoder(response.Body)
+	err = dec.Decode(&key)
 	if err != nil {
 		t.Error(err)
 	}
@@ -569,9 +622,10 @@ func TestCreateKey(t *testing.T) {
 
 func TestDeleteKey(t *testing.T) {
 	handler := InitTestHttpHandler(t)
+	const uri = "/api/keys"
 
 	// no authorization header
-	request, _ := http.NewRequest("DELETE", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
+	request, _ := http.NewRequest("DELETE", uri, strings.NewReader(""))
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
@@ -580,7 +634,7 @@ func TestDeleteKey(t *testing.T) {
 	}
 
 	// wrong token
-	request, _ = http.NewRequest("DELETE", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
+	request, _ = http.NewRequest("DELETE", uri, strings.NewReader(""))
 	request.Header.Set("Authorization", "Bearer doesnotexist")
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -590,8 +644,12 @@ func TestDeleteKey(t *testing.T) {
 	}
 
 	// not existing key
-	request, _ = http.NewRequest("DELETE", "/api/keys/doesnotexist", strings.NewReader(""))
+	q := &url.Values{}
+	q.Add("fingerprint", "doesNotExist")
+
+	request, _ = http.NewRequest("DELETE", uri, strings.NewReader(""))
 	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	request.URL.RawQuery = q.Encode()
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
@@ -599,9 +657,55 @@ func TestDeleteKey(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
 	}
 
-	// all ok
-	request, _ = http.NewRequest("DELETE", "/api/keys/"+keyPrintAlice, strings.NewReader(""))
+	// unencoded fingerprint
+	request, _ = http.NewRequest("DELETE", uri, strings.NewReader(""))
 	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	request.URL.RawQuery = "?fingerprint=" + keyPrintAlice
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
+	}
+
+	// invalid fingerprint encoding
+	q.Set("fingerprint", fingerPrintAliceSHA1)
+	request, _ = http.NewRequest("DELETE", uri, strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	request.URL.RawQuery = q.Encode()
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+	errData := &errorData{}
+	dec := json.NewDecoder(response.Body)
+	err := dec.Decode(errData)
+	if err != nil {
+		t.Error("Error while parsing response")
+	}
+	if !strings.Contains(errData.Message, "Only SHA256 fingerprints are supported") {
+		t.Errorf("Expected invalid fingerprint encoding error but got '%s'\n", errData.Message)
+	}
+
+	// all ok
+	q.Set("fingerprint", keyPrintAlice)
+	request, _ = http.NewRequest("DELETE", uri, strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	request.URL.RawQuery = q.Encode()
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	// all ok including SHA256: prefix
+	q.Set("fingerprint", "SHA256:"+fingerPrintAlice)
+	request, _ = http.NewRequest("DELETE", uri, strings.NewReader(""))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	request.URL.RawQuery = q.Encode()
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
