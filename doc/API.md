@@ -593,7 +593,6 @@ Additional attributes may be present, but will be ignored.
    "middle_name": "...",
    "last_name": "...",
    "email": {
-      "email": "...",
       "is_public": true
   },
   "affiliation": {
@@ -648,7 +647,7 @@ PUT https://<host>/api/accounts/<login>/email
 ##### Authorization
 
 A bearer token sent with the authorization header is required.
-The token scope must contain 'account-write' to change the own e-mail address.
+The token scope must contain 'account-write' to change the own e-mail address. 
 
 ##### Body
 
@@ -661,7 +660,7 @@ The token scope must contain 'account-write' to change the own e-mail address.
 
 ##### Response
 
-If the password was successfully changed the status code is 200 and the response body is empty.
+If the e-mail was successfully changed the status code is 200 and the response body is empty.
 
 
 SSH-key API
