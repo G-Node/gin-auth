@@ -28,6 +28,7 @@ type SSHKey struct {
 	Key         string
 	Description string
 	AccountUUID string
+	IsTemporary bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -105,6 +106,7 @@ func (key *SSHKey) UnmarshalJSON(bytes []byte) error {
 	jsonData := &struct {
 		Key         string `json:"key"`
 		Description string `json:"description"`
+		IsTemporary bool   `json:"temporary"`
 	}{}
 	err := json.Unmarshal(bytes, jsonData)
 	if err != nil {
