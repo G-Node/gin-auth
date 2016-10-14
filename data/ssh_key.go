@@ -62,11 +62,11 @@ func GetSSHKey(fingerprint string) (*SSHKey, bool) {
 
 // Create stores a new SSH key in the database.
 func (key *SSHKey) Create() error {
-	const q = `INSERT INTO SSHKeys (fingerprint, key, description, accountUUID, createdAt, updatedAt)
-	           VALUES ($1, $2, $3, $4, now(), now())
+	const q = `INSERT INTO SSHKeys (fingerprint, key, description, accountUUID, isTemporary, createdAt, updatedAt)
+	           VALUES ($1, $2, $3, $4, $5, now(), now())
 	           RETURNING *`
 
-	return database.Get(key, q, key.Fingerprint, key.Key, key.Description, key.AccountUUID)
+	return database.Get(key, q, key.Fingerprint, key.Key, key.Description, key.AccountUUID, key.IsTemporary)
 }
 
 // Delete removes an existing SSH key from the database.
