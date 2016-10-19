@@ -49,6 +49,7 @@ func TestGetSSHKey(t *testing.T) {
 func TestCreateSSHKey(t *testing.T) {
 	InitTestDb(t)
 
+	// Test normal ssh key creation
 	fingerprint := "SHA256:A3tkBXFQWkjU6rzhkofY55G7tPR/Lmna4B+WEGVFXOQ"
 	fresh := &SSHKey{
 		Fingerprint: fingerprint,
@@ -58,7 +59,7 @@ func TestCreateSSHKey(t *testing.T) {
 
 	err := fresh.Create()
 	if err != nil {
-		t.Error(err)
+		t.Errorf("Error creating ssh key: %s\n", err.Error())
 	}
 
 	check, ok := GetSSHKey(fingerprint)
@@ -67,6 +68,52 @@ func TestCreateSSHKey(t *testing.T) {
 	}
 	if check.AccountUUID != uuidAlice {
 		t.Errorf("Login was expected to be '%s'", uuidAlice)
+	}
+	if check.IsTemporary {
+		t.Error("Temporary key flag was expected to be false but was true")
+	}
+
+	// Test normal ssh key creation with temporary false flag
+	fingerprint = "SHA256:A3tkBXFQWkjU6rzhkofY55G7tPR/Lmna4B+WEGVFXOc"
+	fresh = &SSHKey{
+		Fingerprint: fingerprint,
+		Key:         "fake 3rd key",
+		Description: "Alice 3rd key",
+		AccountUUID: uuidAlice,
+		IsTemporary: false}
+
+	err = fresh.Create()
+	if err != nil {
+		t.Errorf("Error creating ssh key: %s\n", err.Error())
+	}
+
+	check, ok = GetSSHKey(fingerprint)
+	if !ok {
+		t.Error("SSH key does not exist")
+	}
+	if check.IsTemporary {
+		t.Error("Temporary key flag was expected to be false but was true")
+	}
+
+	// Test temporary ssh key creation
+	fingerprint = "SHA256:A3tkBXFQWkjU6rzhkofY55G7tPR/Lmna4B+WEGVFXOb"
+	fresh = &SSHKey{
+		Fingerprint: fingerprint,
+		Key:         "fake temporary key",
+		Description: "Temporary key",
+		AccountUUID: uuidAlice,
+		IsTemporary: true}
+
+	err = fresh.Create()
+	if err != nil {
+		t.Errorf("Error creating temporary ssh key: %s\n", err.Error())
+	}
+	check, ok = GetSSHKey(fingerprint)
+	if !ok {
+		t.Error("Temporary ssh key does not exist")
+	}
+	if !check.IsTemporary {
+		t.Error("Temporary key flag was expected to be true but was false")
 	}
 }
 
