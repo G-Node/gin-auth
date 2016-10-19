@@ -46,13 +46,14 @@ func ListSSHKeys() []SSHKey {
 	return keys
 }
 
-// GetSSHKey returns an SSH key for a given fingerprint.
-// Returns false if no key with the fingerprint can be found.
+// GetSSHKey returns an SSH key (permanent or temporary) for a given fingerprint.
+// Returns false if no permanent key with the fingerprint can be found.
+// Returns false if no temporary key with the fingerprint created within the LifeTime of temporary ssh keys can be found.
 func GetSSHKey(fingerprint string) (*SSHKey, bool) {
-	const q = `SELECT * FROM SSHKeys k WHERE k.fingerprint=$1`
+	const q = `SELECT * FROM SSHKeys k WHERE k.fingerprint=$1 AND (NOT temporary OR createdat > $2)`
 
 	key := &SSHKey{}
-	err := database.Get(key, q, fingerprint)
+	err := database.Get(key, q, fingerprint, time.Now().Add(-1*conf.GetServerConfig().TmpSshKeyLifeTime))
 	if err != nil && err != sql.ErrNoRows {
 		panic(err)
 	}
