@@ -647,7 +647,7 @@ PUT https://<host>/api/accounts/<login>/email
 ##### Authorization
 
 A bearer token sent with the authorization header is required.
-The token scope must contain 'account-write' to change the own e-mail address. 
+The token scope must contain 'account-write' to change the own e-mail address.
 
 ##### Body
 

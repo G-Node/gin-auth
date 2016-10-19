@@ -23,8 +23,8 @@ func TestListSSHKeys(t *testing.T) {
 	InitTestDb(t)
 
 	keys := ListSSHKeys()
-	if len(keys) != 3 {
-		t.Error("Three SSH keys expected in list")
+	if len(keys) != 6 {
+		t.Errorf("Expected six SSH keys but got: %d.\n", len(keys))
 	}
 }
 
@@ -32,17 +32,47 @@ func TestGetSSHKey(t *testing.T) {
 	defer util.FailOnPanic(t)
 	InitTestDb(t)
 
-	key, ok := GetSSHKey(keyPrintAlice)
-	if !ok {
-		t.Error("SSH key does not exist")
-	}
-	if key.AccountUUID != uuidAlice {
-		t.Errorf("AccountUUID was expected to be '%s'", uuidAlice)
+	const keyBobPermanent = "XDKYPWTM9ffhH+MvRs/zrNVP7eoYLf5YG8/1BJrZCJw"
+	const keyBobTmpInvalid = "LTPF+bl45+47oT1X+Yxy0oNH4P6xufQhNxGMjRvxP2A"
+	const keyBobTmpValid = "dgU2JX3eCYur5xbKhFQ+jEACSurCwtRaG+Qn6SYq7lE"
+
+	// Test non existing key
+	_, ok := GetSSHKey("doesNotExist")
+	if ok {
+		t.Error("SSH key should not exist.")
 	}
 
-	_, ok = GetSSHKey("doesNotExist")
+	// Test permanent SSH key with createdat within TmpSshKeyLifeTime
+	key, ok := GetSSHKey(keyPrintAlice)
+	if !ok {
+		t.Errorf("Permanent SSH key with fingerprint '%s' was not returned.\n", keyPrintAlice)
+	}
+	if key.AccountUUID != uuidAlice {
+		t.Errorf("AccountUUID was expected to be '%s', but was '%s'.\n", uuidAlice, key.AccountUUID)
+	}
+
+	// Test permanent SSH key with createdat after TmpSshKeyLifeTime
+	key, ok = GetSSHKey(keyBobPermanent)
+	if !ok {
+		t.Errorf("Permanent SSH key with fingerprint '%s' was not returned.\n", keyBobPermanent)
+	}
+	if key.AccountUUID != uuidBob {
+		t.Errorf("AccountUUID was expected to be '%s', but was '%s'.\n", uuidBob, key.AccountUUID)
+	}
+
+	// Test temporary SSH key with createdat after TmpSshKeyLifeTime
+	_, ok = GetSSHKey(keyBobTmpInvalid)
 	if ok {
-		t.Error("SSH key should not exist")
+		t.Errorf("Did not expect invalid temporary SSH key with fingerprint '%s' to be returned.\n", keyBobTmpInvalid)
+	}
+
+	// Test temporary SSH key with createdat before TmpSshKeyLifeTime
+	key, ok = GetSSHKey(keyBobTmpValid)
+	if !ok {
+		t.Errorf("Valid temporary SSH key with fingerprint '%s' was not returned.\n", keyBobTmpValid)
+	}
+	if key.AccountUUID != uuidBob {
+		t.Errorf("AccountUUID was expected to be '%s', but was '%s'.\n", uuidBob, key.AccountUUID)
 	}
 }
 
