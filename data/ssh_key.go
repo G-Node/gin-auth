@@ -28,7 +28,7 @@ type SSHKey struct {
 	Key         string
 	Description string
 	AccountUUID string
-	IsTemporary bool
+	Temporary   bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -62,11 +62,11 @@ func GetSSHKey(fingerprint string) (*SSHKey, bool) {
 
 // Create stores a new SSH key in the database.
 func (key *SSHKey) Create() error {
-	const q = `INSERT INTO SSHKeys (fingerprint, key, description, accountUUID, isTemporary, createdAt, updatedAt)
+	const q = `INSERT INTO SSHKeys (fingerprint, key, description, accountUUID, temporary, createdAt, updatedAt)
 	           VALUES ($1, $2, $3, $4, $5, now(), now())
 	           RETURNING *`
 
-	return database.Get(key, q, key.Fingerprint, key.Key, key.Description, key.AccountUUID, key.IsTemporary)
+	return database.Get(key, q, key.Fingerprint, key.Key, key.Description, key.AccountUUID, key.Temporary)
 }
 
 // Delete removes an existing SSH key from the database.
@@ -106,7 +106,7 @@ func (key *SSHKey) UnmarshalJSON(bytes []byte) error {
 	jsonData := &struct {
 		Key         string `json:"key"`
 		Description string `json:"description"`
-		IsTemporary bool   `json:"temporary"`
+		Temporary   bool   `json:"temporary"`
 	}{}
 	err := json.Unmarshal(bytes, jsonData)
 	if err != nil {

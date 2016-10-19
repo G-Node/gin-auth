@@ -42,7 +42,7 @@ CREATE TABLE SSHKeys (
   key               VARCHAR(1024) NOT NULL UNIQUE ,
   description       VARCHAR(1024) NOT NULL ,
   accountUUID       VARCHAR(36) NOT NULL REFERENCES Accounts(uuid) ,
-  isTemporary       BOOLEAN NOT NULL DEFAULT FALSE ,
+  temporary       BOOLEAN NOT NULL DEFAULT FALSE ,
   createdAt         TIMESTAMP WITH TIME ZONE NOT NULL ,
   updatedAt         TIMESTAMP WITH TIME ZONE NOT NULL
 );

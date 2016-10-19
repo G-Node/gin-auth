@@ -257,7 +257,7 @@ func (acc *Account) Create() error {
 
 // SSHKeys returns a slice with all non temporary SSH keys belonging to this account.
 func (acc *Account) SSHKeys() []SSHKey {
-	const q = `SELECT * FROM SSHKeys WHERE accountUUID = $1 AND NOT isTemporary ORDER BY fingerprint`
+	const q = `SELECT * FROM SSHKeys WHERE accountUUID = $1 AND NOT temporary ORDER BY fingerprint`
 
 	keys := make([]SSHKey, 0)
 	err := database.Select(&keys, q, acc.UUID)
