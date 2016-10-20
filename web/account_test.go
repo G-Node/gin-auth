@@ -552,11 +552,14 @@ func TestGetKey(t *testing.T) {
 }
 
 func TestCreateKey(t *testing.T) {
-	mkBody := func(key, description string) io.Reader {
+	const login = "alice"
+
+	mkBody := func(key, description string, temporary bool) io.Reader {
 		pw := &struct {
 			Key         string `json:"key"`
 			Description string `json:"description"`
-		}{key, description}
+			Temporary   bool   `json:"temporary"`
+		}{key, description, temporary}
 		b, _ := json.Marshal(pw)
 		return bytes.NewReader(b)
 	}
@@ -566,7 +569,7 @@ func TestCreateKey(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 
 	// no authorization header
-	request, _ := http.NewRequest("POST", "/api/accounts/alice/keys", mkBody(keyStr, "desc"))
+	request, _ := http.NewRequest("POST", "/api/accounts/"+login+"/keys", mkBody(keyStr, "desc", false))
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
@@ -575,7 +578,7 @@ func TestCreateKey(t *testing.T) {
 	}
 
 	// wrong token
-	request, _ = http.NewRequest("POST", "/api/accounts/alice/keys", mkBody(keyStr, "desc"))
+	request, _ = http.NewRequest("POST", "/api/accounts/"+login+"/keys", mkBody(keyStr, "desc", false))
 	request.Header.Set("Authorization", "Bearer doesnotexist")
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -585,7 +588,7 @@ func TestCreateKey(t *testing.T) {
 	}
 
 	// wrong account
-	request, _ = http.NewRequest("POST", "/api/accounts/doesnotexist/keys", mkBody(keyStr, "desc"))
+	request, _ = http.NewRequest("POST", "/api/accounts/doesnotexist/keys", mkBody(keyStr, "desc", false))
 	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -594,8 +597,8 @@ func TestCreateKey(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusNotFound, response.Code)
 	}
 
-	// no authorization header
-	request, _ = http.NewRequest("POST", "/api/accounts/alice/keys", mkBody(keyStr, "desc"))
+	// test correct create key
+	request, _ = http.NewRequest("POST", "/api/accounts/"+login+"/keys", mkBody(keyStr, "desc", false))
 	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
@@ -609,14 +612,36 @@ func TestCreateKey(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if key.Login != "alice" {
-		t.Errorf("Login expected to be 'alice' but was %s", key.Login)
+	if key.Login != login {
+		t.Errorf("Login expected to be '%s' but was %s", login, key.Login)
 	}
 	if key.Key != keyStr {
 		t.Error("Key does not match")
 	}
 	if key.Fingerprint != keyPrintAliceNew {
 		t.Errorf("Fingerprint expected to be '%s' but was '%s'", keyPrintAliceNew, key.Fingerprint)
+	}
+
+	// Test create temporary key
+	keyBytes, _ = ioutil.ReadFile(conf.GetResourceFile("fixtures", "id_rsa_tmp.pub"))
+	keyStr = string(keyBytes)
+
+	request, _ = http.NewRequest("POST", "/api/accounts/"+login+"/keys", mkBody(keyStr, "desc", true))
+	request.Header.Set("Authorization", "Bearer "+accessTokenAlice)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+	key = gin.SSHKey{}
+	dec = json.NewDecoder(response.Body)
+	err = dec.Decode(&key)
+	if err != nil {
+		t.Error(err)
+	}
+	if key.Key != keyStr {
+		t.Error("Key does not match")
 	}
 }
 

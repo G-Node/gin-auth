@@ -31,6 +31,7 @@ const (
 	defaultUnusedAccountLifeTime = 10080
 	defaultCleanerInterval       = 15
 	defaultMailQueueInterval     = 1
+	defaultTmpSshKeyLifeTime     = 5
 )
 
 // Default smtp settings
@@ -75,6 +76,7 @@ type ServerConfig struct {
 	TokenLifeTime         time.Duration
 	GrantReqLifeTime      time.Duration
 	UnusedAccountLifeTime time.Duration
+	TmpSshKeyLifeTime     time.Duration
 	CleanerInterval       time.Duration
 	MailQueueInterval     time.Duration
 }
@@ -140,6 +142,7 @@ func GetServerConfig() *ServerConfig {
 				TokenLifeTime         int    `yaml:"TokenLifeTime"`
 				GrantReqLifeTime      int    `yaml:"GrantReqLifeTime"`
 				UnusedAccountLifeTime int    `yaml:"UnusedAccountLifeTime"`
+				TmpSshKeyLifeTime     int    `yaml:"TmpSshKeyLifeTime"`
 				CleanerInterval       int    `yaml:"CleanerInterval"`
 				MailQueueInterval     int    `yaml:"MailQueueInterval"`
 			}
@@ -169,6 +172,9 @@ func GetServerConfig() *ServerConfig {
 		if config.Http.UnusedAccountLifeTime == 0 {
 			config.Http.UnusedAccountLifeTime = defaultUnusedAccountLifeTime
 		}
+		if config.Http.TmpSshKeyLifeTime == 0 {
+			config.Http.TmpSshKeyLifeTime = defaultTmpSshKeyLifeTime
+		}
 		if config.Http.CleanerInterval == 0 {
 			config.Http.CleanerInterval = defaultCleanerInterval
 		}
@@ -184,6 +190,7 @@ func GetServerConfig() *ServerConfig {
 			TokenLifeTime:         time.Duration(config.Http.TokenLifeTime) * time.Minute,
 			GrantReqLifeTime:      time.Duration(config.Http.GrantReqLifeTime) * time.Minute,
 			UnusedAccountLifeTime: time.Duration(config.Http.UnusedAccountLifeTime) * time.Minute,
+			TmpSshKeyLifeTime:     time.Duration(config.Http.TmpSshKeyLifeTime) * time.Minute,
 			CleanerInterval:       time.Duration(config.Http.CleanerInterval) * time.Minute,
 			MailQueueInterval:     time.Duration(config.Http.MailQueueInterval) * time.Minute,
 		}
