@@ -286,6 +286,9 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Remove any base64 "=" padding characters
+	fingerprint = strings.TrimRight(fingerprint, "=")
+
 	key, ok := data.GetSSHKey(fingerprint)
 	if !ok {
 		PrintErrorJSON(w, r, "The requested key does not exist", http.StatusNotFound)
