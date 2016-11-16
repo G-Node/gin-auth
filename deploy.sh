@@ -10,6 +10,8 @@ CWRN="\033[33;01m"
 
 GOPATH=/opt/deploy/go
 
+sudo -v -p "Certain commands require sudo access. Please enter your password: "
+
 echo -e "Running in ${CAOK}$PWD $CNOC"
 REPO=$(basename $PWD)
 if [ "$REPO" != "gin-auth" ]; then
