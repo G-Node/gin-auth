@@ -38,8 +38,9 @@ for dep in "$EXTDEPS"; do
     sudo -u deploy -E GOPATH=$GOPATH /opt/go/bin/go get -v $dep
 done
 
-echo "Update dbconfig file for goose"
+echo "Update server specific config files for goose"
 cp /opt/deploy/service_conf/gin-auth/dbconf.yml /opt/deploy/gin-auth/resources/conf
+cp /opt/deploy/service_conf/gin-auth/2_initial_client_data.sql /opt/deploy/gin-auth/resources/conf/migrations
 
 echo "Update database scheme to the latest version"
 goose -path /opt/deploy/gin-auth/resources/conf up
@@ -51,7 +52,8 @@ echo "Restarting gin-auth"
 sudo systemctl --user daemon-reload
 sudo systemctl --user restart ginauth.service
 
-echo "Reset dbconfig file"
+echo "Reset server specific config files"
 sudo -u deploy git checkout resources/conf/dbconf.yml
+sudo -u deploy git checkout resources/conf/migrations/2_initial_client_data.sql
 
 echo -e "${CAOK}Done${CNOC}."
