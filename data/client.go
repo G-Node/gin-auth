@@ -212,10 +212,12 @@ func (client *Client) Approve(accountUUID string, scope util.StringSet) (err err
 }
 
 // CreateGrantRequest check whether response type, redirect URI and scope are valid and creates a new
-// grant request for this client.
+// grant request for this client. Grant types are defined by RFC6749 "OAuth 2.0 Authorization Framework"
+// Supported grant types are: "code" (authorization code), "token" (implicit request),
+// "owner" (resource owner password credentials), "client" (client credentials)
 func (client *Client) CreateGrantRequest(responseType, redirectURI, state string, scope util.StringSet) (*GrantRequest, error) {
-	if !(responseType == "code" || responseType == "token") {
-		return nil, errors.New("Response type expected to be 'code' or 'token'")
+	if !(responseType == "code" || responseType == "token" || responseType == "owner" || responseType == "client") {
+		return nil, errors.New("Response type expected to be one of the following: 'code', 'token', 'owner', 'client'")
 	}
 	if !client.RedirectURIs.Contains(redirectURI) {
 		return nil, fmt.Errorf("Redirect URI invalid: '%s'", redirectURI)
