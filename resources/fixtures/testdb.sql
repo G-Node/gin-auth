@@ -35,10 +35,11 @@ INSERT INTO SSHKeys (fingerprint, accountUUID, description, temporary, key, crea
   ('dgU2JX3eCYur5xbKhFQ+jEACSurCwtRaG+Qn6SYq7lE', '51f5ac36-d332-4889-8023-6e033fcd8e17', 'Bobs new temporary key', true, 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDKHfQ67plrnKU5ua2JP6zTYZWiN23H26paJ4M/7r1/m9Ct8a3Oy5qK0LGmwj+nSInOX5U5AmQSnAfqnVcXG1QWP/GEvz7fxm+99ZU00P+Pti1AenmiK69qxvP7dMC3KJbwe6haEgVHNbDy3Uj1lW+cIH+FUkpuoLr5B6tCrXAUD+ZJrSAR3VlYMbAQ5W4ElU3Oh1gruacINCy3B83D3PVSumdgnPopYQdcFSVFv22fHGal4iw1T/M0Xfe7iQevLaEa/F+BwX8IAqNJb3mA+1JQbF0Vkfo+qxMtK3OUK0hZIYheH9H1OIl53RZ18jck0IWBgyo8chegSMoNtL3gzA6p bar@foo', now(), now());
 
 INSERT INTO Clients (uuid, name, secret, scopeWhitelist, scopeBlacklist, redirectURIs, createdAt, updatedAt) VALUES
-  ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'gin', 'secret', '{}','{"account-admin"}','{"https://localhost:8081/login"}', now(), now()),
+  ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'gin', 'secret', '{"account-create"}','{"account-admin"}','{"https://localhost:8081/login","http://localhost:8080/"}', now(), now()),
   ('177c56a4-57b4-4baf-a1a7-04f3d8e5b276', 'wb', 'secret', '{"account-read","repo-read"}','{"account-admin"}','{"https://localhost:8081/login"}', now(), now());
 
 INSERT INTO ClientScopeProvided (clientuuid, name, description) VALUES
+  ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'account-create', 'Create an account'),
   ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'account-read', 'Read access to your account data'),
   ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'account-write', 'Write access to your account data'),
   ('8b14d6bb-cae7-4163-bbd1-f3be46e43e31', 'account-admin', 'Admin access to all account data'),

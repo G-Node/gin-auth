@@ -76,7 +76,7 @@ CREATE TABLE ClientApprovals (
 
 CREATE TABLE GrantRequests (
   token             VARCHAR(512) PRIMARY KEY ,       -- the grant request id
-  grantType         VARCHAR(10) NOT NULL CHECK (grantType = 'code' OR grantType = 'token'),
+  grantType         VARCHAR(10) NOT NULL ,
   state             VARCHAR(512) NOT NULL ,
   code              VARCHAR(512) ,
   scopeRequested    VARCHAR[] NOT NULL ,
