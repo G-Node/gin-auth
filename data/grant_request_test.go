@@ -29,8 +29,8 @@ func TestListGrantRequests(t *testing.T) {
 	InitTestDb(t)
 
 	requests := ListGrantRequests()
-	if len(requests) != 3 {
-		t.Errorf("Exactly 3 grant requests expected in list but was %d", len(requests))
+	if len(requests) != 4 {
+		t.Errorf("Exactly 4 grant requests expected in list but was %d", len(requests))
 	}
 }
 
