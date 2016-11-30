@@ -18,6 +18,45 @@ import (
 	"github.com/G-Node/gin-auth/data"
 )
 
+func TestRegistrationInit(t *testing.T) {
+	const uri = "/oauth/registration_init"
+	const forwardURI = "/oauth/registration_page"
+
+	handler := InitTestHttpHandler(t)
+
+	// Test fail on invalid response type
+	queryVals := &url.Values{}
+	queryVals.Add("response_type", "code")
+
+	request, _ := http.NewRequest("GET", uri+"?"+queryVals.Encode(), strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// Test correct redirect
+	queryVals.Set("response_type", "client")
+	queryVals.Add("client_id", "gin")
+	queryVals.Add("redirect_uri", "http://localhost:8080/")
+	queryVals.Add("state", "someClientState")
+	queryVals.Add("scope", "account-create")
+
+	request, _ = http.NewRequest("GET", uri+"?"+queryVals.Encode(), strings.NewReader(""))
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
+	}
+	loc, err := response.Result().Location()
+	if err != nil {
+		t.Error(err)
+	}
+	if !strings.Contains(loc.String(), forwardURI) {
+		t.Errorf("Forward to unexpected URI: %q\n", loc.String())
+	}
+}
+
 func TestRegistrationPage(t *testing.T) {
 	handler := InitTestHttpHandler(t)
 
