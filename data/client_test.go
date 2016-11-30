@@ -9,6 +9,7 @@
 package data
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/G-Node/gin-auth/conf"
@@ -236,34 +237,43 @@ func TestClient_CreateGrantRequest(t *testing.T) {
 		t.Error("Client does not exist")
 	}
 
-	state := util.RandomToken()
+	validResponseType := "code"
+	validState := util.RandomToken()
+	validRedirectURI := client.RedirectURIs.Strings()[0]
+	validScope := util.NewStringSet("repo-read")
 
-	// wrong response type
-	_, err := client.CreateGrantRequest("foo", client.RedirectURIs.Strings()[0], state, util.NewStringSet("repo-read"))
-	if err == nil {
+	// Test invalid response type
+	_, err := client.CreateGrantRequest("foo", validRedirectURI, validState, validScope)
+	if err == nil || !strings.Contains(err.Error(), "Response type expected") {
 		t.Error("Error expected")
 	}
 
-	// wrong redirect
-	_, err = client.CreateGrantRequest("code", "https://doesnotexist.com/callback", state, util.NewStringSet("repo-read"))
-	if err == nil {
+	// Test invalid redirect
+	_, err = client.CreateGrantRequest(validResponseType, "https://doesnotexist.com/callback", validState, validScope)
+	if err == nil || !strings.Contains(err.Error(), "Redirect URI invalid") {
 		t.Error("Error expected")
 	}
 
-	// wrong scope
-	_, err = client.CreateGrantRequest("code", client.RedirectURIs.Strings()[0], state, util.NewStringSet("foo-read"))
-	if err == nil {
+	// Test invalid scope
+	_, err = client.CreateGrantRequest(validResponseType, validRedirectURI, validState, util.NewStringSet("foo-read"))
+	if err == nil || !strings.Contains(err.Error(), "Invalid scope") {
 		t.Error("Error expected")
 	}
 
-	// blacklisted scope
-	_, err = client.CreateGrantRequest("code", client.RedirectURIs.Strings()[0], state, util.NewStringSet("account-admin"))
-	if err == nil {
+	// Test blacklisted scope
+	_, err = client.CreateGrantRequest(validResponseType, validRedirectURI, validState, util.NewStringSet("account-admin"))
+	if err == nil || !strings.Contains(err.Error(), "Blacklisted scope") {
+		t.Error("Error expected")
+	}
+
+	// Test missing client state token
+	_, err = client.CreateGrantRequest(validResponseType, validRedirectURI, "", validScope)
+	if err == nil || !strings.Contains(err.Error(), "Missing client state") {
 		t.Error("Error expected")
 	}
 
 	// all OK
-	request, err := client.CreateGrantRequest("code", client.RedirectURIs.Strings()[0], state, util.NewStringSet("repo-read"))
+	request, err := client.CreateGrantRequest(validResponseType, validRedirectURI, validState, validScope)
 	if err != nil {
 		t.Error(err)
 	}
@@ -273,7 +283,7 @@ func TestClient_CreateGrantRequest(t *testing.T) {
 	if !request.ScopeRequested.Contains("repo-read") {
 		t.Error("The requested scope should contain 'repo-read'")
 	}
-	if request.State != state {
+	if request.State != validState {
 		t.Error("State does not match")
 	}
 }
