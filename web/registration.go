@@ -22,6 +22,7 @@ import (
 type validateAccount struct {
 	*data.Account
 	*util.ValidationError
+	RequestId      string
 	CaptchaId      string
 	CaptchaResolve string
 }
@@ -39,9 +40,21 @@ func RegistrationInit(w http.ResponseWriter, r *http.Request) {
 
 // RegistrationPage displays entry fields required for the creation of a new gin account
 func RegistrationPage(w http.ResponseWriter, r *http.Request) {
+	requestID := r.URL.Query().Get("request_id")
+	grantRequest, ok := data.GetGrantRequest(requestID)
+	if !ok {
+		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusBadRequest)
+		return
+	}
+	if !grantRequest.ScopeRequested.Contains("account-create") {
+		PrintErrorHTML(w, r, "Invalid grant request", http.StatusBadRequest)
+		return
+	}
+
 	valAccount := &validateAccount{}
 	valAccount.Account = &data.Account{}
 	valAccount.ValidationError = &util.ValidationError{}
+	valAccount.RequestId = requestID
 	valAccount.CaptchaId = captcha.New()
 
 	tmpl := conf.MakeTemplate("registration.html")
