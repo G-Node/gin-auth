@@ -117,6 +117,14 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	valAccount.RequestId = r.Form.Get("request_id")
+	_, ok := data.GetGrantRequest(valAccount.RequestId)
+	if !ok {
+		// TODO check if handling this fail is sufficient or if there should be
+		// a redirect to registration_init and start the registration process again.
+		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusBadRequest)
+		return
+	}
 	valAccount.ValidationError = valAccount.Account.Validate()
 
 	if pw.Password != pw.PasswordControl {
