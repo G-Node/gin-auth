@@ -228,6 +228,9 @@ func (client *Client) CreateGrantRequest(responseType, redirectURI, state string
 	if scope.Intersect(client.ScopeBlacklist).Len() > 0 {
 		return nil, errors.New("Blacklisted scope")
 	}
+	if state == "" {
+		return nil, errors.New("Missing client state")
+	}
 
 	request := &GrantRequest{
 		GrantType:      responseType,
