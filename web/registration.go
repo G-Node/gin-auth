@@ -26,6 +26,17 @@ type validateAccount struct {
 	CaptchaResolve string
 }
 
+// RegistrationInit creates a grant request for an account registration
+// and redirects to the actual registration entry form.
+func RegistrationInit(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	if query.Get("response_type") != "client" {
+		PrintErrorHTML(w, r, "Invalid response type", http.StatusBadRequest)
+		return
+	}
+	createGrantRequest(w, r, "/oauth/registration_page")
+}
+
 // RegistrationPage displays entry fields required for the creation of a new gin account
 func RegistrationPage(w http.ResponseWriter, r *http.Request) {
 	valAccount := &validateAccount{}
