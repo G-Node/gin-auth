@@ -150,7 +150,18 @@ func TestRegistrationHandler(t *testing.T) {
 		t.Errorf("Expected empty location header, but was '%s'", redirect.String())
 	}
 
+	// test that a request without valid request id returns a BadRequest
+	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Expected code %d but got %d\n", http.StatusBadRequest, response.Code)
+	}
+
 	// test that a request with correct form content but missing captcha stays on the same page
+	body.Add("request_id", "QPJ64HK0")
 	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()
@@ -191,6 +202,9 @@ func TestRegistrationHandler(t *testing.T) {
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
+	if response.Code != http.StatusFound {
+		t.Errorf("Expected status %d but got status %d\n", http.StatusFound, response.Code)
+	}
 	redirect, err = url.Parse(response.Header().Get("Location"))
 	if err != nil {
 		t.Error(err)
