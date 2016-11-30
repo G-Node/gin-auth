@@ -58,11 +58,52 @@ func TestRegistrationInit(t *testing.T) {
 }
 
 func TestRegistrationPage(t *testing.T) {
+	const uri = "/oauth/registration_page"
+	const invalidID = "invalidID"
+	const invalidCodeID = "B4LIMIMB"
+	const validID = "QPJ64HK0"
+
 	handler := InitTestHttpHandler(t)
 
-	request, _ := http.NewRequest("GET", "/oauth/registration_page", strings.NewReader(""))
+	// Test fail with missing requestID
+	request, _ := http.NewRequest("GET", uri, strings.NewReader(""))
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// Test fail with invalid grant request ID
+	queryVals := &url.Values{}
+	queryVals.Add("request_id", invalidID)
+
+	request, _ = http.NewRequest("GET", uri+"?"+queryVals.Encode(), strings.NewReader(""))
+	request.URL.Query().Add("request_id", invalidID)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// Test fail with invalid grant request scope
+	queryVals.Set("request_id", invalidCodeID)
+	request, _ = http.NewRequest("GET", uri+"?"+queryVals.Encode(), strings.NewReader(""))
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// Test success with valid grant request
+	queryVals.Set("request_id", validID)
+	request, _ = http.NewRequest("GET", uri+"?"+queryVals.Encode(), strings.NewReader(""))
+	request.URL.Query().Add("request_id", validID)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
