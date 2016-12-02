@@ -224,13 +224,53 @@ func TestRegistrationHandler(t *testing.T) {
 }
 
 func TestRegisteredPage(t *testing.T) {
+	const uri = "/oauth/registered_page"
+	const invalidToken = "iDoNotExist"
+	const validToken = "QPJ64HK0"
+
 	handler := InitTestHttpHandler(t)
 
-	request, _ := http.NewRequest("GET", "/oauth/registered_page", strings.NewReader(""))
+	// Test fail on missing URI query
+	request, _ := http.NewRequest("GET", uri, strings.NewReader(""))
 	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// Test fail on invalid grant request token
+	urlValue := &url.Values{}
+	urlValue.Add("request_id", invalidToken)
+
+	request, _ = http.NewRequest("GET", uri+"?"+urlValue.Encode(), strings.NewReader(""))
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// Test redirect with valid grant request token
+	urlValue.Set("request_id", validToken)
+	request, _ = http.NewRequest("GET", uri+"?"+urlValue.Encode(), strings.NewReader(""))
+	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	grantRequest, exists := data.GetGrantRequest(validToken)
+	if !exists {
+		t.Error("Grant request does not exist")
+	}
+	redirect, err := url.Parse(response.Header().Get("Location"))
+	if err != nil {
+		t.Error(err)
+	}
+	if !strings.Contains(redirect.String(), grantRequest.RedirectURI) {
+		t.Errorf("Expected to be redirected to '%s', but was '%s'", grantRequest.RedirectURI, redirect.String())
+	}
+	if !strings.Contains(redirect.Query().Get("state"), grantRequest.State) {
+		t.Errorf("Missing or invalid state in reponse query: '%s'", redirect.RawQuery)
 	}
 }
 
