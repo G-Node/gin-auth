@@ -38,7 +38,7 @@ func TestRegistrationInit(t *testing.T) {
 	// Test correct redirect
 	queryVals.Set("response_type", "client")
 	queryVals.Add("client_id", "gin")
-	queryVals.Add("redirect_uri", "http://localhost:8080/")
+	queryVals.Add("redirect_uri", "http://localhost:8080/notice")
 	queryVals.Add("state", "someClientState")
 	queryVals.Add("scope", "account-create")
 
@@ -46,7 +46,7 @@ func TestRegistrationInit(t *testing.T) {
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusFound {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
+		t.Fatalf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
 	}
 	loc, err := response.Result().Location()
 	if err != nil {
