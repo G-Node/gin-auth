@@ -10,6 +10,7 @@ package web
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -211,6 +212,17 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // RegisteredPage displays information about how a newly created gin account can be activated.
 func RegisteredPage(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Query() == nil {
+		PrintErrorHTML(w, r, "Grant request id is missing", http.StatusBadRequest)
+		return
+	}
+
+	request, exists := data.GetGrantRequest(r.URL.Query().Get("request_id"))
+	if !exists {
+		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusBadRequest)
+		return
+	}
+
 	head := "Account registered"
 	message := "Your account activation is pending. "
 	message += "An e-mail with an activation code has been sent to your e-mail address."
@@ -220,9 +232,22 @@ func RegisteredPage(w http.ResponseWriter, r *http.Request) {
 		Message string
 	}{head, message}
 
-	tmpl := conf.MakeTemplate("success.html")
-	w.Header().Add("Cache-Control", "no-store")
+	if request.RedirectURI != "" {
+		w.Header().Add("Cache-Control", "no-store")
+		w.Header().Add("Content-Type", "application/json")
+
+		enc := json.NewEncoder(w)
+		enc.Encode(info)
+
+		urlValue := &url.Values{}
+		urlValue.Add("state", request.State)
+
+		http.Redirect(w, r, request.RedirectURI+"?"+urlValue.Encode(), http.StatusFound)
+		return
+	}
+
 	w.Header().Add("Content-Type", "text/html")
+	tmpl := conf.MakeTemplate("success.html")
 	err := tmpl.ExecuteTemplate(w, "layout", info)
 	if err != nil {
 		panic(err)
