@@ -195,7 +195,7 @@ func TestRegistrationHandler(t *testing.T) {
 		t.Errorf("Expected e-mail queue to contain '%d' entries but had '%d'", num, len(emails))
 	}
 
-	// test that a request with correct form content redirects to registered_page
+	// test that a request with correct form content redirects to registered_page and contains a request token
 	body.Add("captcha_resolve", "test")
 	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -209,9 +209,14 @@ func TestRegistrationHandler(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if redirect.String() != registeredPageURL {
+	if !strings.Contains(redirect.String(), registeredPageURL) {
 		t.Errorf("Expected to be redirected to '%s', but was '%s'", registeredPageURL, redirect.String())
 	}
+	_, exists := data.GetGrantRequest(redirect.Query().Get("request_id"))
+	if !exists {
+		t.Errorf("Missing or invalid grant request token in redirect query: %q\n", redirect.RawQuery)
+	}
+
 	emails, _ = data.GetQueuedEmails()
 	if len(emails) == num {
 		t.Error("E-Mail entry was not created")
