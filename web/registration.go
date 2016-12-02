@@ -12,6 +12,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
@@ -203,7 +204,9 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add("Cache-Control", "no-store")
-	http.Redirect(w, r, "/oauth/registered_page", http.StatusFound)
+	urlValue := &url.Values{}
+	urlValue.Add("request_id", valAccount.RequestId)
+	http.Redirect(w, r, "/oauth/registered_page?"+urlValue.Encode(), http.StatusFound)
 }
 
 // RegisteredPage displays information about how a newly created gin account can be activated.
