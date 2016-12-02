@@ -22,15 +22,39 @@ import (
 type validateAccount struct {
 	*data.Account
 	*util.ValidationError
+	RequestId      string
 	CaptchaId      string
 	CaptchaResolve string
 }
 
+// RegistrationInit creates a grant request for an account registration
+// and redirects to the actual registration entry form.
+func RegistrationInit(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	if query.Get("response_type") != "client" {
+		PrintErrorHTML(w, r, "Invalid response type", http.StatusBadRequest)
+		return
+	}
+	createGrantRequest(w, r, "/oauth/registration_page")
+}
+
 // RegistrationPage displays entry fields required for the creation of a new gin account
 func RegistrationPage(w http.ResponseWriter, r *http.Request) {
+	requestID := r.URL.Query().Get("request_id")
+	grantRequest, ok := data.GetGrantRequest(requestID)
+	if !ok {
+		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusBadRequest)
+		return
+	}
+	if !grantRequest.ScopeRequested.Contains("account-create") {
+		PrintErrorHTML(w, r, "Invalid grant request", http.StatusBadRequest)
+		return
+	}
+
 	valAccount := &validateAccount{}
 	valAccount.Account = &data.Account{}
 	valAccount.ValidationError = &util.ValidationError{}
+	valAccount.RequestId = requestID
 	valAccount.CaptchaId = captcha.New()
 
 	tmpl := conf.MakeTemplate("registration.html")
@@ -93,6 +117,14 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	valAccount.RequestId = r.Form.Get("request_id")
+	_, ok := data.GetGrantRequest(valAccount.RequestId)
+	if !ok {
+		// TODO check if handling this fail is sufficient or if there should be
+		// a redirect to registration_init and start the registration process again.
+		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusBadRequest)
+		return
+	}
 	valAccount.ValidationError = valAccount.Account.Validate()
 
 	if pw.Password != pw.PasswordControl {

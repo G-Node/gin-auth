@@ -118,37 +118,9 @@ func (o oauth) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Authorize handles the beginning of an OAuth grant request following the schema
-// of 'implicit' or 'code' grant types.
+// of any of the 'implicit', 'code', 'owner' or 'client' grant types.
 func Authorize(w http.ResponseWriter, r *http.Request) {
-	param := &struct {
-		ResponseType string
-		ClientId     string
-		RedirectURI  string
-		State        string
-		Scope        string
-	}{}
-
-	err := util.ReadQueryIntoStruct(r, param, false)
-	if err != nil {
-		PrintErrorHTML(w, r, err, http.StatusBadRequest)
-		return
-	}
-
-	client, ok := data.GetClientByName(param.ClientId)
-	if !ok {
-		PrintErrorHTML(w, r, fmt.Sprintf("Client '%s' does not exist", param.ClientId), http.StatusBadRequest)
-		return
-	}
-
-	scope := util.NewStringSet(strings.Split(param.Scope, " ")...)
-	request, err := client.CreateGrantRequest(param.ResponseType, param.RedirectURI, param.State, scope)
-	if err != nil {
-		PrintErrorHTML(w, r, err, http.StatusBadRequest)
-		return
-	}
-
-	w.Header().Add("Cache-Control", "no-store")
-	http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusFound)
+	createGrantRequest(w, r, "/oauth/login_page")
 }
 
 type loginData struct {

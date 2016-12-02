@@ -18,12 +18,92 @@ import (
 	"github.com/G-Node/gin-auth/data"
 )
 
-func TestRegistrationPage(t *testing.T) {
+func TestRegistrationInit(t *testing.T) {
+	const uri = "/oauth/registration_init"
+	const forwardURI = "/oauth/registration_page"
+
 	handler := InitTestHttpHandler(t)
 
-	request, _ := http.NewRequest("GET", "/oauth/registration_page", strings.NewReader(""))
+	// Test fail on invalid response type
+	queryVals := &url.Values{}
+	queryVals.Add("response_type", "code")
+
+	request, _ := http.NewRequest("GET", uri+"?"+queryVals.Encode(), strings.NewReader(""))
 	response := httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// Test correct redirect
+	queryVals.Set("response_type", "client")
+	queryVals.Add("client_id", "gin")
+	queryVals.Add("redirect_uri", "http://localhost:8080/")
+	queryVals.Add("state", "someClientState")
+	queryVals.Add("scope", "account-create")
+
+	request, _ = http.NewRequest("GET", uri+"?"+queryVals.Encode(), strings.NewReader(""))
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
+	}
+	loc, err := response.Result().Location()
+	if err != nil {
+		t.Error(err)
+	}
+	if !strings.Contains(loc.String(), forwardURI) {
+		t.Errorf("Forward to unexpected URI: %q\n", loc.String())
+	}
+}
+
+func TestRegistrationPage(t *testing.T) {
+	const uri = "/oauth/registration_page"
+	const invalidID = "invalidID"
+	const invalidCodeID = "B4LIMIMB"
+	const validID = "QPJ64HK0"
+
+	handler := InitTestHttpHandler(t)
+
+	// Test fail with missing requestID
+	request, _ := http.NewRequest("GET", uri, strings.NewReader(""))
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// Test fail with invalid grant request ID
+	queryVals := &url.Values{}
+	queryVals.Add("request_id", invalidID)
+
+	request, _ = http.NewRequest("GET", uri+"?"+queryVals.Encode(), strings.NewReader(""))
+	request.URL.Query().Add("request_id", invalidID)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// Test fail with invalid grant request scope
+	queryVals.Set("request_id", invalidCodeID)
+	request, _ = http.NewRequest("GET", uri+"?"+queryVals.Encode(), strings.NewReader(""))
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// Test success with valid grant request
+	queryVals.Set("request_id", validID)
+	request, _ = http.NewRequest("GET", uri+"?"+queryVals.Encode(), strings.NewReader(""))
+	request.URL.Query().Add("request_id", validID)
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
@@ -70,7 +150,18 @@ func TestRegistrationHandler(t *testing.T) {
 		t.Errorf("Expected empty location header, but was '%s'", redirect.String())
 	}
 
+	// test that a request without valid request id returns a BadRequest
+	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Expected code %d but got %d\n", http.StatusBadRequest, response.Code)
+	}
+
 	// test that a request with correct form content but missing captcha stays on the same page
+	body.Add("request_id", "QPJ64HK0")
 	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()
@@ -111,6 +202,9 @@ func TestRegistrationHandler(t *testing.T) {
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 
+	if response.Code != http.StatusFound {
+		t.Errorf("Expected status %d but got status %d\n", http.StatusFound, response.Code)
+	}
 	redirect, err = url.Parse(response.Header().Get("Location"))
 	if err != nil {
 		t.Error(err)

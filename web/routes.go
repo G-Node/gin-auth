@@ -35,6 +35,7 @@ func RegisterRoutes(r *mux.Router) {
 		Methods("POST")
 	oauth.HandleFunc("/logout/{token}", Logout).
 		Methods("GET")
+	oauth.HandleFunc("/registration_init", RegistrationInit).Methods("GET")
 	oauth.HandleFunc("/registration_page", RegistrationPage).Methods("GET")
 	oauth.Handle("/registration", RegistrationHandler(captcha.VerifyString)).Methods("POST")
 	oauth.HandleFunc("/registered_page", RegisteredPage).Methods("GET")

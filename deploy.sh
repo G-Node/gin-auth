@@ -39,18 +39,18 @@ for dep in "$EXTDEPS"; do
 done
 
 echo "Update server specific config files for goose"
-cp /opt/deploy/service_conf/gin-auth/dbconf.yml /opt/deploy/gin-auth/resources/conf
-cp /opt/deploy/service_conf/gin-auth/2_initial_client_data.sql /opt/deploy/gin-auth/resources/conf/migrations
+sudo -u deploy cp /opt/deploy/service_conf/gin-auth/dbconf.yml /opt/deploy/gin-auth/resources/conf
+sudo -u deploy cp /opt/deploy/service_conf/gin-auth/2_initial_client_data.sql /opt/deploy/gin-auth/resources/conf/migrations
 
 echo "Update database scheme to the latest version"
-goose -path /opt/deploy/gin-auth/resources/conf up
+sudo -u deploy -E GOPATH=$GOPATH $GOPATH/bin/goose -path /opt/deploy/gin-auth/resources/conf up
 
 echo "Installing gin-auth"
 sudo -u deploy -E GOPATH=$GOPATH /opt/go/bin/go install
 
 echo "Restarting gin-auth"
-sudo systemctl --user daemon-reload
-sudo systemctl --user restart ginauth.service
+sudo systemctl daemon-reload
+sudo systemctl restart ginauth.service
 
 echo "Reset server specific config files"
 sudo -u deploy git checkout resources/conf/dbconf.yml
