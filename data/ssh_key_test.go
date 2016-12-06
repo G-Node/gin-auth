@@ -9,6 +9,9 @@
 package data
 
 import (
+	"encoding/json"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/G-Node/gin-auth/util"
@@ -163,5 +166,35 @@ func TestDeleteSSHKey(t *testing.T) {
 	_, ok = GetSSHKey(keyPrintAlice)
 	if ok {
 		t.Error("SSH key should not exist")
+	}
+}
+
+func TestUnmarshalKey(t *testing.T) {
+	pubkey := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCv3Ig/y9AWuYIkKcyKfSslDEOHrRKJEimCVW0gfWgqLc/yWSlxDD3Uah015HjyrpXKQ3r2tglxs8UtdQRCeFszvI7UZ3Izawq62d152Z44ozPBS78uueqlBIP6M08CJAvxjaG+bCCVBJ5PXFHEVEhWuqx3h1v8nrJQ2wfiTHRaPIv1hmZHTAAcNZM5OmgoG7VugIGuSpvhSe82zLSEbQlO9YQTju+Ab4XGkWcFGYPDFjQYe4GitmO9esBD4y7BNWxCVAQ1akRbnKh7qls8aKc8AN/ln9/GSwzvhTI4kbfFLoxr/hWsQl8ifj9Q3KqA3m0eu1lzZLNCMks2mcpkLKm9"
+	keydesc := "UNMARSHAL KEY TEST"
+	jsonStr := fmt.Sprintf(`{"key":"%s", "description":"%s", "temporary":false}`, pubkey, keydesc)
+
+	jsonData := &SSHKey{}
+	dec := json.NewDecoder(strings.NewReader(jsonStr))
+	dec.Decode(jsonData)
+
+	if jsonData.Key != pubkey {
+		t.Error("Error unmarshalling key data: Bad Key.")
+	}
+
+	if jsonData.Description != keydesc {
+		t.Error("Error unmarshalling key data: Bad Description.")
+	}
+
+	if jsonData.Temporary {
+		t.Error("Error unmarshalling key data: Bad Temporary flag.")
+	}
+
+	jsonStr = fmt.Sprintf(`{"key":"%s", "description":"%s", "temporary":true}`, pubkey, keydesc)
+	dec = json.NewDecoder(strings.NewReader(jsonStr))
+	dec.Decode(jsonData)
+
+	if !jsonData.Temporary {
+		t.Error("Error unmarshalling key data: Bad Temporary flag.")
 	}
 }

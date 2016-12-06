@@ -100,8 +100,8 @@ func (keyMarshaler *SSHKeyMarshaler) MarshalJSON() ([]byte, error) {
 	return json.Marshal(jsonData)
 }
 
-// UnmarshalJSON implements Unmarshaler for Account.
-// Only parses updatable fields: Key and Description.
+// UnmarshalJSON implements Unmarshaler for SSHKey
+// Only parses updatable fields: Key, Description, and Temporary.
 // The fingerprint is parsed from the key.
 func (key *SSHKey) UnmarshalJSON(bytes []byte) error {
 	jsonData := &struct {
@@ -138,6 +138,8 @@ func (key *SSHKey) UnmarshalJSON(bytes []byte) error {
 	} else {
 		key.Description = comment
 	}
+
+	key.Temporary = jsonData.Temporary
 
 	return nil
 }
