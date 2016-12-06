@@ -38,7 +38,7 @@ func TestRegistrationInit(t *testing.T) {
 	// Test correct redirect
 	queryVals.Set("response_type", "client")
 	queryVals.Add("client_id", "gin")
-	queryVals.Add("redirect_uri", "http://localhost:8080/")
+	queryVals.Add("redirect_uri", "http://localhost:8080/notice")
 	queryVals.Add("state", "someClientState")
 	queryVals.Add("scope", "account-create")
 
@@ -46,7 +46,7 @@ func TestRegistrationInit(t *testing.T) {
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusFound {
-		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
+		t.Fatalf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
 	}
 	loc, err := response.Result().Location()
 	if err != nil {
@@ -195,7 +195,7 @@ func TestRegistrationHandler(t *testing.T) {
 		t.Errorf("Expected e-mail queue to contain '%d' entries but had '%d'", num, len(emails))
 	}
 
-	// test that a request with correct form content redirects to registered_page
+	// test that a request with correct form content redirects to registered_page and contains a request token
 	body.Add("captcha_resolve", "test")
 	request, _ = http.NewRequest("POST", registrationURL, strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -209,9 +209,14 @@ func TestRegistrationHandler(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if redirect.String() != registeredPageURL {
+	if !strings.Contains(redirect.String(), registeredPageURL) {
 		t.Errorf("Expected to be redirected to '%s', but was '%s'", registeredPageURL, redirect.String())
 	}
+	_, exists := data.GetGrantRequest(redirect.Query().Get("request_id"))
+	if !exists {
+		t.Errorf("Missing or invalid grant request token in redirect query: %q\n", redirect.RawQuery)
+	}
+
 	emails, _ = data.GetQueuedEmails()
 	if len(emails) == num {
 		t.Error("E-Mail entry was not created")
@@ -219,13 +224,53 @@ func TestRegistrationHandler(t *testing.T) {
 }
 
 func TestRegisteredPage(t *testing.T) {
+	const uri = "/oauth/registered_page"
+	const invalidToken = "iDoNotExist"
+	const validToken = "QPJ64HK0"
+
 	handler := InitTestHttpHandler(t)
 
-	request, _ := http.NewRequest("GET", "/oauth/registered_page", strings.NewReader(""))
+	// Test fail on missing URI query
+	request, _ := http.NewRequest("GET", uri, strings.NewReader(""))
 	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// Test fail on invalid grant request token
+	urlValue := &url.Values{}
+	urlValue.Add("request_id", invalidToken)
+
+	request, _ = http.NewRequest("GET", uri+"?"+urlValue.Encode(), strings.NewReader(""))
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusBadRequest {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusBadRequest, response.Code)
+	}
+
+	// Test redirect with valid grant request token
+	urlValue.Set("request_id", validToken)
+	request, _ = http.NewRequest("GET", uri+"?"+urlValue.Encode(), strings.NewReader(""))
+	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
+	}
+
+	grantRequest, exists := data.GetGrantRequest(validToken)
+	if !exists {
+		t.Error("Grant request does not exist")
+	}
+	redirect, err := url.Parse(response.Header().Get("Location"))
+	if err != nil {
+		t.Error(err)
+	}
+	if !strings.Contains(redirect.String(), grantRequest.RedirectURI) {
+		t.Errorf("Expected to be redirected to '%s', but was '%s'", grantRequest.RedirectURI, redirect.String())
+	}
+	if !strings.Contains(redirect.Query().Get("state"), grantRequest.State) {
+		t.Errorf("Missing or invalid state in reponse query: '%s'", redirect.RawQuery)
 	}
 }
 

@@ -28,7 +28,7 @@ func TestCreateGrantRequest(t *testing.T) {
 
 	const validResponseType = "code"
 	const validClientId = "gin"
-	const validRedirectURI = "http://localhost:8080/"
+	const validRedirectURI = "http://localhost:8080/notice"
 	const validState = "clientState"
 	const validScope = "account-create"
 
