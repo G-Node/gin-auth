@@ -44,7 +44,7 @@ func TestMakeEmailTemplate_Plain(t *testing.T) {
 	if !strings.Contains(content, "Subject: "+subject) {
 		t.Errorf("Subject is malformed or missing:\n\n%s", content)
 	}
-	if !strings.Contains(content, "\n"+message+"\n") {
+	if !strings.Contains(content, message) {
 		t.Errorf("Body is malformed or missing:\n\n%s", content)
 	}
 }
@@ -73,7 +73,7 @@ func TestMakeEmailTemplate_Activate(t *testing.T) {
 	if !strings.Contains(content, "From: "+from) {
 		t.Errorf("Sender line is malformed or missing:\n\n%s", content)
 	}
-	if !strings.Contains(content, "To: "+recipient[0]+"\n") {
+	if !strings.Contains(content, "To: "+recipient[0]) {
 		t.Errorf("Recipient line is malformed or missing:\n\n%s", content)
 	}
 	if !strings.Contains(content, "Subject: "+subject) {
@@ -111,7 +111,7 @@ func TestMakeEmailTemplate_Reset(t *testing.T) {
 	if !strings.Contains(content, "From: "+from) {
 		t.Errorf("Sender line is malformed or missing:\n\n%s", content)
 	}
-	if !strings.Contains(content, "To: "+recipient[0]+"\n") {
+	if !strings.Contains(content, "To: "+recipient[0]) {
 		t.Errorf("Recipient line is malformed or missing:\n\n%s", content)
 	}
 	if !strings.Contains(content, "Subject: "+subject) {
@@ -144,7 +144,7 @@ func TestEmailDispatcher_Send(t *testing.T) {
 	f := func(addr string, auth smtp.Auth, from string, recipient []string, cont []byte) error {
 		var err error
 		content := string(cont)
-		if !strings.Contains(content, "\n"+message+"\n") {
+		if !strings.Contains(content, "\n"+message) {
 			err = fmt.Errorf("Body is malformed or missing:\n%s", content)
 		}
 		return err
