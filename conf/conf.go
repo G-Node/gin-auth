@@ -26,7 +26,7 @@ import (
 // The unit of all life times and intervals is minute
 const (
 	defaultSessionLifeTime       = 2880
-	defaultTokenLifeTime         = 1440
+	defaultTokenLifeTime         = 43200
 	defaultGrantReqLifeTime      = 15
 	defaultUnusedAccountLifeTime = 10080
 	defaultCleanerInterval       = 15
