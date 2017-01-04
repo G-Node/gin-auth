@@ -63,6 +63,9 @@ func main() {
 	data.InitDb(dbConf)
 	data.InitClients(conf.GetClientsConfigFile())
 
+	// Initialize externals
+	conf.GetExternals()
+
 	router := mux.NewRouter()
 	router.NotFoundHandler = &web.NotFoundHandler{}
 
