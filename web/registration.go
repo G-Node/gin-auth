@@ -10,7 +10,6 @@ package web
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -217,7 +216,7 @@ func RegisteredPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request, exists := data.GetGrantRequest(r.URL.Query().Get("request_id"))
+	_, exists := data.GetGrantRequest(r.URL.Query().Get("request_id"))
 	if !exists {
 		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusBadRequest)
 		return
@@ -231,20 +230,6 @@ func RegisteredPage(w http.ResponseWriter, r *http.Request) {
 		Header  string
 		Message string
 	}{head, message}
-
-	if request.RedirectURI != "" {
-		w.Header().Add("Cache-Control", "no-store")
-		w.Header().Add("Content-Type", "application/json")
-
-		enc := json.NewEncoder(w)
-		enc.Encode(info)
-
-		urlValue := &url.Values{}
-		urlValue.Add("state", request.State)
-
-		http.Redirect(w, r, request.RedirectURI+"?"+urlValue.Encode(), http.StatusFound)
-		return
-	}
 
 	w.Header().Add("Content-Type", "text/html")
 	tmpl := conf.MakeTemplate("success.html")
