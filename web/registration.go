@@ -18,6 +18,7 @@ import (
 	"github.com/G-Node/gin-auth/data"
 	"github.com/G-Node/gin-auth/util"
 	"github.com/dchest/captcha"
+	"html/template"
 )
 
 type validateAccount struct {
@@ -222,14 +223,20 @@ func RegisteredPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	head := "Account registered"
-	message := "Your account activation is pending. "
-	message += "An e-mail with an activation code has been sent to your e-mail address."
+	head := "Your gin account has been successfully registered!"
+	message := "You are only one step away from using your gin account! <br/><br/>"
+	message += "An e-mail with an activation code has been sent to your e-mail address, "
+	message += "please use the link within the e-mail to activate your account. <br/><br/>"
+	message += fmt.Sprintf("You can also return to the <a href=\"%s\">gin main page</a>",
+		conf.GetExternals().GinUiURL)
+	message += " and continue browsing all available public repositories."
+
+	safeMessage := template.HTML(message)
 
 	info := struct {
 		Header  string
-		Message string
-	}{head, message}
+		Message template.HTML
+	}{head, safeMessage}
 
 	w.Header().Add("Content-Type", "text/html")
 	tmpl := conf.MakeTemplate("success.html")
