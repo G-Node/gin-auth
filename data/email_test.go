@@ -143,7 +143,8 @@ func TestEmail_Send(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error")
 	}
-	if !strings.Contains(err.Error(), "connection refused") {
+	// [TODO] come up with a better setup to test for a refused connection
+	if !strings.Contains(err.Error(), "refused") {
 		t.Errorf("Expected connection refused error but got: '%s'", err.Error())
 	}
 }
