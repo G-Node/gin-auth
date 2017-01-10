@@ -210,14 +210,16 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/oauth/registered_page?"+urlValue.Encode(), http.StatusFound)
 }
 
-// RegisteredPage displays information about how a newly created gin account can be activated.
+// RegisteredPage displays gin account activation information and
+// redirects back to the grant request redirection URI after a brief delay
+// using java script.
 func RegisteredPage(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query() == nil {
 		PrintErrorHTML(w, r, "Grant request id is missing", http.StatusBadRequest)
 		return
 	}
 
-	_, exists := data.GetGrantRequest(r.URL.Query().Get("request_id"))
+	request, exists := data.GetGrantRequest(r.URL.Query().Get("request_id"))
 	if !exists {
 		PrintErrorHTML(w, r, "Grant request does not exist", http.StatusBadRequest)
 		return
@@ -234,8 +236,8 @@ func RegisteredPage(w http.ResponseWriter, r *http.Request) {
 
 	// Force redirect to gin ui using java script
 	message += "<script type=\"text/javascript\">"
-	message += fmt.Sprintf("var url = \"%s\";", conf.GetExternals().GinUiURL)
-	message += "window.onload = function (){setTimeout(redirect, 10000);};"
+	message += fmt.Sprintf("var url = \"%s\";", request.RedirectURI)
+	message += "window.onload = function (){setTimeout(redirect, 8000);};"
 	message += "function redirect(){window.location.replace(url);};"
 	message += "</script>"
 
