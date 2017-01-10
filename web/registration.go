@@ -214,6 +214,8 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // redirects back to the grant request redirection URI after a brief delay
 // using java script.
 func RegisteredPage(w http.ResponseWriter, r *http.Request) {
+	const redirectionDelay = 8000
+
 	if r.URL.Query() == nil {
 		PrintErrorHTML(w, r, "Grant request id is missing", http.StatusBadRequest)
 		return
@@ -234,12 +236,8 @@ func RegisteredPage(w http.ResponseWriter, r *http.Request) {
 		conf.GetExternals().GinUiURL)
 	message += " and continue browsing the available public repositories."
 
-	// Force redirect to gin ui using java script
-	message += "<script type=\"text/javascript\">"
-	message += fmt.Sprintf("var url = \"%s\";", request.RedirectURI)
-	message += "window.onload = function (){setTimeout(redirect, 8000);};"
-	message += "function redirect(){window.location.replace(url);};"
-	message += "</script>"
+	// Add java script block to force redirect to the grant request redirection URI.
+	message += redirectionScript(request.RedirectURI, redirectionDelay)
 
 	safeMessage := template.HTML(message)
 
