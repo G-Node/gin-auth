@@ -15,3 +15,5 @@ smtp:
 log:
   Access: gin-auth.access.log
   Error: gin-auth.error.log
+externals:
+  GinUiURL: "http://localhost:8080"

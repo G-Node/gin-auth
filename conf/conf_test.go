@@ -75,3 +75,10 @@ func TestSmtpCheck(t *testing.T) {
 		t.Error("Expected smtp connection error")
 	}
 }
+
+func TestGetExternals(t *testing.T) {
+	externals := GetExternals()
+	if externals == nil || externals.GinUiURL == "" {
+		t.Error("Error initializing server externals")
+	}
+}

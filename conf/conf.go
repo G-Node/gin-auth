@@ -26,7 +26,7 @@ import (
 // The unit of all life times and intervals is minute
 const (
 	defaultSessionLifeTime       = 2880
-	defaultTokenLifeTime         = 1440
+	defaultTokenLifeTime         = 43200
 	defaultGrantReqLifeTime      = 15
 	defaultUnusedAccountLifeTime = 10080
 	defaultCleanerInterval       = 15
@@ -365,4 +365,41 @@ func GetLogLocation() *LogLocations {
 	}
 
 	return logLoc
+}
+
+// Externals contains links to external resources e.g. required for links in templates.
+type Externals struct {
+	GinUiURL string
+}
+
+var externals *Externals
+var externalsLock = sync.Mutex{}
+
+// GetExternals loads the externals information from a yaml file when called the first time.
+func GetExternals() *Externals {
+	externalsLock.Lock()
+	defer externalsLock.Unlock()
+
+	if externals == nil {
+		content, err := ioutil.ReadFile(filepath.Join(configPath, serverConfigFile))
+		if err != nil {
+			panic(err)
+		}
+
+		e := &struct {
+			Externals struct {
+				GinUiURL string `yaml:"GinUiURL"`
+			}
+		}{}
+		err = yaml.Unmarshal(content, e)
+		if err != nil {
+			panic(err)
+		}
+
+		externals = &Externals{
+			GinUiURL: e.Externals.GinUiURL,
+		}
+	}
+
+	return externals
 }

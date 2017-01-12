@@ -37,5 +37,13 @@ func MakeTemplate(name string) *template.Template {
 	if err != nil {
 		panic(err)
 	}
+
+	// parse gin web ui URL from config into the layout template
+	s := fmt.Sprintf("{{ define \"ginui\" }}%s{{ end }}", GetExternals().GinUiURL)
+	tmpl, err = tmpl.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+
 	return tmpl
 }
