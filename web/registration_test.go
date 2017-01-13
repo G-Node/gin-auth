@@ -257,21 +257,6 @@ func TestRegisteredPage(t *testing.T) {
 	if response.Code != http.StatusOK {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
-
-	grantRequest, exists := data.GetGrantRequest(validToken)
-	if !exists {
-		t.Error("Grant request does not exist")
-	}
-	redirect, err := url.Parse(response.Header().Get("Location"))
-	if err != nil {
-		t.Error(err)
-	}
-	if !strings.Contains(redirect.String(), grantRequest.RedirectURI) {
-		t.Errorf("Expected to be redirected to '%s', but was '%s'", grantRequest.RedirectURI, redirect.String())
-	}
-	if !strings.Contains(redirect.Query().Get("state"), grantRequest.State) {
-		t.Errorf("Missing or invalid state in reponse query: '%s'", redirect.RawQuery)
-	}
 }
 
 func TestActivation(t *testing.T) {

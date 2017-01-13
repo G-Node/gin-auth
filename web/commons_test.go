@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -128,5 +129,19 @@ func TestCreateGrantRequest(t *testing.T) {
 	}
 	if !strings.Contains(location.RawQuery, "request_id=") {
 		t.Errorf("Request token is missing from redirect uri query: %q\n", location.RawQuery)
+	}
+}
+
+func TestRedirectionScript(t *testing.T) {
+	const uri = "https://example.com"
+	const delay = 500
+
+	script := redirectionScript(uri, delay)
+
+	if !strings.Contains(script, uri) {
+		t.Errorf("Script block does not contain uri %q: \n%q\n", uri, script)
+	}
+	if !strings.Contains(script, strconv.Itoa(delay)) {
+		t.Errorf("Script block does not contain delay %q: \n%q\n", delay, script)
 	}
 }

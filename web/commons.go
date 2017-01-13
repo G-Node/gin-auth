@@ -52,3 +52,15 @@ func createGrantRequest(w http.ResponseWriter, r *http.Request, forwardURI strin
 	w.Header().Add("Cache-Control", "no-store")
 	http.Redirect(w, r, forwardURI+"?"+queryVals.Encode(), http.StatusFound)
 }
+
+// redirectionScript returns a java script block that upon window loading
+// redirects after a given delay to a given redirectURI.
+func redirectionScript(redirectURI string, delay int) string {
+	scriptBlock := "<script type=\"text/javascript\">"
+	scriptBlock += fmt.Sprintf("var url = \"%s\";", redirectURI)
+	scriptBlock += fmt.Sprintf("window.onload = function (){setTimeout(redirect, %d);};", delay)
+	scriptBlock += "function redirect(){window.location.replace(url);};"
+	scriptBlock += "</script>"
+
+	return scriptBlock
+}

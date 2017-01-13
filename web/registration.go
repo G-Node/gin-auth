@@ -10,8 +10,8 @@ package web
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 
@@ -210,8 +210,12 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/oauth/registered_page?"+urlValue.Encode(), http.StatusFound)
 }
 
-// RegisteredPage displays information about how a newly created gin account can be activated.
+// RegisteredPage displays gin account activation information and
+// redirects back to the grant request redirection URI after a brief delay
+// using java script.
 func RegisteredPage(w http.ResponseWriter, r *http.Request) {
+	const redirectionDelay = 8000
+
 	if r.URL.Query() == nil {
 		PrintErrorHTML(w, r, "Grant request id is missing", http.StatusBadRequest)
 		return
@@ -223,28 +227,24 @@ func RegisteredPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	head := "Account registered"
-	message := "Your account activation is pending. "
-	message += "An e-mail with an activation code has been sent to your e-mail address."
+	head := "Your gin account has been successfully registered!"
+	message := "You are only one step away from using your gin account! <br/><br/>"
+	message += "An e-mail with an activation code has been sent to your e-mail address, "
+	message += "please use the link within the e-mail to activate your account. <br/><br/>"
+	message += "You will be automatically redirected to the gin main page, "
+	message += fmt.Sprintf("you can also use <a href=\"%s\">this link</a> to return",
+		conf.GetExternals().GinUiURL)
+	message += " and continue browsing the available public repositories."
+
+	// Add java script block to force redirect to the grant request redirection URI.
+	message += redirectionScript(request.RedirectURI, redirectionDelay)
+
+	safeMessage := template.HTML(message)
 
 	info := struct {
 		Header  string
-		Message string
-	}{head, message}
-
-	if request.RedirectURI != "" {
-		w.Header().Add("Cache-Control", "no-store")
-		w.Header().Add("Content-Type", "application/json")
-
-		enc := json.NewEncoder(w)
-		enc.Encode(info)
-
-		urlValue := &url.Values{}
-		urlValue.Add("state", request.State)
-
-		http.Redirect(w, r, request.RedirectURI+"?"+urlValue.Encode(), http.StatusFound)
-		return
-	}
+		Message template.HTML
+	}{head, safeMessage}
 
 	w.Header().Add("Content-Type", "text/html")
 	tmpl := conf.MakeTemplate("success.html")
