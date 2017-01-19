@@ -165,6 +165,8 @@ func ResetPage(w http.ResponseWriter, r *http.Request) {
 // the password reset code with the new password. This update further removes any existing
 // password reset and account activation codes rendering the account active.
 func Reset(w http.ResponseWriter, r *http.Request) {
+	const redirectionDelay = 8000
+
 	formData := &struct {
 		ResetCode       string
 		Password        string
@@ -229,12 +231,23 @@ func Reset(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	head := "Your password has been reset!"
-	message := "You can now login using your new password."
+	head := "Success!"
+	message := "Your password has been reset, you can now login using your new password!<br/><br/>"
+	message += "You will be automatically redirected to the gin login page, "
+	message += fmt.Sprintf("you can also use <a href=\"%s\">this link</a> to return to the gin main page",
+		conf.GetExternals().GinUiURL)
+	message += " to login manually or continue browsing the available public repositories."
+
+	// Add java script block to start login redirection round trip to login via gin-ui.
+	// Round trip is required to ensure a proper grant request from the gin-ui client.
+	message += redirectionScript(conf.GetExternals().GinUiURL+"/oauth/authorize", redirectionDelay)
+
+	safeMessage := template.HTML(message)
+
 	info := struct {
 		Header  string
-		Message string
-	}{head, message}
+		Message template.HTML
+	}{head, safeMessage}
 
 	tmpl := conf.MakeTemplate("success.html")
 	w.Header().Add("Cache-Control", "no-store")
