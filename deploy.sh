@@ -40,7 +40,6 @@ done
 
 echo "Update server specific config files for goose"
 sudo -u deploy cp /opt/deploy/service_conf/gin-auth/dbconf.yml /opt/deploy/gin-auth/resources/conf
-sudo -u deploy cp /opt/deploy/service_conf/gin-auth/2_initial_client_data.sql /opt/deploy/gin-auth/resources/conf/migrations
 
 echo "Update database scheme to the latest version"
 sudo -u deploy -E GOPATH=$GOPATH $GOPATH/bin/goose -path /opt/deploy/gin-auth/resources/conf up
@@ -54,6 +53,5 @@ sudo systemctl restart ginauth.service
 
 echo "Reset server specific config files"
 sudo -u deploy git checkout resources/conf/dbconf.yml
-sudo -u deploy git checkout resources/conf/migrations/2_initial_client_data.sql
 
 echo -e "${CAOK}Done${CNOC}."
