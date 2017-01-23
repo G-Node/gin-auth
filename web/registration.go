@@ -21,6 +21,8 @@ import (
 	"github.com/dchest/captcha"
 )
 
+const redirectionDelay = 8000
+
 type validateAccount struct {
 	*data.Account
 	*util.ValidationError
@@ -214,8 +216,6 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // redirects back to the grant request redirection URI after a brief delay
 // using java script.
 func RegisteredPage(w http.ResponseWriter, r *http.Request) {
-	const redirectionDelay = 8000
-
 	if r.URL.Query() == nil {
 		PrintErrorHTML(w, r, "Grant request id is missing", http.StatusBadRequest)
 		return
@@ -279,13 +279,24 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	head := "Account activation"
-	message := fmt.Sprintf("Congratulation %s %s! The account for %s has been activated and can now be used.",
-		account.FirstName, account.LastName, account.Login)
+	head := "Your gin account has been successfully activated!"
+	message := fmt.Sprintf("Congratulation %s %s! ", account.FirstName, account.LastName)
+	message = fmt.Sprintf("The account for %s has been activated and can now be used.<br/><br/>", account.Login)
+	message += "You will be automatically redirected to the gin login page, "
+	message += fmt.Sprintf("you can also use <a href=\"%s\">this link</a> <br/>to return to the gin main page",
+		conf.GetExternals().GinUiURL)
+	message += " to login manually or continue browsing the available public repositories."
+
+	// Add java script block to start login redirection round trip to login via gin-ui.
+	// Round trip is required to ensure a proper grant request from the gin-ui client.
+	message += redirectionScript(conf.GetExternals().GinUiURL+"/oauth/authorize", redirectionDelay)
+
+	safeMessage := template.HTML(message)
+
 	info := struct {
 		Header  string
-		Message string
-	}{head, message}
+		Message template.HTML
+	}{head, safeMessage}
 
 	tmpl := conf.MakeTemplate("success.html")
 	w.Header().Add("Cache-Control", "no-store")

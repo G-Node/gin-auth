@@ -10,6 +10,7 @@ package web
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"github.com/G-Node/gin-auth/conf"
@@ -41,6 +42,7 @@ func ResetInitPage(w http.ResponseWriter, r *http.Request) {
 // account is updated with a password reset code and an email containing
 // the code is sent to the e-mail address of the account.
 func ResetInit(w http.ResponseWriter, r *http.Request) {
+	const redirectionDelay = 8000
 
 	w.Header().Add("Cache-Control", "no-store")
 	w.Header().Add("Content-Type", "text/html")
@@ -99,12 +101,21 @@ func ResetInit(w http.ResponseWriter, r *http.Request) {
 
 	head := "Success!"
 	message := "An e-mail with a password reset token has been sent to your e-mail address. "
-	message += "Please follow the contained link to reset your password. "
-	message += "Please note that your account will stay deactivated until your password reset has been completed."
+	message += "Please follow the enclosed link to reset your password.<br/><br/>"
+	message += "Please note that your account will stay DEACTIVATED until your password reset has been completed!<br/><br/>"
+	message += "You will be automatically redirected to the gin main page, "
+	message += fmt.Sprintf("you can also use <a href=\"%s\">this link</a> to return to the main gin page.",
+		conf.GetExternals().GinUiURL)
+
+	// Add java script block to force redirect to the main gin-ui page.
+	message += redirectionScript(conf.GetExternals().GinUiURL, redirectionDelay)
+
+	safeMessage := template.HTML(message)
+
 	info := struct {
 		Header  string
-		Message string
-	}{head, message}
+		Message template.HTML
+	}{head, safeMessage}
 
 	tmpl := conf.MakeTemplate("success.html")
 	err = tmpl.ExecuteTemplate(w, "layout", info)
@@ -154,6 +165,8 @@ func ResetPage(w http.ResponseWriter, r *http.Request) {
 // the password reset code with the new password. This update further removes any existing
 // password reset and account activation codes rendering the account active.
 func Reset(w http.ResponseWriter, r *http.Request) {
+	const redirectionDelay = 8000
+
 	formData := &struct {
 		ResetCode       string
 		Password        string
@@ -218,12 +231,23 @@ func Reset(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	head := "Your password has been reset!"
-	message := "You can now login using your new password."
+	head := "Success!"
+	message := "Your password has been reset, you can now login using your new password!<br/><br/>"
+	message += "You will be automatically redirected to the gin login page, "
+	message += fmt.Sprintf("you can also use <a href=\"%s\">this link</a> to return to the gin main page",
+		conf.GetExternals().GinUiURL)
+	message += " to login manually or continue browsing the available public repositories."
+
+	// Add java script block to start login redirection round trip to login via gin-ui.
+	// Round trip is required to ensure a proper grant request from the gin-ui client.
+	message += redirectionScript(conf.GetExternals().GinUiURL+"/oauth/authorize", redirectionDelay)
+
+	safeMessage := template.HTML(message)
+
 	info := struct {
 		Header  string
-		Message string
-	}{head, message}
+		Message template.HTML
+	}{head, safeMessage}
 
 	tmpl := conf.MakeTemplate("success.html")
 	w.Header().Add("Cache-Control", "no-store")
