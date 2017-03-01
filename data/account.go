@@ -329,7 +329,7 @@ func (acc *Account) Validate() *util.ValidationError {
 		valErr.FieldErrors["last_name"] = "Please add last name"
 	}
 	if acc.Institute == "" {
-		valErr.FieldErrors["institute"] = "Please add institute"
+		valErr.FieldErrors["institute"] = "Please add institution"
 	}
 	if acc.Department == "" {
 		valErr.FieldErrors["department"] = "Please add department"

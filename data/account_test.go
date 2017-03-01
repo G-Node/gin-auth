@@ -603,7 +603,7 @@ func TestValidate(t *testing.T) {
 	account.LastName = "ln"
 	account.Institute = ""
 	valErr = account.Validate()
-	if valErr.FieldErrors["institute"] != "Please add institute" {
+	if valErr.FieldErrors["institute"] != "Please add institution" {
 		t.Errorf("Expected missing institute error, but got: '%s'", valErr.FieldErrors["institute"])
 	}
 
