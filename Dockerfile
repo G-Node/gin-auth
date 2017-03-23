@@ -9,7 +9,7 @@ RUN apt-get update &&                                   \
                        python-pip python-setuptools     \
     && rm -rf /var/lib/apt/lists/*
 RUN apt-get install -y golang
-ENV GOPATH /opt/deploy/go/
+ENV GOPATH /opt/go/
 
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 755 "$GOPATH"
 WORKDIR $GOPATH
@@ -32,12 +32,14 @@ RUN go get golang.org/x/crypto/bcrypt
 RUN go get golang.org/x/crypto/ssh
 RUN go get gopkg.in/yaml.v2
 
-#RUN go get github.com/G-Node/gin-core/gingo
-
-
 WORKDIR $GOPATH/src/github.com/G-Node/gin-auth/
 
-RUN ls .
-RUN pwd
+VOLUME /conf
+VOLUME /authlog
 
 RUN go install
+
+WORKDIR /wd
+
+ENTRYPOINT $GOPATH/bin/gin-auth --conf /conf
+
