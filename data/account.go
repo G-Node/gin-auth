@@ -104,6 +104,21 @@ func GetAccountByLogin(login string) (*Account, bool) {
 	return account, err == nil
 }
 
+// GetAccountByCredential returns an active account (non disabled, no activation code,
+// no reset password code) with matching login or email address.
+// Returns false if no account with such login or email address exists.
+func GetAccountByCredential(id string) (*Account, bool) {
+	const q = `SELECT * FROM ActiveAccounts WHERE login=$1 or email=$1`
+
+	account := &Account{}
+	err := database.Get(account, q, id)
+	if err != nil && err != sql.ErrNoRows {
+		panic(err)
+	}
+
+	return account, err == nil
+}
+
 // GetAccountByActivationCode returns an account with matching activation code.
 // Returns false if no account with the activation code can be found.
 func GetAccountByActivationCode(code string) (*Account, bool) {
