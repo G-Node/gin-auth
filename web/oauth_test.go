@@ -350,6 +350,23 @@ func TestLoginWithCredentials(t *testing.T) {
 	if redirect.Query().Get("request_id") == "" {
 		t.Error("Request id not found")
 	}
+
+	// all OK for email
+	body = mkBody(validEmailToken, validEmail, pw)
+	request, _ = http.NewRequest("POST", "/oauth/login", strings.NewReader(body.Encode()))
+	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	response = httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+	if response.Code != http.StatusFound {
+		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
+	}
+	redirect, err = url.Parse(response.Header().Get("Location"))
+	if err != nil {
+		t.Error(err)
+	}
+	if redirect.Path != "/login" {
+		t.Errorf("Wrong redirect, received path '%s'\n", redirect.Path)
+	}
 }
 
 func TestLogout(t *testing.T) {
