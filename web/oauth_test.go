@@ -275,13 +275,20 @@ func TestLoginWithSession(t *testing.T) {
 }
 
 func TestLoginWithCredentials(t *testing.T) {
+	const validLogin = "bob"
+	const validLoginToken = "B4LIMIMB"
+	const validEmail = "aclic@foo.com"
+	const validEmailToken = "U7JIKKYI"
+	const invalid = "doesnotexist"
+	const pw = "testtest"
+
 	handler := InitTestHttpHandler(t)
 
-	mkBody := func() *url.Values {
+	mkBody := func(t, l, p string) *url.Values {
 		body := &url.Values{}
-		body.Add("request_id", "U7JIKKYI")
-		body.Add("login", "bob")
-		body.Add("password", "testtest")
+		body.Add("request_id", t)
+		body.Add("login", l)
+		body.Add("password", p)
 		return body
 	}
 
@@ -295,8 +302,7 @@ func TestLoginWithCredentials(t *testing.T) {
 	}
 
 	// wrong request id
-	body := mkBody()
-	body.Set("request_id", "doesnotexist")
+	body := mkBody(invalid, validLogin, pw)
 	request, _ = http.NewRequest("POST", "/oauth/login", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()
@@ -306,8 +312,7 @@ func TestLoginWithCredentials(t *testing.T) {
 	}
 
 	// wrong login
-	body = mkBody()
-	body.Set("login", "doesnotexist")
+	body = mkBody(validLoginToken, invalid, pw)
 	request, _ = http.NewRequest("POST", "/oauth/login", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()
@@ -317,8 +322,7 @@ func TestLoginWithCredentials(t *testing.T) {
 	}
 
 	// wrong password
-	body = mkBody()
-	body.Set("password", "notapassword")
+	body = mkBody(validLoginToken, validLogin, invalid)
 	request, _ = http.NewRequest("POST", "/oauth/login", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()
@@ -327,8 +331,9 @@ func TestLoginWithCredentials(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusFound, response.Code)
 	}
 
-	// all OK
-	request, _ = http.NewRequest("POST", "/oauth/login", strings.NewReader(mkBody().Encode()))
+	// all OK for login
+	body = mkBody(validLoginToken, validLogin, pw)
+	request, _ = http.NewRequest("POST", "/oauth/login", strings.NewReader(body.Encode()))
 	request.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	response = httptest.NewRecorder()
 	handler.ServeHTTP(response, request)
