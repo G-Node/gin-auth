@@ -70,6 +70,9 @@
             <label for="reg-email-public">
                 <input type="checkbox" id="reg-email-public" name="is_email_public" value="true" {{ if .IsEmailPublic }} checked {{ end }}>
                 Make e-mail public
+                <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip"
+                  title="If you make your e-mail address public, it will be visible for other logged in users.">
+                </span>
             </label>
         </div>
     </div>
@@ -119,6 +122,9 @@
             <label for="reg-affiliation-public">
                 <input type="checkbox" id="reg-affiliation-public" name="is_affiliation_public"  value="true" {{ if .IsAffiliationPublic }} checked {{ end }}>
                 Make affiliation public
+                <span class="glyphicon glyphicon-info-sign" data-toggle="tooltip"
+                      title="If you make your affiliation public, it will be visible for other logged in users.">
+                </span>
             </label>
         </div>
     </div>
@@ -180,7 +186,7 @@
     <br /><br />
 </form>
 
-<script>
+<script type="text/javascript">
     var xmlHttp = null;
     function reloadCaptcha() {
         var id = document.getElementById('reg-captcha-id').value;
@@ -189,6 +195,10 @@
         xmlHttp.send();
         document.getElementById('reg-image').src = "/captcha/"+ id +".png?"+ new Date().getTime();
     }
+
+    $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+    })
 </script>
 
 {{ end }}
