@@ -78,7 +78,13 @@ func TestSmtpCheck(t *testing.T) {
 
 func TestGetExternals(t *testing.T) {
 	externals := GetExternals()
-	if externals == nil || externals.GinUiURL == "" {
+	if externals == nil {
 		t.Error("Error initializing server externals")
+	}
+	if externals.GinUiURL == "" {
+		t.Error("Missing Gin UI URL")
+	}
+	if externals.ThemeURL == "" {
+		t.Error("Missing Theme URL")
 	}
 }
