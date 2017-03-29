@@ -9,3 +9,12 @@
 # GIN-Auth
 
 **G**-Node **In**frastructure Authentication Provider
+
+gin-auth is an OAuth2 authentication server for the **GIN** (**G**-Node **IN**frastructure) services.
+
+Associated projects are
+- [gin-repo](https://github.com/G-Node/gin-repo): The GIN repository server.
+- [gin-ui](https://github.com/G-Node/gin-ui): The GIN web interface based on VueJs.
+- [gin-cli](https://github.com/G-Node/gin-cli): The GIN command line client.
+
+A detailed description of the GIN project can be found at the [G-Node projects site](g-node.github.io).
