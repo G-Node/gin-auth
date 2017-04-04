@@ -182,7 +182,7 @@ func LoginWithCredentials(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// verify login data
-	account, ok := data.GetAccountByLogin(param.Login)
+	account, ok := data.GetAccountByCredential(param.Login)
 	if !ok {
 		w.Header().Add("Cache-Control", "no-store")
 		http.Redirect(w, r, "/oauth/login_page?request_id="+request.Token, http.StatusFound)

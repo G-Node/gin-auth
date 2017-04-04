@@ -16,4 +16,5 @@ log:
   Access: gin-auth.access.log
   Error: gin-auth.error.log
 externals:
+  ThemeURL: "//projects.g-node.org/assets/gnode-bootstrap-theme/1.1.0-snapshot"
   GinUiURL: "http://localhost:8080"

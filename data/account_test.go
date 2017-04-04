@@ -88,6 +88,45 @@ func TestGetAccountByLogin(t *testing.T) {
 	}
 }
 
+func TestGetAccountByCredential(t *testing.T) {
+	defer util.FailOnPanic(t)
+	InitTestDb(t)
+
+	const validLogin = "bob"
+	const validEmail = "aclic@foo.com"
+
+	acc, ok := GetAccountByCredential(validLogin)
+	if !ok {
+		t.Errorf("Account for login '%s' was not found.\n", validLogin)
+	}
+	if acc.Login != validLogin {
+		t.Errorf("Retrieved account for '%s' but got %v.\n", validLogin, acc)
+	}
+
+	acc, ok = GetAccountByCredential(validEmail)
+	if !ok {
+		t.Errorf("Account for email '%s' was not found.\n", validEmail)
+	}
+	if acc.Email != validEmail {
+		t.Errorf("Retrieved account for '%s' but got '%v'.\n", validEmail, acc)
+	}
+
+	_, ok = GetAccountByCredential("doesNotExist")
+	if ok {
+		t.Error("Account should not exist.")
+	}
+
+	// Test whole barrage of inactive accounts
+	inactiveLogin := []string{"inact_log1", "inact_log2", "inact_log3", "inact_log4",
+		"inact_log5", "inact_log6"}
+	for _, v := range inactiveLogin {
+		_, ok = GetAccountByCredential(v)
+		if ok {
+			t.Errorf("Account with login '%s' should not exist", v)
+		}
+	}
+}
+
 func TestGetAccountByActivationCode(t *testing.T) {
 	defer util.FailOnPanic(t)
 	InitTestDb(t)

@@ -16,7 +16,8 @@
     <div class="form-group {{ if .FieldErrors.title }}has-error{{ end }}">
         <label for="reg-title" class="col-sm-3 control-label">Title</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-title" name="title" placeholder="Title" value="{{ .Title.String }}" maxlength="512">
+            <input type="text" class="form-control" id="reg-title" name="title"
+                   placeholder="Title" value="{{ .Title.String }}" maxlength="512">
             {{ if .FieldErrors.title }}
                 <span class="help-block">{{ .FieldErrors.title }}</span>
             {{ end }}
@@ -25,7 +26,8 @@
     <div class="form-group {{ if .FieldErrors.first_name }}has-error{{ end }}">
         <label for="reg-fn" class="col-sm-3 control-label">First name *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-fn" name="first_name" placeholder="First Name" value="{{ .FirstName }}" maxlength="512">
+            <input type="text" class="form-control" id="reg-fn" name="first_name"
+                   placeholder="First Name" value="{{ .FirstName }}" maxlength="512">
             {{ if .FieldErrors.first_name }}
                 <span class="help-block">{{ .FieldErrors.first_name }}</span>
             {{ end }}
@@ -34,7 +36,8 @@
     <div class="form-group {{ if .FieldErrors.middle_name }}has-error{{ end }}">
         <label for="reg-mn" class="col-sm-3 control-label">Middle name</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-mn" name="middle_name" placeholder="Middle Name" value="{{ .MiddleName.String }}" maxlength="512">
+            <input type="text" class="form-control" id="reg-mn" name="middle_name"
+                   placeholder="Middle Name" value="{{ .MiddleName.String }}" maxlength="512">
             {{ if .FieldErrors.middle_name }}
                 <span class="help-block">{{ .FieldErrors.middle_name }}</span>
             {{ end }}
@@ -43,7 +46,8 @@
     <div class="form-group {{ if .FieldErrors.last_name }}has-error{{ end }}">
         <label for="reg-ln" class="col-sm-3 control-label">Last name *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-ln" name="last_name" placeholder="Last Name" value="{{ .LastName }}" maxlength="512">
+            <input type="text" class="form-control" id="reg-ln" name="last_name"
+                   placeholder="Last Name" value="{{ .LastName }}" maxlength="512">
             {{ if .FieldErrors.last_name }}
                 <span class="help-block">{{ .FieldErrors.last_name }}</span>
             {{ end }}
@@ -52,7 +56,8 @@
     <div class="form-group {{ if .FieldErrors.login }}has-error{{ end }}">
         <label for="reg-login" class="col-sm-3 control-label">Login *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-login" name="login" placeholder="Login" value="{{ .Login }}" maxlength="512">
+            <input type="text" class="form-control" id="reg-login" name="login"
+                   placeholder="Login" value="{{ .Login }}" maxlength="512">
             {{ if .FieldErrors.login }}
                 <span class="help-block">{{ .FieldErrors.login }}</span>
             {{ end }}
@@ -61,15 +66,20 @@
     <div class="form-group {{ if .FieldErrors.email }}has-error{{ end }}">
         <label for="reg-email" class="col-sm-3 control-label">e-mail address *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-email" name="email" placeholder="e-mail address" value="{{ .Email }}" maxlength="512">
+            <input type="text" class="form-control" id="reg-email" name="email"
+                   placeholder="e-mail address" value="{{ .Email }}" maxlength="512">
             <span class="help-block">Note: A valid e-mail address is required to finish the registration process.</span>
         </div>
     </div>
     <div class="form-group">
         <div class="col-sm-offset-3 col-sm-9 checkbox">
             <label for="reg-email-public">
-                <input type="checkbox" id="reg-email-public" name="is_email_public" value="true" {{ if .IsEmailPublic }} checked {{ end }}>
+                <input type="checkbox" id="reg-email-public" name="is_email_public"
+                       value="true" {{ if .IsEmailPublic }} checked {{ end }}>
                 Make e-mail public
+                <span class="glyphicon glyphicon-info-sign glyph-blue" data-toggle="tooltip"
+                  title="If you make your e-mail address public, it will be visible to other logged in users.">
+                </span>
             </label>
         </div>
     </div>
@@ -80,7 +90,8 @@
     <div class="form-group {{ if .FieldErrors.institute }}has-error{{ end }}">
         <label for="reg-institute" class="col-sm-3 control-label">Institution *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-institute" name="institute" placeholder="Institute" value="{{ .Institute }}" maxlength="512">
+            <input type="text" class="form-control" id="reg-institute" name="institute"
+                   placeholder="Institute" value="{{ .Institute }}" maxlength="512">
             {{ if .FieldErrors.institute }}
                 <span class="help-block">{{ .FieldErrors.institute }}</span>
             {{ end }}
@@ -90,7 +101,8 @@
     <div class="form-group {{ if .FieldErrors.department }}has-error{{ end }}">
         <label for="reg-department" class="col-sm-3 control-label">Department *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-department" name="department" placeholder="Department" value="{{ .Department }}" maxlength="512">
+            <input type="text" class="form-control" id="reg-department" name="department"
+                   placeholder="Department" value="{{ .Department }}" maxlength="512">
             {{ if .FieldErrors.department }}
                 <span class="help-block">{{ .FieldErrors.department }}</span>
             {{ end }}
@@ -99,7 +111,8 @@
     <div class="form-group {{ if .FieldErrors.city }}has-error{{ end }}">
         <label for="reg-city" class="col-sm-3 control-label">City *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-city" name="city" placeholder="City" value="{{ .City }}" maxlength="512">
+            <input type="text" class="form-control" id="reg-city" name="city"
+                   placeholder="City" value="{{ .City }}" maxlength="512">
             {{ if .FieldErrors.city }}
                 <span class="help-block">{{ .FieldErrors.city }}</span>
             {{ end }}
@@ -108,7 +121,8 @@
     <div class="form-group {{ if .FieldErrors.country }}has-error{{ end }}">
         <label for="reg-country" class="col-sm-3 control-label">Country *</label>
         <div class="col-sm-9">
-            <input type="text" class="form-control" id="reg-country" name="country" placeholder="Country" value="{{ .Country }}" maxlength="512">
+            <input type="text" class="form-control" id="reg-country" name="country"
+                   placeholder="Country" value="{{ .Country }}" maxlength="512">
             {{ if .FieldErrors.country }}
                 <span class="help-block">{{ .FieldErrors.country }}</span>
             {{ end }}
@@ -117,8 +131,12 @@
     <div class="form-group">
         <div class="col-sm-offset-3 col-sm-9 checkbox">
             <label for="reg-affiliation-public">
-                <input type="checkbox" id="reg-affiliation-public" name="is_affiliation_public"  value="true" {{ if .IsAffiliationPublic }} checked {{ end }}>
+                <input type="checkbox" id="reg-affiliation-public" name="is_affiliation_public"
+                       value="true" {{ if .IsAffiliationPublic }} checked {{ end }}>
                 Make affiliation public
+                <span class="glyphicon glyphicon-info-sign glyph-blue" data-toggle="tooltip"
+                      title="If you make your affiliation public, it will be visible to other logged in users.">
+                </span>
             </label>
         </div>
     </div>
@@ -129,13 +147,15 @@
     <div class="form-group {{ if .FieldErrors.password }}has-error{{ end }}">
         <label for="reg-password-input" class="col-sm-3 control-label">Password *</label>
         <div class="col-sm-9">
-            <input type="password" class="form-control" id="reg-password-input" name="password" placeholder="Password" maxlength="512">
+            <input type="password" class="form-control" id="reg-password-input"
+                   name="password" placeholder="Password" maxlength="512">
         </div>
     </div>
     <div class="form-group {{ if .FieldErrors.password }}has-error{{ end }}">
         <label for="reg-password-control" class="col-sm-3 control-label">Re-enter password *</label>
         <div class="col-sm-9">
-            <input type="password" class="form-control" id="reg-password-control" name="password_control" placeholder="Password" maxlength="512">
+            <input type="password" class="form-control" id="reg-password-control"
+                   name="password_control" placeholder="Password" maxlength="512">
             {{ if .FieldErrors.password }}
                 <span class="help-block">{{ .FieldErrors.password }}</span>
             {{ end }}
@@ -144,7 +164,7 @@
 
     <hr>
     <div class="form-group">
-        <div class="col-sm-offset-3 col-sm-9">Please verify you are a person:</div>
+        <div class="col-sm-offset-3 col-sm-9">Please verify that you are a person:</div>
         <div class="col-sm-offset-3 col-sm-3">
             <img id="reg-image" src="/captcha/{{ .CaptchaId }}.png" alt="Captcha image">
         </div>
@@ -156,7 +176,8 @@
         <label for="reg-captcha-resolve" class="col-sm-3 control-label">Enter displayed characters *</label>
         <div class="col-sm-9">
             <input type="hidden" name="captcha_id" id="reg-captcha-id" value="{{ .CaptchaId }}">
-            <input class="form-control" name="captcha_resolve" id="reg-captcha-resolve" placeholder="Enter characters">
+            <input class="form-control" name="captcha_resolve" id="reg-captcha-resolve"
+                   placeholder="Enter characters">
             {{ if .FieldErrors.captcha }}
                 <span class="help-block">{{ .FieldErrors.captcha }}</span>
             {{ end }}
@@ -167,7 +188,7 @@
     <div class="form-group">
         <div class="col-sm-9 col-sm-offset-3">
             <p>By clicking "Create account", you agree to our
-                <a href="http://www.g-node.org/gin_terms">Terms of usage</a>.
+                <a href="http://www.g-node.org/gin_terms">Terms of Use</a>.
             </p>
         </div>
     </div>
@@ -180,7 +201,7 @@
     <br /><br />
 </form>
 
-<script>
+<script type="text/javascript">
     var xmlHttp = null;
     function reloadCaptcha() {
         var id = document.getElementById('reg-captcha-id').value;
@@ -189,6 +210,16 @@
         xmlHttp.send();
         document.getElementById('reg-image').src = "/captcha/"+ id +".png?"+ new Date().getTime();
     }
+
+    $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+    })
 </script>
+
+<style type="text/css">
+    .glyph-blue {
+        color: rgb(85, 123, 185);
+    }
+</style>
 
 {{ end }}

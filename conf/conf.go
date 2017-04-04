@@ -369,6 +369,7 @@ func GetLogLocation() *LogLocations {
 
 // Externals contains links to external resources e.g. required for links in templates.
 type Externals struct {
+	ThemeURL string
 	GinUiURL string
 }
 
@@ -388,6 +389,7 @@ func GetExternals() *Externals {
 
 		e := &struct {
 			Externals struct {
+				ThemeURL string `yaml:"ThemeURL"`
 				GinUiURL string `yaml:"GinUiURL"`
 			}
 		}{}
@@ -397,6 +399,7 @@ func GetExternals() *Externals {
 		}
 
 		externals = &Externals{
+			ThemeURL: e.Externals.ThemeURL,
 			GinUiURL: e.Externals.GinUiURL,
 		}
 	}

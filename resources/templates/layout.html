@@ -7,9 +7,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet"
-          href="//projects.g-node.org/assets/gnode-bootstrap-theme/1.1.0-snapshot/css/bootstrap.min.css">
+          href="{{ template "theme" . }}/css/bootstrap.min.css">
     <link rel="shortcut icon" type="image/png"
-          href="//projects.g-node.org/assets/gnode-bootstrap-theme/1.1.0-snapshot/img/favicon.png">
+          href="{{ template "theme" . }}/img/favicon.png">
 
     <title>G-Node GIN</title>
 </head>
@@ -37,14 +37,14 @@
                 <div class="col-sm-6 display-cell">
                     <ul class="list-inline">
                         <li>© G-Node</li>
-                        <li><a href="http://www.g-node.org/gin_terms">Terms of usage</a></li>
+                        <li><a href="http://www.g-node.org/gin_terms">Terms of Use</a></li>
                     </ul>
                 </div>
                 <div class="col-sm-6 display-cell">
                     <ul class="list-inline pull-right">
-                        <li><a href="https://gin.g-node.org/info/about">About</a></li>
-                        <li><a href="https://gin.g-node.org/info/imprint">Imprint</a></li>
-                        <li><a href="https://gin.g-node.org/info/contact">Contact</a></li>
+                        <li><a href="{{ template "ginui" . }}/info/about">About</a></li>
+                        <li><a href="{{ template "ginui" . }}/info/imprint">Imprint</a></li>
+                        <li><a href="{{ template "ginui" . }}/info/contact">Contact</a></li>
                     </ul>
                 </div>
             </div>
@@ -52,7 +52,7 @@
     </nav>
 
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <script src="//projects.g-node.org/assets/gnode-bootstrap-theme/1.1.0-snapshot/js/bootstrap.min.js"></script>
+    <script src="{{ template "theme" . }}/js/bootstrap.min.js"></script>
 </body>
 </html>
 {{ end }}
