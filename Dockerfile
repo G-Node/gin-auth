@@ -41,5 +41,7 @@ RUN go install
 
 WORKDIR /wd
 
+EXPOSE 8081
+
 ENTRYPOINT $GOPATH/bin/gin-auth --conf /conf
 
