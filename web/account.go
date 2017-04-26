@@ -331,6 +331,13 @@ func CreateKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Catch cases where key is already registered
+	_, ok = data.GetSSHKey(key.Fingerprint)
+	if ok {
+		PrintErrorJSON(w, r, "This key is already registered", http.StatusConflict)
+		return
+	}
+
 	err = key.Create()
 	if err != nil {
 		panic(err)
