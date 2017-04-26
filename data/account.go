@@ -337,24 +337,6 @@ func (acc *Account) Validate() *util.ValidationError {
 	if !(len(acc.Email) > 2) || !strings.Contains(acc.Email, "@") {
 		valErr.FieldErrors["email"] = "Please add a valid e-mail address"
 	}
-	if acc.FirstName == "" {
-		valErr.FieldErrors["first_name"] = "Please add first name"
-	}
-	if acc.LastName == "" {
-		valErr.FieldErrors["last_name"] = "Please add last name"
-	}
-	if acc.Institute == "" {
-		valErr.FieldErrors["institute"] = "Please add institution"
-	}
-	if acc.Department == "" {
-		valErr.FieldErrors["department"] = "Please add department"
-	}
-	if acc.City == "" {
-		valErr.FieldErrors["city"] = "Please add city"
-	}
-	if acc.Country == "" {
-		valErr.FieldErrors["country"] = "Please add country"
-	}
 
 	const fieldLength = 512
 	var lenMessage = fmt.Sprintf("Entry too long, please shorten to %d characters", fieldLength)
