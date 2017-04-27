@@ -279,9 +279,14 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	salutation := fmt.Sprintf("%s %s", account.FirstName, account.LastName)
+	if account.FirstName == "" && account.LastName == "" {
+		salutation = account.Login
+	}
+
 	head := "Your gin account has been successfully activated!"
-	message := fmt.Sprintf("Congratulation %s %s! ", account.FirstName, account.LastName)
-	message += fmt.Sprintf("The account for %s has been activated and can now be used.<br/><br/>", account.Login)
+	message := fmt.Sprintf("Congratulation %s! ", salutation)
+	message += fmt.Sprintf("Your account for user '%s' has been activated and can now be used.<br/><br/>", account.Login)
 	message += "You will be automatically redirected to the gin login page, "
 	message += fmt.Sprintf("you can also use <a href=\"%s\">this link</a> <br/>to return to the gin main page",
 		conf.GetExternals().GinUiURL)
