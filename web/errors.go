@@ -62,7 +62,10 @@ func PrintErrorHTML(w http.ResponseWriter, r *http.Request, err interface{}, cod
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "text/html")
 	w.WriteHeader(code)
-	tmpl.ExecuteTemplate(w, "layout", errData)
+	err = tmpl.ExecuteTemplate(w, "layout", errData)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // PrintErrorJSON writes an JSON error response.
@@ -78,5 +81,8 @@ func PrintErrorJSON(w http.ResponseWriter, r *http.Request, err interface{}, cod
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(code)
 	enc := json.NewEncoder(w)
-	enc.Encode(errData)
+	err = enc.Encode(errData)
+	if err != nil {
+		panic(err)
+	}
 }

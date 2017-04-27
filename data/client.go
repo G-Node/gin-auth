@@ -404,7 +404,10 @@ func updateClients(confClients []Client) {
 	}
 
 	if err != nil {
-		tx.Rollback()
+		errTx := tx.Rollback()
+		if errTx != nil {
+			err = fmt.Errorf("After initial error '%v'\nrollback failed: '%v'\n", err, errTx)
+		}
 		panic(err)
 	}
 

@@ -49,7 +49,7 @@ func (e *Email) Create(to util.StringSet, content []byte) error {
 
 	config := conf.GetSmtpCredentials()
 	mode := sql.NullString{}
-	mode.Scan(config.Mode)
+	_ = mode.Scan(config.Mode)
 	err := database.Get(e, q, mode, config.From, to, content)
 
 	return err

@@ -171,7 +171,16 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	valAccount.Account.SetPassword(pw.Password)
+	err = valAccount.Account.SetPassword(pw.Password)
+	if err != nil {
+		valAccount.Message = "An error occurred during registration."
+		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
 	valAccount.Account.ActivationCode = sql.NullString{String: util.RandomToken(), Valid: true}
 
 	err = account.Create()

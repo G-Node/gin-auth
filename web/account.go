@@ -47,7 +47,10 @@ func ListAccounts(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(marshal)
+	err := enc.Encode(marshal)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // GetAccount is a handler which returns a requested account as JSON
@@ -76,7 +79,10 @@ func GetAccount(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(marshal)
+	err := enc.Encode(marshal)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // UpdateAccount is a handler which updated all updatable fields of an account (Title, FirstName,
@@ -117,7 +123,10 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(marshal)
+	err = enc.Encode(marshal)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // UpdateAccountPassword is a handler which parses the old and new password from the request body and
@@ -146,7 +155,7 @@ func UpdateAccountPassword(w http.ResponseWriter, r *http.Request) {
 		PasswordNewRepeat string `json:"password_new_repeat"`
 	}{}
 	dec := json.NewDecoder(r.Body)
-	dec.Decode(pwData)
+	_ = dec.Decode(pwData)
 
 	if !account.VerifyPassword(pwData.PasswordOld) {
 		err := &util.ValidationError{
@@ -206,7 +215,7 @@ func UpdateAccountEmail(w http.ResponseWriter, r *http.Request) {
 	}{}
 
 	dec := json.NewDecoder(r.Body)
-	dec.Decode(cred)
+	_ = dec.Decode(cred)
 
 	if !acc.VerifyPassword(cred.Password) {
 		valErr := &util.ValidationError{
@@ -272,7 +281,10 @@ func ListAccountKeys(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(marshal)
+	err := enc.Encode(marshal)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // GetKey returns a single ssh key identified by its fingerprint as JSON.
@@ -301,7 +313,10 @@ func GetKey(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(&data.SSHKeyMarshaler{SSHKey: key, Account: account})
+	err := enc.Encode(&data.SSHKeyMarshaler{SSHKey: key, Account: account})
+	if err != nil {
+		panic(err)
+	}
 }
 
 // CreateKey stores a new key for a given account.
@@ -346,7 +361,10 @@ func CreateKey(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(&data.SSHKeyMarshaler{SSHKey: key, Account: account})
+	err = enc.Encode(&data.SSHKeyMarshaler{SSHKey: key, Account: account})
+	if err != nil {
+		panic(err)
+	}
 }
 
 // DeleteKey removes a single ssh key identified by its fingerprint and returns
@@ -388,5 +406,8 @@ func DeleteKey(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(&data.SSHKeyMarshaler{SSHKey: key, Account: account})
+	err = enc.Encode(&data.SSHKeyMarshaler{SSHKey: key, Account: account})
+	if err != nil {
+		panic(err)
+	}
 }
