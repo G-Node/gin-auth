@@ -158,7 +158,7 @@ func (set StringSet) Value() (driver.Value, error) {
 
 	quoted := make([]string, set.Len(), set.Len())
 	for i, s := range set.Strings() {
-		quoted[i] = fmt.Sprintf(strconv.Quote(s))
+		quoted[i] = fmt.Sprint(strconv.Quote(s))
 	}
 
 	return fmt.Sprintf("{%s}", strings.Join(quoted, ",")), nil
