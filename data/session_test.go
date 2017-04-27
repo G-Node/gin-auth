@@ -88,7 +88,10 @@ func TestSessionUpdateExpirationTime(t *testing.T) {
 	}
 
 	oldExpired := sess.Expires
-	sess.UpdateExpirationTime()
+	err := sess.UpdateExpirationTime()
+	if err != nil {
+		t.Errorf("Error updating expiration time: %v\n", err)
+	}
 	if !sess.Expires.After(oldExpired) {
 		t.Error("Session expired was not properly updated.")
 	}
