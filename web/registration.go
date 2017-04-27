@@ -288,9 +288,8 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 	message := fmt.Sprintf("Congratulation %s! ", salutation)
 	message += fmt.Sprintf("Your account for user '%s' has been activated and can now be used.<br/><br/>", account.Login)
 	message += "You will be automatically redirected to the gin login page, "
-	message += fmt.Sprintf("you can also use <a href=\"%s\">this link</a> <br/>to return to the gin main page",
-		conf.GetExternals().GinUiURL)
-	message += " to login manually or continue browsing the available public repositories."
+	message += fmt.Sprintf("you can also use <a href=\"%s\">this link</a> ", conf.GetExternals().GinUiURL)
+	message += " to return to the gin main page to login manually or continue browsing the available public repositories."
 
 	// Add java script block to start login redirection round trip to login via gin-ui.
 	// Round trip is required to ensure a proper grant request from the gin-ui client.
