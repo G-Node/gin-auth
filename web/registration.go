@@ -21,7 +21,7 @@ import (
 	"github.com/dchest/captcha"
 )
 
-const redirectionDelay = 8000
+const redirectionDelay = 15000
 
 type validateAccount struct {
 	*data.Account
