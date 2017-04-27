@@ -534,11 +534,11 @@ func TestAccount_RemoveActivationCode(t *testing.T) {
 	const login = "inact_log1"
 	const activationCode = "ac_a"
 
-	acc, ok := GetAccountByLogin(login)
+	_, ok := GetAccountByLogin(login)
 	if ok {
 		t.Error("Account should not be active")
 	}
-	acc, ok = GetAccountByActivationCode(activationCode)
+	acc, ok := GetAccountByActivationCode(activationCode)
 	if !ok {
 		t.Error("Account does not exist")
 	}

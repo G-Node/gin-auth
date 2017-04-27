@@ -191,6 +191,9 @@ func TestClient_ApprovalForAccount_Approve(t *testing.T) {
 	// whitelist: account-read, repo-read
 	// blacklist: account-admin
 	client, ok = GetClient(uuidClientWB)
+	if !ok {
+		t.Errorf("Client '%s' does not exist.\n", uuidClientWB)
+	}
 
 	// approve whitelisted scope
 	err = client.Approve(uuidBob, util.NewStringSet("repo-read", "account-read"))
