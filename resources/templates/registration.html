@@ -26,6 +26,8 @@
                         {{ if .FieldErrors.login }}
                         <span class="help-block">{{ .FieldErrors.login }}</span>
                         {{ end }}
+                        <span class="help-block"><strong>Please note:</strong> Username is required to create and
+                            used to display your repositories and <strong>cannot be changed.</strong></span>
                     </div>
                 </div>
                 <div class="form-group {{ if .FieldErrors.password }}has-error{{ end }}">
@@ -54,7 +56,8 @@
                         {{ if .FieldErrors.email }}
                         <span class="help-block">{{ .FieldErrors.email }}</span>
                         {{ end }}
-                        <span class="help-block">Note: A valid e-mail address is required to activate your account.</span>
+                        <span class="help-block"><strong>Please note:</strong> A valid e-mail address
+                            is required to activate your account.</span>
                     </div>
                 </div>
                 <div class="form-group">
