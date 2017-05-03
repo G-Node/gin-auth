@@ -587,14 +587,14 @@ func TestValidate(t *testing.T) {
 
 	// Test existing login
 	valErr = account.Validate()
-	if valErr.FieldErrors["login"] != "Please choose a different login" {
+	if valErr.FieldErrors["login"] != "Please choose a different username" {
 		t.Errorf("Expected existing login error, but got: '%s'", valErr.FieldErrors["login"])
 	}
 
 	// Test missing login
 	account.Login = ""
 	valErr = account.Validate()
-	if valErr.FieldErrors["login"] != "Please add login" {
+	if valErr.FieldErrors["login"] != "Please add username" {
 		t.Errorf("Expected missing login error, but got: '%s'", valErr.FieldErrors["login"])
 	}
 

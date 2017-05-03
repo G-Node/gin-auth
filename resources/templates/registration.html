@@ -19,10 +19,10 @@
             <div class="stp-offset stp-title">Personal account</div>
             <div class="stp-offset collapse in">
                 <div class="form-group {{ if .FieldErrors.login }}has-error{{ end }}">
-                    <label for="reg-login" class="col-sm-3 control-label">Login *</label>
+                    <label for="reg-login" class="col-sm-3 control-label">Username *</label>
                     <div class="col-sm-9">
                         <input type="text" class="form-control" id="reg-login" name="login"
-                               placeholder="Login" value="{{ .Login }}" maxlength="512">
+                               placeholder="Username" value="{{ .Login }}" maxlength="512">
                         {{ if .FieldErrors.login }}
                         <span class="help-block">{{ .FieldErrors.login }}</span>
                         {{ end }}

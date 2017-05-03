@@ -327,7 +327,7 @@ func (acc *Account) Validate() *util.ValidationError {
 	valErr := &util.ValidationError{FieldErrors: make(map[string]string)}
 
 	if acc.Login == "" {
-		valErr.FieldErrors["login"] = "Please add login"
+		valErr.FieldErrors["login"] = "Please add username"
 	}
 	re := regexp.MustCompile("^[a-zA-Z0-9-_]*$")
 	if !re.MatchString(acc.Login) {
@@ -386,7 +386,7 @@ func (acc *Account) Validate() *util.ValidationError {
 		panic(err)
 	}
 	if exists.Login {
-		valErr.FieldErrors["login"] = "Please choose a different login"
+		valErr.FieldErrors["login"] = "Please choose a different username"
 	}
 	if exists.Email {
 		valErr.FieldErrors["email"] = "Please choose a different email address"
