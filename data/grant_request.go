@@ -13,6 +13,7 @@ import (
 	"errors"
 	"time"
 
+	"fmt"
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/util"
 )
@@ -106,12 +107,18 @@ func (req *GrantRequest) ExchangeCodeForTokens() (string, string, error) {
 	tx := database.MustBegin()
 	err := tx.Get(refresh, qCreateRefresh, refresh.Token, refresh.Scope, refresh.ClientUUID, refresh.AccountUUID)
 	if err != nil {
-		tx.Rollback()
+		errTx := tx.Rollback()
+		if errTx != nil {
+			err = fmt.Errorf("After initial error '%v'\nrollback failed: '%v'\n", err, errTx)
+		}
 		return "", "", err
 	}
 	err = tx.Get(access, qCreateAccess, access.Token, access.Scope, access.Expires, access.ClientUUID, access.AccountUUID)
 	if err != nil {
-		tx.Rollback()
+		errTx := tx.Rollback()
+		if errTx != nil {
+			err = fmt.Errorf("After initial error '%v'\nrollback failed: '%v'\n", err, errTx)
+		}
 		return "", "", err
 	}
 	err = tx.Commit()

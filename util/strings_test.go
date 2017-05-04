@@ -140,25 +140,28 @@ func TestStringSetStrings(t *testing.T) {
 
 func TestStringSetScan(t *testing.T) {
 	set := NewStringSet()
-	set.Scan([]byte(`{"foo","\"bar",bla,"\\blub"}`))
+	err := set.Scan([]byte(`{"foo","\"bar",bla,"\\blub"}`))
+	if err != nil {
+		t.Errorf("Error scanning StringSet: %v\n", err)
+	}
 
 	if set.Len() != 4 {
 		t.Error("The set should contain four elements")
 	}
 	if !set.Contains(`foo`) {
-		t.Errorf(`Set does not contain 'foo'`)
+		t.Error(`Set does not contain 'foo'`)
 	}
 	if !set.Contains(`\"bar`) {
-		t.Errorf(`Set does not contain '\"bar'`)
+		t.Error(`Set does not contain '\"bar'`)
 	}
 	if !set.Contains(`bla`) {
-		t.Errorf(`Set does not contain 'bla'`)
+		t.Error(`Set does not contain 'bla'`)
 	}
 	if !set.Contains(`foo`) {
-		t.Errorf(`Set does not contain 'foo'`)
+		t.Error(`Set does not contain 'foo'`)
 	}
 	if !set.Contains(`\\blub`) {
-		t.Errorf(`Set does not contain '\\blub'`)
+		t.Error(`Set does not contain '\\blub'`)
 	}
 }
 

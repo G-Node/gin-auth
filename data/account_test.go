@@ -270,7 +270,10 @@ func TestSetPasswordReset(t *testing.T) {
 
 func TestAccount_SetPassword(t *testing.T) {
 	acc := &Account{}
-	acc.SetPassword("foobar")
+	err := acc.SetPassword("foobar")
+	if err != nil {
+		t.Errorf("Error setting password: %v\n", err)
+	}
 	if acc.PWHash == "foobar" {
 		t.Error("PWHash equals plain text password")
 	}
@@ -387,8 +390,11 @@ func TestAccount_Create(t *testing.T) {
 	InitTestDb(t)
 
 	fresh := &Account{Login: "theo", Email: "theo@example.com", FirstName: "Theo", LastName: "Test"}
-	fresh.SetPassword("testtest")
-	err := fresh.Create()
+	err := fresh.SetPassword("testtest")
+	if err != nil {
+		t.Errorf("Error setting password: %v\n", err)
+	}
+	err = fresh.Create()
 	if err != nil {
 		t.Error(err)
 	}
@@ -441,7 +447,10 @@ func TestAccount_Update(t *testing.T) {
 		t.Error("Account does not exist")
 	}
 
-	acc.SetPassword(newPw)
+	err := acc.SetPassword(newPw)
+	if err != nil {
+		t.Errorf("Error setting password: %v\n", err)
+	}
 	acc.Login = newLogin
 	acc.Title = sql.NullString{String: newTitle, Valid: true}
 	acc.FirstName = newFirstName
@@ -454,7 +463,7 @@ func TestAccount_Update(t *testing.T) {
 	acc.IsEmailPublic = newEmailPublic
 	acc.IsAffiliationPublic = newAffiliationPublic
 
-	err := acc.Update()
+	err = acc.Update()
 	if err != nil {
 		t.Error(err)
 	}
@@ -534,11 +543,11 @@ func TestAccount_RemoveActivationCode(t *testing.T) {
 	const login = "inact_log1"
 	const activationCode = "ac_a"
 
-	acc, ok := GetAccountByLogin(login)
+	_, ok := GetAccountByLogin(login)
 	if ok {
 		t.Error("Account should not be active")
 	}
-	acc, ok = GetAccountByActivationCode(activationCode)
+	acc, ok := GetAccountByActivationCode(activationCode)
 	if !ok {
 		t.Error("Account does not exist")
 	}
@@ -578,14 +587,14 @@ func TestValidate(t *testing.T) {
 
 	// Test existing login
 	valErr = account.Validate()
-	if valErr.FieldErrors["login"] != "Please choose a different login" {
+	if valErr.FieldErrors["login"] != "Please choose a different username" {
 		t.Errorf("Expected existing login error, but got: '%s'", valErr.FieldErrors["login"])
 	}
 
 	// Test missing login
 	account.Login = ""
 	valErr = account.Validate()
-	if valErr.FieldErrors["login"] != "Please add login" {
+	if valErr.FieldErrors["login"] != "Please add username" {
 		t.Errorf("Expected missing login error, but got: '%s'", valErr.FieldErrors["login"])
 	}
 

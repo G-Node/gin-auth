@@ -25,7 +25,10 @@ var database *sqlx.DB
 // An existing connection will be closed.
 func InitDb(config *conf.DbConfig) {
 	if database != nil {
-		database.Close()
+		err := database.Close()
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	var err error

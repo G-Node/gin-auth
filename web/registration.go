@@ -14,6 +14,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
@@ -21,7 +22,7 @@ import (
 	"github.com/dchest/captcha"
 )
 
-const redirectionDelay = 8000
+const redirectionDelay = 15000
 
 type validateAccount struct {
 	*data.Account
@@ -171,7 +172,16 @@ func (rh *registration) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	valAccount.Account.SetPassword(pw.Password)
+	err = valAccount.Account.SetPassword(pw.Password)
+	if err != nil {
+		valAccount.Message = "An error occurred during registration."
+		err := tmpl.ExecuteTemplate(w, "layout", valAccount)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+
 	valAccount.Account.ActivationCode = sql.NullString{String: util.RandomToken(), Valid: true}
 
 	err = account.Create()
@@ -279,13 +289,17 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	salutation := fmt.Sprintf("%s %s", account.FirstName, account.LastName)
+	if account.FirstName == "" && account.LastName == "" {
+		salutation = account.Login
+	}
+
 	head := "Your gin account has been successfully activated!"
-	message := fmt.Sprintf("Congratulation %s %s! ", account.FirstName, account.LastName)
-	message = fmt.Sprintf("The account for %s has been activated and can now be used.<br/><br/>", account.Login)
+	message := fmt.Sprintf("Congratulation %s! ", strings.TrimSpace(salutation))
+	message += fmt.Sprintf("Your account for user '%s' has been activated and can now be used.<br/><br/>", account.Login)
 	message += "You will be automatically redirected to the gin login page, "
-	message += fmt.Sprintf("you can also use <a href=\"%s\">this link</a> <br/>to return to the gin main page",
-		conf.GetExternals().GinUiURL)
-	message += " to login manually or continue browsing the available public repositories."
+	message += fmt.Sprintf("you can also use <a href=\"%s\">this link</a> ", conf.GetExternals().GinUiURL)
+	message += " to return to the gin main page to login manually or continue browsing the available public repositories."
 
 	// Add java script block to start login redirection round trip to login via gin-ui.
 	// Round trip is required to ensure a proper grant request from the gin-ui client.

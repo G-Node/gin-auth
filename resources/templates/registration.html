@@ -19,13 +19,15 @@
             <div class="stp-offset stp-title">Personal account</div>
             <div class="stp-offset collapse in">
                 <div class="form-group {{ if .FieldErrors.login }}has-error{{ end }}">
-                    <label for="reg-login" class="col-sm-3 control-label">Login *</label>
+                    <label for="reg-login" class="col-sm-3 control-label">Username *</label>
                     <div class="col-sm-9">
                         <input type="text" class="form-control" id="reg-login" name="login"
-                               placeholder="Login" value="{{ .Login }}" maxlength="512">
+                               placeholder="Username" value="{{ .Login }}" maxlength="512">
                         {{ if .FieldErrors.login }}
                         <span class="help-block">{{ .FieldErrors.login }}</span>
                         {{ end }}
+                        <span class="help-block"><strong>Please note:</strong> Username is used to create and
+                            to display your repositories and <strong>cannot be changed.</strong></span>
                     </div>
                 </div>
                 <div class="form-group {{ if .FieldErrors.password }}has-error{{ end }}">
@@ -54,7 +56,8 @@
                         {{ if .FieldErrors.email }}
                         <span class="help-block">{{ .FieldErrors.email }}</span>
                         {{ end }}
-                        <span class="help-block">Note: A valid e-mail address is required to activate your account.</span>
+                        <span class="help-block"><strong>Please note:</strong> A valid e-mail address
+                            is required to activate your account.</span>
                     </div>
                 </div>
                 <div class="form-group">

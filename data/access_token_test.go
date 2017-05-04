@@ -120,7 +120,10 @@ func TestAccessTokenUpdateExpirationTime(t *testing.T) {
 	}
 
 	oldExpired := tok.Expires
-	tok.UpdateExpirationTime()
+	err := tok.UpdateExpirationTime()
+	if err != nil {
+		t.Errorf("Error updating expiration time: %v\n", err)
+	}
 	if !tok.Expires.After(oldExpired) {
 		t.Error("Access token expired was not properly updated.")
 	}

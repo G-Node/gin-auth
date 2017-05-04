@@ -175,7 +175,10 @@ func TestClient_ApprovalForAccount_Approve(t *testing.T) {
 	}
 
 	// expand approval for a client
-	client.Approve(uuidBob, util.NewStringSet("repo-read", "repo-write"))
+	err = client.Approve(uuidBob, util.NewStringSet("repo-read", "repo-write"))
+	if err != nil {
+		t.Errorf("Error approving '%s': %v\n", uuidBob, err)
+	}
 	approval, ok = client.ApprovalForAccount(uuidBob)
 	if !ok {
 		t.Error("Approval does not exist")
@@ -191,6 +194,9 @@ func TestClient_ApprovalForAccount_Approve(t *testing.T) {
 	// whitelist: account-read, repo-read
 	// blacklist: account-admin
 	client, ok = GetClient(uuidClientWB)
+	if !ok {
+		t.Errorf("Client '%s' does not exist.\n", uuidClientWB)
+	}
 
 	// approve whitelisted scope
 	err = client.Approve(uuidBob, util.NewStringSet("repo-read", "account-read"))
@@ -353,7 +359,7 @@ func TestClient_create(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error creating client '%s': '%v'", client.UUID, err)
 	}
-	tx.Commit()
+	_ = tx.Commit()
 
 	check, ok := GetClient(client.UUID)
 	if !ok {
@@ -406,7 +412,7 @@ func TestClient_createFail(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error creating client '%s': '%v'", client.UUID, err)
 	}
-	tx.Commit()
+	_ = tx.Commit()
 
 	// Test fail on incorrect uuid length
 	tx = database.MustBegin()
@@ -415,7 +421,7 @@ func TestClient_createFail(t *testing.T) {
 	if err == nil {
 		t.Errorf("Missing error on invalid UUID length: %v", client)
 	}
-	tx.Rollback()
+	_ = tx.Rollback()
 
 	// Test fail on incorrect name length
 	tx = database.MustBegin()
@@ -433,7 +439,7 @@ func TestClient_createFail(t *testing.T) {
 	if err == nil {
 		t.Error("Missing error on duplicate name.")
 	}
-	tx.Rollback()
+	_ = tx.Rollback()
 
 	// Test fail duplicate client scope
 	tx = database.MustBegin()
@@ -442,7 +448,7 @@ func TestClient_createFail(t *testing.T) {
 	if err == nil {
 		t.Error("Missing error on duplicate client scope.")
 	}
-	tx.Rollback()
+	_ = tx.Rollback()
 }
 
 // Tests removal of a client and all of its scopes
@@ -467,7 +473,7 @@ func TestClient_delete(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error creating client '%s': '%v'", client.UUID, err)
 	}
-	tx.Commit()
+	_ = tx.Commit()
 
 	_, ok := GetClient(client.UUID)
 	if !ok {
@@ -483,7 +489,7 @@ func TestClient_delete(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error deleting client: %v", err)
 	}
-	tx.Commit()
+	_ = tx.Commit()
 
 	_, ok = GetClient(client.UUID)
 	if ok {
@@ -520,7 +526,7 @@ func TestClient_update(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error creating client '%s': '%v'", client.UUID, err)
 	}
-	tx.Commit()
+	_ = tx.Commit()
 
 	var clUpdate = new(Client)
 	clUpdate.UUID = client.UUID
@@ -534,7 +540,7 @@ func TestClient_update(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	tx.Commit()
+	_ = tx.Commit()
 
 	check, ok := GetClient(clUpdate.UUID)
 	if !ok {

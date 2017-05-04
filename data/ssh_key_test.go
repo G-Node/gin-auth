@@ -176,7 +176,10 @@ func TestUnmarshalKey(t *testing.T) {
 
 	jsonData := &SSHKey{}
 	dec := json.NewDecoder(strings.NewReader(jsonStr))
-	dec.Decode(jsonData)
+	err := dec.Decode(jsonData)
+	if err != nil {
+		t.Errorf("Error decoding json: %v\n", err)
+	}
 
 	if jsonData.Key != pubkey {
 		t.Error("Error unmarshalling key data: Bad Key.")
@@ -192,7 +195,10 @@ func TestUnmarshalKey(t *testing.T) {
 
 	jsonStr = fmt.Sprintf(`{"key":"%s", "description":"%s", "temporary":true}`, pubkey, keydesc)
 	dec = json.NewDecoder(strings.NewReader(jsonStr))
-	dec.Decode(jsonData)
+	err = dec.Decode(jsonData)
+	if err != nil {
+		t.Errorf("Error decoding json: %v\n", err)
+	}
 
 	if !jsonData.Temporary {
 		t.Error("Error unmarshalling key data: Bad Temporary flag.")

@@ -572,7 +572,11 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	}
 
 	responseBody := &gin.TokenResponse{}
-	json.Unmarshal(response.Body.Bytes(), responseBody)
+	err := json.Unmarshal(response.Body.Bytes(), responseBody)
+	if err != nil {
+		t.Errorf("Error unmarshaling response: %v\n", err)
+	}
+
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
 	}
@@ -608,7 +612,11 @@ func TestTokenAuthorizationCode(t *testing.T) {
 	}
 
 	responseBody = &gin.TokenResponse{}
-	json.Unmarshal(response.Body.Bytes(), responseBody)
+	err = json.Unmarshal(response.Body.Bytes(), responseBody)
+	if err != nil {
+		t.Errorf("Error unmarshaling response: %v\n", err)
+	}
+
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
 	}
@@ -677,7 +685,10 @@ func TestTokenRefreshToken(t *testing.T) {
 	}
 
 	responseBody := &gin.TokenResponse{}
-	json.Unmarshal(response.Body.Bytes(), responseBody)
+	err := json.Unmarshal(response.Body.Bytes(), responseBody)
+	if err != nil {
+		t.Errorf("Error unmarshaling response: %v\n", err)
+	}
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
 	}
@@ -698,7 +709,10 @@ func TestTokenRefreshToken(t *testing.T) {
 	}
 
 	responseBody = &gin.TokenResponse{}
-	json.Unmarshal(response.Body.Bytes(), responseBody)
+	err = json.Unmarshal(response.Body.Bytes(), responseBody)
+	if err != nil {
+		t.Errorf("Error unmarshaling response: %v\n", err)
+	}
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
 	}
@@ -785,7 +799,10 @@ func TestTokenPassword(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 	responseBody := &gin.TokenResponse{}
-	json.Unmarshal(response.Body.Bytes(), responseBody)
+	err := json.Unmarshal(response.Body.Bytes(), responseBody)
+	if err != nil {
+		t.Errorf("Error unmarshaling response: %v\n", err)
+	}
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
 	}
@@ -805,7 +822,10 @@ func TestTokenPassword(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 	responseBody = &gin.TokenResponse{}
-	json.Unmarshal(response.Body.Bytes(), responseBody)
+	err = json.Unmarshal(response.Body.Bytes(), responseBody)
+	if err != nil {
+		t.Errorf("Error unmarshaling response: %v\n", err)
+	}
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
 	}
@@ -868,7 +888,10 @@ func TestTokenClientCredentials(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 	responseBody := &gin.TokenResponse{}
-	json.Unmarshal(response.Body.Bytes(), responseBody)
+	err := json.Unmarshal(response.Body.Bytes(), responseBody)
+	if err != nil {
+		t.Errorf("Error unmarshaling response: %v\n", err)
+	}
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
 	}
@@ -888,7 +911,10 @@ func TestTokenClientCredentials(t *testing.T) {
 		t.Errorf("Response code '%d' expected but was '%d'", http.StatusOK, response.Code)
 	}
 	responseBody = &gin.TokenResponse{}
-	json.Unmarshal(response.Body.Bytes(), responseBody)
+	err = json.Unmarshal(response.Body.Bytes(), responseBody)
+	if err != nil {
+		t.Errorf("Error unmarshaling response: %v\n", err)
+	}
 	if responseBody.AccessToken == "" {
 		t.Error("No access token received")
 	}
@@ -925,7 +951,10 @@ func TestValidate(t *testing.T) {
 	}
 
 	result := &gin.TokenInfo{}
-	json.Unmarshal(response.Body.Bytes(), result)
+	err := json.Unmarshal(response.Body.Bytes(), result)
+	if err != nil {
+		t.Errorf("Error unmarshaling response: %v\n", err)
+	}
 	if result.JTI != "3N7MP7M7" {
 		t.Errorf("JTI expected to be '3N7MP7M7' but was '%s'", result.JTI)
 	}

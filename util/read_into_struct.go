@@ -51,7 +51,10 @@ func ReadQueryIntoStruct(request *http.Request, dest interface{}, ignoreMissing 
 //
 // See ReadMapIntoStruct for more information.
 func ReadFormIntoStruct(request *http.Request, dest interface{}, ignoreMissing bool) error {
-	request.ParseForm()
+	err := request.ParseForm()
+	if err != nil {
+		return err
+	}
 	form := request.PostForm
 	if form == nil {
 		return errors.New("Request has no form data")

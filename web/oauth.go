@@ -446,7 +446,11 @@ func Approve(w http.ResponseWriter, r *http.Request) {
 		RequestID string
 		Scope     []string
 	}{}
-	util.ReadFormIntoStruct(r, param, true)
+	err := util.ReadFormIntoStruct(r, param, true)
+	if err != nil {
+		PrintErrorJSON(w, r, err, http.StatusBadRequest)
+		return
+	}
 
 	request, ok := data.GetGrantRequest(param.RequestID)
 	if !ok {
@@ -469,7 +473,7 @@ func Approve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create approval
-	err := client.Approve(request.AccountUUID.String, request.ScopeRequested)
+	err = client.Approve(request.AccountUUID.String, request.ScopeRequested)
 	if err != nil {
 		panic(err)
 	}
@@ -536,8 +540,11 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if request.ClientUUID != client.UUID {
-			request.Delete()
 			PrintErrorJSON(w, r, "Invalid grant code", http.StatusUnauthorized)
+			err = request.Delete()
+			if err != nil {
+				panic(err)
+			}
 			return
 		}
 
@@ -561,8 +568,11 @@ func Token(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if refresh.ClientUUID != client.UUID {
-			refresh.Delete()
 			PrintErrorJSON(w, r, "Invalid refresh token", http.StatusUnauthorized)
+			err = refresh.Delete()
+			if err != nil {
+				panic(err)
+			}
 			return
 		}
 
@@ -651,7 +661,10 @@ func Token(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(response)
+	err = enc.Encode(response)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Validate validates a token and returns information about it as JSON
@@ -689,5 +702,8 @@ func Validate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Cache-Control", "no-cache")
 	w.Header().Add("Content-Type", "application/json")
 	enc := json.NewEncoder(w)
-	enc.Encode(response)
+	err := enc.Encode(response)
+	if err != nil {
+		panic(err)
+	}
 }

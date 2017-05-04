@@ -64,7 +64,10 @@ func InitLogEnv() {
 
 	logEnv.Close = func() {
 		for _, f := range fs {
-			f.Close()
+			err := f.Close()
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 
