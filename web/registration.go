@@ -14,6 +14,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/G-Node/gin-auth/conf"
 	"github.com/G-Node/gin-auth/data"
@@ -294,7 +295,7 @@ func Activation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	head := "Your gin account has been successfully activated!"
-	message := fmt.Sprintf("Congratulation %s! ", salutation)
+	message := fmt.Sprintf("Congratulation %s! ", strings.TrimSpace(salutation))
 	message += fmt.Sprintf("Your account for user '%s' has been activated and can now be used.<br/><br/>", account.Login)
 	message += "You will be automatically redirected to the gin login page, "
 	message += fmt.Sprintf("you can also use <a href=\"%s\">this link</a> ", conf.GetExternals().GinUiURL)
